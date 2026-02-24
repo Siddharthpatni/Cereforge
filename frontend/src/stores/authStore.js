@@ -56,7 +56,10 @@ export const useAuthStore = create(
       name: "cereforge-auth-storage", // key in local storage
       partialize: (state) => ({
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken, // Optionally store user details, but fetching /me on load is safer
+        refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
+        user: state.user,
+        rank: state.rank,
       }),
     },
   ),

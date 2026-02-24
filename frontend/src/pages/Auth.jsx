@@ -135,14 +135,15 @@ export function Auth() {
             {!isLogin && (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-zinc-300">
-                  Email (Optional)
+                  Email
                 </label>
                 <input
                   type="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full rounded-md bg-zinc-900/50 border border-zinc-800 p-2.5 text-white placeholder-zinc-500 transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
-                  placeholder="Optional for password recovery"
+                  placeholder="neo@matrix.com"
                 />
               </div>
             )}
