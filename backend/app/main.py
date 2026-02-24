@@ -114,10 +114,10 @@ def create_app() -> FastAPI:
 
     app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
     app.include_router(tasks.router, prefix="/api/v1/tasks", tags=["Tasks"])
-    app.include_router(community.router, prefix="/api/v1", tags=["Community"])
+    app.include_router(community.router, prefix="/api/v1/community", tags=["Community"])
     app.include_router(badges.router, prefix="/api/v1/badges", tags=["Badges"])
     app.include_router(leaderboard.router, prefix="/api/v1/leaderboard", tags=["Leaderboard"])
-    app.include_router(learning_paths.router, prefix="/api/v1/learning-paths", tags=["Learning Paths"])
+    app.include_router(learning_paths.router, prefix="/api/v1/paths", tags=["Learning Paths"])
     app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
     app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["Dashboard"])
 
