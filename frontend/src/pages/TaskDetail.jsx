@@ -127,14 +127,30 @@ export function TaskDetail() {
 
           <Card className="glass-panel">
             <CardContent className="p-6 md:p-8 prose prose-invert max-w-none">
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: task.beginner_guide
-                    .replace(/\n\n/g, "<br/><br/>")
-                    .replace(/### (.*?)\n/g, "<h3>$1</h3>")
-                    .replace(/`([^`]+)`/g, "<code>$1</code>"),
-                }}
-              />
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-white mb-4" style={{ marginTop: 0 }}>Objective</h3>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: task.description
+                      ?.replace(/\n\n/g, "<br/><br/>")
+                      ?.replace(/`([^`]+)`/g, "<code>$1</code>") || "No description provided.",
+                  }}
+                />
+              </div>
+
+              {task.show_beginner_guide && task.beginner_guide && (
+                <div className="mt-8 pt-8 border-t border-border/50">
+                  <h3 className="text-lg font-bold text-white mb-4">Beginner Guide</h3>
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: task.beginner_guide
+                        .replace(/\n\n/g, "<br/><br/>")
+                        .replace(/### (.*?)\n/g, "<h3>$1</h3>")
+                        .replace(/`([^`]+)`/g, "<code>$1</code>"),
+                    }}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 
