@@ -50,7 +50,7 @@ export function Auth() {
                 setAuthData(res.data);
                 addToast({
                     title: 'Account created!',
-                    message: res.data.welcome_message || `Welcome to NeuralForge, ${username}!`,
+                    message: res.data.welcome_message || `Welcome to CereForge, ${username}!`,
                     type: 'success',
                     duration: 8000
                 });

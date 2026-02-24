@@ -47,7 +47,7 @@ export function Sidebar({ className }) {
 
             {/* Small mini-widget could go here at the bottom of sidebar */}
             <div className="p-4 border-t border-border/50 text-xs text-zinc-500">
-                <p>NeuralForge v1.0.0</p>
+                <p>CereForge v1.0.0</p>
             </div>
         </div>
     );

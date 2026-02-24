@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MessageSquare, ArrowBigUpOpen, ArrowBigDownOpen, CheckCircle, ArrowLeft, MoreVertical, Sparkles } from 'lucide-react';
+import { MessageSquare, ChevronUp, ChevronDown, CheckCircle, ArrowLeft, MoreVertical, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useUIStore } from '@/stores/uiStore';
@@ -34,9 +34,9 @@ function CommentNode({ comment, postAuthorId, onVote, onAccept, onReply }) {
             )}>
                 {/* Voting */}
                 <div className="flex flex-col items-center shrink-0">
-                    <button onClick={() => onVote(comment.id, 1, 'comment')} className="text-zinc-500 hover:text-success focus:outline-none"><ArrowBigUpOpen className="h-5 w-5" /></button>
+                    <button onClick={() => onVote(comment.id, 1, 'comment')} className="text-zinc-500 hover:text-success focus:outline-none"><ChevronUp className="h-5 w-5" /></button>
                     <span className="font-mono text-sm font-bold text-white py-1">{comment.score}</span>
-                    <button onClick={() => onVote(comment.id, -1, 'comment')} className="text-zinc-500 hover:text-danger focus:outline-none"><ArrowBigDownOpen className="h-5 w-5" /></button>
+                    <button onClick={() => onVote(comment.id, -1, 'comment')} className="text-zinc-500 hover:text-danger focus:outline-none"><ChevronDown className="h-5 w-5" /></button>
                 </div>
 
                 {/* Content */}
@@ -241,9 +241,9 @@ export function PostDetail() {
             <div className="flex gap-4">
                 {/* Voting Sidebar */}
                 <div className="flex flex-col items-center shrink-0 w-10">
-                    <button onClick={() => handleVote(post.id, 1, 'post')} className="text-zinc-500 hover:text-success focus:outline-none"><ArrowBigUpOpen className="h-8 w-8" /></button>
+                    <button onClick={() => handleVote(post.id, 1, 'post')} className="text-zinc-500 hover:text-success focus:outline-none"><ChevronUp className="h-8 w-8" /></button>
                     <span className="text-lg font-bold text-white py-1">{post.score}</span>
-                    <button onClick={() => handleVote(post.id, -1, 'post')} className="text-zinc-500 hover:text-danger focus:outline-none"><ArrowBigDownOpen className="h-8 w-8" /></button>
+                    <button onClick={() => handleVote(post.id, -1, 'post')} className="text-zinc-500 hover:text-danger focus:outline-none"><ChevronDown className="h-8 w-8" /></button>
                 </div>
 
                 {/* Content Body */}

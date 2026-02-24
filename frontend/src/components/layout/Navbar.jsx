@@ -28,10 +28,10 @@ export function Navbar() {
                 </button>
 
                 <Link to="/" className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded bg-primary flex items-center justify-center font-mono font-bold text-white shadow-[0_0_15px_rgba(67,56,202,0.5)]">
-                        NF
+                    <div className="h-8 w-8 rounded bg-primary flex items-center justify-center text-lg shadow-[0_0_15px_rgba(67,56,202,0.5)]">
+                        🧠
                     </div>
-                    <span className="hidden sm:block text-lg font-bold tracking-tight text-white">NeuralForge</span>
+                    <span className="hidden sm:block text-lg font-bold tracking-tight text-white">CereForge</span>
                 </Link>
             </div>
 

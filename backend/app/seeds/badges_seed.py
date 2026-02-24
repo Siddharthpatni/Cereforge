@@ -98,8 +98,8 @@ BADGES_DATA = [
         "display_order": 9,
     },
     {
-        "slug": "neuralforge-elite",
-        "name": "NeuralForge Elite",
+        "slug": "cereforge-elite",
+        "name": "CereForge Elite",
         "icon": "🏆",
         "description": "All 12 tasks complete. You are the embodiment of AI engineering mastery.",
         "condition_type": "total_tasks",

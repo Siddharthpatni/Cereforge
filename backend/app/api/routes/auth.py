@@ -55,17 +55,17 @@ async def register(
 
     # Suggest learning path for beginners
     suggested_path = None
-    welcome_message = f"Welcome to NeuralForge, {user.username}! 🚀"
+    welcome_message = f"Welcome to CereForge, {user.username}! 🚀"
     if data.skill_level == "absolute_beginner":
         suggested_path = "zero-to-ai-path"
-        welcome_message = f"Welcome to NeuralForge, {user.username}! 🚀 We've recommended the Zero to AI learning path based on your background. Start there — it's built for exactly where you are."
+        welcome_message = f"Welcome to CereForge, {user.username}! 🚀 We've recommended the Zero to AI learning path based on your background. Start there — it's built for exactly where you are."
     elif data.skill_level == "some_python":
         suggested_path = "zero-to-ai-path"
-        welcome_message = f"Welcome to NeuralForge, {user.username}! 🐍 Your Python skills are a great foundation. Check out the Zero to AI path to start your AI engineering journey."
+        welcome_message = f"Welcome to CereForge, {user.username}! 🐍 Your Python skills are a great foundation. Check out the Zero to AI path to start your AI engineering journey."
     elif data.skill_level == "ml_familiar":
-        welcome_message = f"Welcome to NeuralForge, {user.username}! 🧪 Great that you have ML experience. Dive into our intermediate and expert tasks to level up your AI engineering skills."
+        welcome_message = f"Welcome to CereForge, {user.username}! 🧪 Great that you have ML experience. Dive into our intermediate and expert tasks to level up your AI engineering skills."
     elif data.skill_level == "advanced":
-        welcome_message = f"Welcome to NeuralForge, {user.username}! ⚡ Expert detected. Go straight to the expert-level tasks and show the community what you've got."
+        welcome_message = f"Welcome to CereForge, {user.username}! ⚡ Expert detected. Go straight to the expert-level tasks and show the community what you've got."
 
     await db.commit()
 

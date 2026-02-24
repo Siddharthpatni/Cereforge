@@ -26,7 +26,7 @@ export function Layout() {
 
                 {/* Simple Footer */}
                 <footer className="w-full border-t border-border py-6 text-center text-sm text-zinc-500">
-                    <p>© {new Date().getFullYear()} NeuralForge. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} CereForge. All rights reserved.</p>
                 </footer>
             </main>
 

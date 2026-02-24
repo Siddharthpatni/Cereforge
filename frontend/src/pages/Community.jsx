@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MessageSquare, ArrowBigUpOpen, Plus, Search, Tag as TagIcon, Zap } from 'lucide-react';
+import { MessageSquare, ChevronUp, Plus, Search, Tag as TagIcon, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
@@ -123,7 +123,7 @@ export function Community() {
                             <div key={post.id} className="p-4 sm:p-6 hover:bg-zinc-900/40 transition-colors flex gap-4">
                                 {/* Vote Counter Stub */}
                                 <div className="flex flex-col items-center shrink-0">
-                                    <div className="text-zinc-400 hover:text-success cursor-pointer mb-1"><ArrowBigUpOpen className="h-6 w-6" /></div>
+                                    <div className="text-zinc-400 hover:text-success cursor-pointer mb-1"><ChevronUp className="h-6 w-6" /></div>
                                     <span className="font-mono font-bold text-white px-2">{post.score}</span>
                                 </div>
 

@@ -9,7 +9,7 @@ from app.seeds.paths_seed import seed_paths
 
 
 async def run_all_seeds():
-    print("🌱 Starting NeuralForge seed process...")
+    print("🌱 Starting CereForge seed process...")
     async with async_session_factory() as db:
         await seed_tasks(db)
         await seed_badges(db)

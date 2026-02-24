@@ -3,83 +3,101 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    container_name: neuralforge_db
+    container_name: cereforge_db
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-neuralforge}
+      POSTGRES_USER: ${POSTGRES_USER:-cereforge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cereforge}
+      POSTGRES_DB: ${POSTGRES_DB:-cereforge}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -U cereforge" ]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - cereforge-network
 
   redis:
     image: redis:7-alpine
-    container_name: neuralforge_redis
+    container_name: cereforge_redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - cereforge-network
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: neuralforge_api
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    container_name: cereforge_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     volumes:
       - ./backend:/app
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-neuralforge}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-cereforge}:${POSTGRES_PASSWORD:-cereforge}@db:5432/${POSTGRES_DB:-cereforge}
       - REDIS_URL=redis://redis:6379/0
-      - API_V1_STR=/api/v1
-      - PROJECT_NAME=NeuralForge
+      - APP_NAME=CereForge
+      - APP_ENV=${APP_ENV:-development}
+      - APP_SECRET_KEY=${APP_SECRET_KEY:-dev-secret-key-change-in-production-please}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-jwt-secret-change-in-production-please}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - cereforge-network
 
   celery_worker:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: neuralforge_worker
+    container_name: cereforge_worker
     command: celery -A app.workers.tasks.celery_app worker --loglevel=info
     volumes:
       - ./backend:/app
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-neuralforge}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-cereforge}:${POSTGRES_PASSWORD:-cereforge}@db:5432/${POSTGRES_DB:-cereforge}
       - REDIS_URL=redis://redis:6379/0
+      - APP_SECRET_KEY=${APP_SECRET_KEY:-dev-secret-key-change-in-production-please}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-jwt-secret-change-in-production-please}
     depends_on:
       - backend
       - redis
+    networks:
+      - cereforge-network
 
   frontend:
     build:
       context: ./frontend
-      # Simple dev container for frontend
-      dockerfile: Dockerfile.dev
-    container_name: neuralforge_ui
+      dockerfile: Dockerfile
+    container_name: cereforge_ui
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "5173:80"
     environment:
-      - VITE_API_URL=http://localhost:8000/api/v1
+      - VITE_API_BASE_URL=http://localhost:8000/api/v1
     depends_on:
       - backend
+    networks:
+      - cereforge-network
+
+networks:
+  cereforge-network:
+    driver: bridge
 
 volumes:
   postgres_data:
+  redis_data:

@@ -1,35 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+.pytest_cache/
+
 # Node
 node_modules/
 dist/
-dist-ssr/
-*.local
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# Environment
 .env
-.venv
-venv/
-ENV/
+.env.local
+.env.*.local
 
-# OS
+# IDE
+.vscode/
+.idea/
+*.swp
 .DS_Store
+
+# Docker
+.docker/
+
+# Coverage
+coverage/
+.coverage
+*.coverage
+coverage.xml
+htmlcov/
+
+# Logs
+*.log
+logs/

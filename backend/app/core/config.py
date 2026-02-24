@@ -1,4 +1,4 @@
-"""NeuralForge configuration — loads all settings from environment variables."""
+"""CereForge configuration — loads all settings from environment variables."""
 
 from typing import Optional
 from pydantic_settings import BaseSettings
@@ -7,14 +7,14 @@ from pydantic import field_validator
 
 class Settings(BaseSettings):
     # Application
-    APP_NAME: str = "NeuralForge"
+    APP_NAME: str = "CereForge"
     APP_ENV: str = "development"
     APP_SECRET_KEY: str
     APP_PORT: int = 8000
     APP_CORS_ORIGINS: str = "http://localhost:5173"
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://neuralforge:neuralforge@localhost:5432/neuralforge"
+    DATABASE_URL: str = "postgresql+asyncpg://cereforge:cereforge@localhost:5432/cereforge"
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10
 
@@ -35,8 +35,8 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USER: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
-    EMAILS_FROM_EMAIL: str = "noreply@neuralforge.io"
-    EMAILS_FROM_NAME: str = "NeuralForge"
+    EMAILS_FROM_EMAIL: str = "noreply@cereforge.io"
+    EMAILS_FROM_NAME: str = "CereForge"
 
     # Storage
     S3_BUCKET_NAME: Optional[str] = None
