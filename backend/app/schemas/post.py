@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 
 # ─── Request Schemas ───
 
+
 class PostCreate(BaseModel):
     title: str = Field(..., min_length=5, max_length=300)
     body: str = Field(..., min_length=10)
@@ -67,6 +68,7 @@ class VoteCreate(BaseModel):
 
 
 # ─── Response Schemas ───
+
 
 class AuthorResponse(BaseModel):
     id: UUID

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 # ─── Badge Schemas ───
 
+
 class BadgeResponse(BaseModel):
     id: UUID
     slug: str
@@ -23,6 +24,7 @@ class BadgeResponse(BaseModel):
 
 
 # ─── Learning Path Schemas ───
+
 
 class LessonResponse(BaseModel):
     id: UUID
@@ -84,6 +86,7 @@ class EnrollResponse(BaseModel):
 
 # ─── Leaderboard Schemas ───
 
+
 class LeaderboardEntry(BaseModel):
     position: int
     user: dict
@@ -101,6 +104,7 @@ class LeaderboardResponse(BaseModel):
 
 # ─── Dashboard Schemas ───
 
+
 class DashboardResponse(BaseModel):
     stats: dict
     rank: dict
@@ -112,6 +116,7 @@ class DashboardResponse(BaseModel):
 
 
 # ─── Notification Schemas ───
+
 
 class NotificationResponse(BaseModel):
     id: UUID
@@ -131,6 +136,7 @@ class MarkReadRequest(BaseModel):
 
 # ─── AI Mentor Schemas ───
 
+
 class MentorGuidanceRequest(BaseModel):
     task_slug: str
     user_message: str
@@ -141,6 +147,7 @@ class CommunityAssistRequest(BaseModel):
 
 
 # ─── Generic Response ───
+
 
 class SuccessResponse(BaseModel):
     data: dict | None = None

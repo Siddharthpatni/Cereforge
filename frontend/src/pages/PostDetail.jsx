@@ -168,7 +168,6 @@ export function PostDetail() {
   const { postId } = useParams();
   const navigate = useNavigate();
   const { addToast } = useUIStore();
-  const { user } = useAuthStore();
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -185,7 +184,7 @@ export function PostDetail() {
     try {
       const res = await apiClient.get(`/community/posts/${postId}`);
       setPost(res.data);
-    } catch (err) {
+    } catch {
       addToast({
         title: "Error",
         message: "Discussion not found",
@@ -199,6 +198,7 @@ export function PostDetail() {
 
   useEffect(() => {
     fetchPost();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
   const handleVote = async (id, value, targetType = "post") => {
@@ -213,10 +213,10 @@ export function PostDetail() {
       // Optimistic update would go here for a production app
       // For simplicity, just refetch
       fetchPost();
-    } catch (err) {
+    } catch (error) {
       addToast({
         title: "Vote Failed",
-        message: err.response?.data?.detail || "Try again.",
+        message: error.response?.data?.detail || "Try again.",
         type: "warning",
       });
     }
@@ -233,7 +233,7 @@ export function PostDetail() {
         type: "success",
       });
       fetchPost();
-    } catch (err) {
+    } catch {
       addToast({
         title: "Error",
         message: "Failed to accept answer",
@@ -254,7 +254,7 @@ export function PostDetail() {
         type: "success",
       });
       fetchPost();
-    } catch (err) {
+    } catch {
       addToast({
         title: "Error",
         message: "Failed to post comment",
@@ -279,7 +279,7 @@ export function PostDetail() {
         `/ai/mentor/community-assist?post_id=${postId}`,
       );
       setAiSummary(res.data.summary || res.data); // depending on backend structure
-    } catch (err) {
+    } catch {
       addToast({
         title: "AI Unavailable",
         message: "Failed to generate summary.",
@@ -404,9 +404,9 @@ export function PostDetail() {
                     __html:
                       typeof aiSummary === "string"
                         ? aiSummary.replace(
-                            /\*\*(.*?)\*\*/g,
-                            "<strong>$1</strong>",
-                          )
+                          /\*\*(.*?)\*\*/g,
+                          "<strong>$1</strong>",
+                        )
                         : aiSummary.message,
                   }}
                 />

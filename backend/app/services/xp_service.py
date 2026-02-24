@@ -14,7 +14,12 @@ RANKS: list[dict[str, Any]] = [
     {"name": "Engineer", "min_xp": 200, "color": "#3b82f6", "border": "solid blue"},
     {"name": "Architect", "min_xp": 500, "color": "#8b5cf6", "border": "solid purple"},
     {"name": "Autonomous", "min_xp": 1000, "color": "#f59e0b", "border": "solid gold"},
-    {"name": "CereForge Elite", "min_xp": 1800, "color": "#ffffff", "border": "animated rainbow gradient"},
+    {
+        "name": "CereForge Elite",
+        "min_xp": 1800,
+        "color": "#ffffff",
+        "border": "animated rainbow gradient",
+    },
 ]
 
 # XP award amounts
@@ -52,10 +57,7 @@ def calculate_rank(xp: int) -> dict:
 async def award_xp(db: AsyncSession, user_id: UUID, amount: int) -> int:
     """Award XP to a user, returns new total."""
     result = await db.execute(
-        update(User)
-        .where(User.id == user_id)
-        .values(xp=User.xp + amount)
-        .returning(User.xp)
+        update(User).where(User.id == user_id).values(xp=User.xp + amount).returning(User.xp)
     )
     new_xp = result.scalar_one()
     return new_xp

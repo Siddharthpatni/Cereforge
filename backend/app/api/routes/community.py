@@ -92,25 +92,29 @@ async def list_posts(
     for post in posts:
         # Count comments
         comment_count_result = await db.execute(
-            select(func.count(Comment.id)).where(Comment.post_id == post.id, Comment.is_deleted.is_(False))
+            select(func.count(Comment.id)).where(
+                Comment.post_id == post.id, Comment.is_deleted.is_(False)
+            )
         )
         comment_count = comment_count_result.scalar() or 0
 
-        items.append(PostListItem(
-            id=post.id,
-            author=AuthorResponse.model_validate(post.author),
-            title=post.title,
-            body=post.body[:200] + "..." if len(post.body) > 200 else post.body,
-            track=post.track,
-            tags=post.tags or [],
-            colab_link=post.colab_link,
-            status=post.status,
-            vote_score=post.vote_score,
-            view_count=post.view_count,
-            is_beginner_friendly=post.is_beginner_friendly,
-            comment_count=comment_count,
-            created_at=post.created_at,
-        ))
+        items.append(
+            PostListItem(
+                id=post.id,
+                author=AuthorResponse.model_validate(post.author),
+                title=post.title,
+                body=post.body[:200] + "..." if len(post.body) > 200 else post.body,
+                track=post.track,
+                tags=post.tags or [],
+                colab_link=post.colab_link,
+                status=post.status,
+                vote_score=post.vote_score,
+                view_count=post.view_count,
+                is_beginner_friendly=post.is_beginner_friendly,
+                comment_count=comment_count,
+                created_at=post.created_at,
+            )
+        )
 
     pages = (total + limit - 1) // limit
 
@@ -149,9 +153,7 @@ async def get_post(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Get a single post with threaded comments."""
-    result = await db.execute(
-        select(Post).where(Post.id == post_id, Post.is_deleted.is_(False))
-    )
+    result = await db.execute(select(Post).where(Post.id == post_id, Post.is_deleted.is_(False)))
     post = result.scalar_one_or_none()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
@@ -163,7 +165,9 @@ async def get_post(
     # Get top-level comments (no parent)
     comments_result = await db.execute(
         select(Comment)
-        .where(Comment.post_id == post_id, Comment.parent_id.is_(None), Comment.is_deleted.is_(False))
+        .where(
+            Comment.post_id == post_id, Comment.parent_id.is_(None), Comment.is_deleted.is_(False)
+        )
         .order_by(desc(Comment.is_accepted), desc(Comment.vote_score), Comment.created_at)
     )
     comments = comments_result.scalars().all()
@@ -288,12 +292,16 @@ async def accept_answer(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Accept a comment as the answer (post author only)."""
-    post_result = await db.execute(select(Post).where(Post.id == post_id, Post.is_deleted.is_(False)))
+    post_result = await db.execute(
+        select(Post).where(Post.id == post_id, Post.is_deleted.is_(False))
+    )
     post = post_result.scalar_one_or_none()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
     if post.author_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the post author can accept answers")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only the post author can accept answers"
+        )
     if post.status != "open":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Post is not open")
 
@@ -314,10 +322,11 @@ async def accept_answer(
 
     # Create notification for comment author
     await create_notification(
-        db, comment.author_id,
+        db,
+        comment.author_id,
         type="answer_accepted",
         title="Your answer was accepted! 🎉",
-        body=f"Your answer on \"{post.title}\" was marked as the accepted solution.",
+        body=f'Your answer on "{post.title}" was marked as the accepted solution.',
         metadata={"post_id": str(post_id), "comment_id": str(comment_id)},
     )
 
@@ -350,14 +359,18 @@ async def vote(
         if not target:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
         if target.author_id == current_user.id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot vote on your own post")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot vote on your own post"
+            )
     else:
         target_result = await db.execute(select(Comment).where(Comment.id == data.target_id))
         target = target_result.scalar_one_or_none()
         if not target:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
         if target.author_id == current_user.id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot vote on your own comment")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot vote on your own comment"
+            )
 
     # Check existing vote
     existing_result = await db.execute(
@@ -451,7 +464,9 @@ async def ai_community_assist(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
 
     comments_result = await db.execute(
-        select(Comment).where(Comment.post_id == post_id, Comment.is_deleted.is_(False), Comment.parent_id.is_(None))
+        select(Comment).where(
+            Comment.post_id == post_id, Comment.is_deleted.is_(False), Comment.parent_id.is_(None)
+        )
     )
     answers = [c.body for c in comments_result.scalars().all()]
 

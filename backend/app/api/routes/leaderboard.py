@@ -42,37 +42,35 @@ async def get_leaderboard(
 
         # Count tasks
         tasks_result = await db.execute(
-            select(func.count(TaskSubmission.id))
-            .where(TaskSubmission.user_id == user.id)
+            select(func.count(TaskSubmission.id)).where(TaskSubmission.user_id == user.id)
         )
         tasks_completed = tasks_result.scalar() or 0
 
         # Count and get badges
-        badges_result = await db.execute(
-            select(UserBadge).where(UserBadge.user_id == user.id)
-        )
+        badges_result = await db.execute(select(UserBadge).where(UserBadge.user_id == user.id))
         user_badges = badges_result.scalars().all()
         top_badges = [ub.badge.icon for ub in user_badges[:3]] if user_badges else []
 
-        items.append({
-            "position": position,
-            "user": {
-                "id": str(user.id),
-                "username": user.username,
-                "avatar_url": user.avatar_url,
-            },
-            "rank": rank,
-            "xp": user.xp,
-            "tasks_completed": tasks_completed,
-            "badges_count": len(user_badges),
-            "top_badges": top_badges,
-        })
+        items.append(
+            {
+                "position": position,
+                "user": {
+                    "id": str(user.id),
+                    "username": user.username,
+                    "avatar_url": user.avatar_url,
+                },
+                "rank": rank,
+                "xp": user.xp,
+                "tasks_completed": tasks_completed,
+                "badges_count": len(user_badges),
+                "top_badges": top_badges,
+            }
+        )
 
     # Find current user's position
     current_position = None
     rank_result = await db.execute(
-        select(func.count(User.id))
-        .where(User.is_active, User.xp > current_user.xp)
+        select(func.count(User.id)).where(User.is_active, User.xp > current_user.xp)
     )
     current_position = (rank_result.scalar() or 0) + 1
 

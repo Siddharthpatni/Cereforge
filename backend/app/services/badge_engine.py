@@ -61,8 +61,7 @@ async def check_and_award_badges(
 
     # Count accepted answers
     accepted_result = await db.execute(
-        select(func.count(Comment.id))
-        .where(Comment.author_id == user_id, Comment.is_accepted)
+        select(func.count(Comment.id)).where(Comment.author_id == user_id, Comment.is_accepted)
     )
     accepted_answers = accepted_result.scalar() or 0
 
@@ -103,14 +102,16 @@ async def check_and_award_badges(
             # Determine track color for cinematic
             track_color = _get_badge_track_color(badge)
 
-            newly_earned.append({
-                "slug": badge.slug,
-                "name": badge.name,
-                "icon": badge.icon,
-                "description": badge.description,
-                "xp_bonus": badge.xp_bonus,
-                "track_color": track_color,
-            })
+            newly_earned.append(
+                {
+                    "slug": badge.slug,
+                    "name": badge.name,
+                    "icon": badge.icon,
+                    "description": badge.description,
+                    "xp_bonus": badge.xp_bonus,
+                    "track_color": track_color,
+                }
+            )
 
     if newly_earned:
         await db.flush()

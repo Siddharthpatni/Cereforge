@@ -10,8 +10,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 track_enum = ENUM("llm", "rag", "vision", "agents", name="track_enum", create_type=True)
-difficulty_enum = ENUM("beginner", "intermediate", "expert", name="difficulty_enum", create_type=True)
-resource_type_enum = ENUM("article", "video", "colab", "docs", name="resource_type_enum", create_type=True)
+difficulty_enum = ENUM(
+    "beginner", "intermediate", "expert", name="difficulty_enum", create_type=True
+)
+resource_type_enum = ENUM(
+    "article", "video", "colab", "docs", name="resource_type_enum", create_type=True
+)
 
 
 class Task(Base):
@@ -42,7 +46,9 @@ class TaskResource(Base):
     __tablename__ = "task_resources"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    task_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tasks.id"), nullable=False)
+    task_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tasks.id"), nullable=False
+    )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     url: Mapped[str] = mapped_column(String(500), nullable=False)
     resource_type: Mapped[str] = mapped_column(resource_type_enum, nullable=False)

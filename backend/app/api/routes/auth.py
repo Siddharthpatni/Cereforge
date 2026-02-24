@@ -42,9 +42,7 @@ async def register(
     """Register a new user account."""
     # Check if username or email already exists
     existing = await db.execute(
-        select(User).where(
-            or_(User.username == data.username, User.email == data.email)
-        )
+        select(User).where(or_(User.username == data.username, User.email == data.email))
     )
     if existing.scalar_one_or_none():
         raise HTTPException(
@@ -155,6 +153,7 @@ async def refresh_token(
         )
 
     from uuid import UUID
+
     result = await db.execute(select(User).where(User.id == UUID(user_id_str)))
     user = result.scalar_one_or_none()
     if not user or not user.is_active:
@@ -184,9 +183,7 @@ async def get_me(
     rank = calculate_rank(current_user.xp)
 
     # Get badges
-    badges_result = await db.execute(
-        select(UserBadge).where(UserBadge.user_id == current_user.id)
-    )
+    badges_result = await db.execute(select(UserBadge).where(UserBadge.user_id == current_user.id))
     user_badges = badges_result.scalars().all()
     badges_data = [
         {
@@ -253,7 +250,9 @@ async def update_me(
             select(User).where(User.username == data.username, User.id != current_user.id)
         )
         if existing.scalar_one_or_none():
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Username already taken"
+            )
         current_user.username = data.username
 
     if data.skill_level is not None:

@@ -53,6 +53,7 @@ export function Community() {
 
   useEffect(() => {
     fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tagFilter]);
 
   const handleCreatePost = async (e) => {
@@ -83,7 +84,7 @@ export function Community() {
 
       // Navigate directly to the new post
       navigate(`/community/${res.data.id}`);
-    } catch (err) {
+    } catch {
       addToast({
         title: "Error",
         message: "Failed to post question",

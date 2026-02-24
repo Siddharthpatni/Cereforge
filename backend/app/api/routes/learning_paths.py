@@ -55,19 +55,21 @@ async def list_learning_paths(
         completed_count = sum(1 for tid in (path.task_sequence or []) if tid in completed_task_ids)
         progress = (completed_count / total_tasks * 100) if total_tasks > 0 else 0
 
-        items.append(LearningPathResponse(
-            id=path.id,
-            slug=path.slug,
-            title=path.title,
-            description=path.description,
-            for_skill_levels=path.for_skill_levels or [],
-            duration_days=path.duration_days,
-            task_sequence=path.task_sequence or [],
-            display_order=path.display_order,
-            enrolled=enrolled,
-            recommended=recommended,
-            progress=round(progress, 1),
-        ))
+        items.append(
+            LearningPathResponse(
+                id=path.id,
+                slug=path.slug,
+                title=path.title,
+                description=path.description,
+                for_skill_levels=path.for_skill_levels or [],
+                duration_days=path.duration_days,
+                task_sequence=path.task_sequence or [],
+                display_order=path.display_order,
+                enrolled=enrolled,
+                recommended=recommended,
+                progress=round(progress, 1),
+            )
+        )
 
     return items
 
@@ -108,7 +110,7 @@ async def get_learning_path(
 
     # Find next task
     next_task = None
-    for tid in (path.task_sequence or []):
+    for tid in path.task_sequence or []:
         if tid not in completed_task_ids:
             task_result = await db.execute(select(Task.slug).where(Task.id == tid))
             task_slug = task_result.scalar_one_or_none()

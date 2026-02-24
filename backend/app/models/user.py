@@ -10,8 +10,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 skill_level_enum = ENUM(
-    "absolute_beginner", "some_python", "ml_familiar", "advanced",
-    name="skill_level_enum", create_type=True,
+    "absolute_beginner",
+    "some_python",
+    "ml_familiar",
+    "advanced",
+    name="skill_level_enum",
+    create_type=True,
 )
 
 

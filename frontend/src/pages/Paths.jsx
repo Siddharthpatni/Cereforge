@@ -43,12 +43,9 @@ export function Paths() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {paths.map((path) => {
-          const isEnrolled = path.student_progress !== null;
-          const completed = isEnrolled
-            ? path.student_progress.completed_tasks
-            : 0;
-          const total = path.total_tasks;
-          const progressPerc = total > 0 ? (completed / total) * 100 : 0;
+          const isEnrolled = path.enrolled;
+          const progressPerc = path.progress || 0;
+          const total = path.task_sequence?.length || 0;
 
           return (
             <Card
@@ -65,8 +62,8 @@ export function Paths() {
                       {path.title}
                     </CardTitle>
                     <p className="text-xs text-primary font-mono mt-1">
-                      Difficulty:{" "}
-                      <span className="capitalize">{path.difficulty}</span>
+                      Target:{" "}
+                      <span className="capitalize">{path.for_skill_levels?.join(", ") || "All"}</span>
                     </p>
                   </div>
                 </div>
@@ -79,11 +76,11 @@ export function Paths() {
                 <div className="grid grid-cols-2 gap-4 text-sm text-zinc-300 mb-6 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800/50">
                   <div className="flex items-center gap-2">
                     <Layers className="h-4 w-4 text-zinc-500" />
-                    <span>{path.total_modules} Modules</span>
+                    <span>{path.duration_days || 0} Days</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4 text-zinc-500" />
-                    <span>{path.total_tasks} Tasks</span>
+                    <span>{total} Tasks</span>
                   </div>
                 </div>
 
@@ -95,7 +92,7 @@ export function Paths() {
                           Your Progress
                         </span>
                         <span className="text-white font-bold">
-                          {completed} / {total}
+                          {progressPerc}%
                         </span>
                       </div>
                       <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden mb-4">

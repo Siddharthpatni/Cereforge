@@ -26,7 +26,7 @@ export function TaskDetail() {
     apiClient
       .get(`/tasks/${slug}`)
       .then((res) => setTask(res.data))
-      .catch((err) => {
+      .catch(() => {
         addToast({
           title: "Error",
           message: "Failed to load task",
@@ -70,10 +70,10 @@ export function TaskDetail() {
           });
         });
       }
-    } catch (err) {
+    } catch (error) {
       addToast({
         title: "Submission Failed",
-        message: err.response?.data?.detail || "Something went wrong.",
+        message: error.response?.data?.detail || "Something went wrong.",
         type: "error",
       });
     } finally {

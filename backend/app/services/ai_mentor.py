@@ -6,6 +6,7 @@ from app.core.config import settings
 
 try:
     import anthropic
+
     HAS_ANTHROPIC = True
 except ImportError:
     HAS_ANTHROPIC = False
@@ -54,9 +55,11 @@ async def get_community_assist(
 
     client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
 
-    answers_text = "\n\n---\n\n".join(
-        [f"Answer {i+1}: {a}" for i, a in enumerate(answers)]
-    ) if answers else "No answers yet."
+    answers_text = (
+        "\n\n---\n\n".join([f"Answer {i+1}: {a}" for i, a in enumerate(answers)])
+        if answers
+        else "No answers yet."
+    )
 
     context = f"Question: {post_title}\n\n{post_body}\n\nExisting Answers:\n{answers_text}"
 

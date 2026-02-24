@@ -1,6 +1,5 @@
 """Redis client for caching and sessions."""
 
-
 import redis.asyncio as redis
 
 from app.core.config import settings

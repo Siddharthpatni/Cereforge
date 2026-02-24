@@ -7,6 +7,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 # ─── Request Schemas ───
 
+
 class UserRegister(BaseModel):
     username: str = Field(..., min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_]+$")
     email: EmailStr
@@ -49,6 +50,7 @@ class UserUpdate(BaseModel):
 
 
 # ─── Response Schemas ───
+
 
 class UserResponse(BaseModel):
     id: UUID

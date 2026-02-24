@@ -33,9 +33,7 @@ async def get_user_profile(
     rank = calculate_rank(user.xp)
 
     # Badges
-    badges_result = await db.execute(
-        select(UserBadge).where(UserBadge.user_id == user.id)
-    )
+    badges_result = await db.execute(select(UserBadge).where(UserBadge.user_id == user.id))
     user_badges = badges_result.scalars().all()
 
     all_badges_result = await db.execute(select(Badge).order_by(Badge.display_order))
@@ -97,7 +95,9 @@ async def get_user_profile(
         select(func.count(Post.id)).where(Post.author_id == user.id, Post.is_deleted.is_(False))
     )
     answers_count = await db.execute(
-        select(func.count(Comment.id)).where(Comment.author_id == user.id, Comment.is_deleted.is_(False))
+        select(func.count(Comment.id)).where(
+            Comment.author_id == user.id, Comment.is_deleted.is_(False)
+        )
     )
 
     return {

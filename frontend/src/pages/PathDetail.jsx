@@ -33,7 +33,7 @@ export function PathDetail() {
       if (res.data.modules && res.data.modules.length > 0) {
         setExpandedModules({ [res.data.modules[0].id]: true });
       }
-    } catch (err) {
+    } catch {
       addToast({ title: "Error", message: "Path not found.", type: "error" });
       navigate("/paths");
     } finally {
@@ -43,6 +43,7 @@ export function PathDetail() {
 
   useEffect(() => {
     fetchPath();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const handleEnroll = async () => {

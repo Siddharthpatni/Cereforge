@@ -19,34 +19,85 @@ PATHS_DATA = [
         ),
         "for_skill_levels": ["absolute_beginner", "some_python"],
         "duration_days": 30,
-        "task_slugs": ["llm-prompt-chain", "llm-token-optimizer", "rag-intro-flow", "cv-real-world-survey", "agent-fundamentals"],
+        "task_slugs": [
+            "llm-prompt-chain",
+            "llm-token-optimizer",
+            "rag-intro-flow",
+            "cv-real-world-survey",
+            "agent-fundamentals",
+        ],
         "display_order": 1,
         "modules": [
             {
                 "title": "AI Fundamentals (Days 1-7)",
                 "display_order": 1,
                 "lessons": [
-                    {"title": "What is an LLM? No math, no jargon", "lesson_type": "article", "duration_minutes": 15, "display_order": 1},
-                    {"title": "Your first conversation with an API", "lesson_type": "colab", "duration_minutes": 30, "display_order": 2},
-                    {"title": "Prompt Engineering Basics — 5 patterns that always work", "lesson_type": "article", "duration_minutes": 20, "display_order": 3},
+                    {
+                        "title": "What is an LLM? No math, no jargon",
+                        "lesson_type": "article",
+                        "duration_minutes": 15,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Your first conversation with an API",
+                        "lesson_type": "colab",
+                        "duration_minutes": 30,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "Prompt Engineering Basics — 5 patterns that always work",
+                        "lesson_type": "article",
+                        "duration_minutes": 20,
+                        "display_order": 3,
+                    },
                 ],
             },
             {
                 "title": "RAG and Memory (Days 8-16)",
                 "display_order": 2,
                 "lessons": [
-                    {"title": "What are Embeddings? The intuition", "lesson_type": "article", "duration_minutes": 20, "display_order": 1},
-                    {"title": "Building a simple RAG with 30 lines", "lesson_type": "colab", "duration_minutes": 45, "display_order": 2},
-                    {"title": "When to use RAG vs Fine-tuning", "lesson_type": "article", "duration_minutes": 15, "display_order": 3},
+                    {
+                        "title": "What are Embeddings? The intuition",
+                        "lesson_type": "article",
+                        "duration_minutes": 20,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Building a simple RAG with 30 lines",
+                        "lesson_type": "colab",
+                        "duration_minutes": 45,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "When to use RAG vs Fine-tuning",
+                        "lesson_type": "article",
+                        "duration_minutes": 15,
+                        "display_order": 3,
+                    },
                 ],
             },
             {
                 "title": "Vision and Agents (Days 17-30)",
                 "display_order": 3,
                 "lessons": [
-                    {"title": "Computer Vision in 15 minutes", "lesson_type": "video", "duration_minutes": 15, "display_order": 1},
-                    {"title": "What is an AI Agent? With real examples", "lesson_type": "article", "duration_minutes": 20, "display_order": 2},
-                    {"title": "Your first LangChain agent", "lesson_type": "colab", "duration_minutes": 60, "display_order": 3},
+                    {
+                        "title": "Computer Vision in 15 minutes",
+                        "lesson_type": "video",
+                        "duration_minutes": 15,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "What is an AI Agent? With real examples",
+                        "lesson_type": "article",
+                        "duration_minutes": 20,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "Your first LangChain agent",
+                        "lesson_type": "colab",
+                        "duration_minutes": 60,
+                        "display_order": 3,
+                    },
                 ],
             },
         ],
@@ -68,17 +119,42 @@ PATHS_DATA = [
                 "title": "Advanced Retrieval",
                 "display_order": 1,
                 "lessons": [
-                    {"title": "Semantic vs Fixed-Size Chunking — when each works", "lesson_type": "article", "duration_minutes": 25, "display_order": 1},
-                    {"title": "Hierarchical indexing for long documents", "lesson_type": "colab", "duration_minutes": 60, "display_order": 2},
-                    {"title": "Hybrid search — combining dense and sparse retrieval", "lesson_type": "article", "duration_minutes": 30, "display_order": 3},
+                    {
+                        "title": "Semantic vs Fixed-Size Chunking — when each works",
+                        "lesson_type": "article",
+                        "duration_minutes": 25,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Hierarchical indexing for long documents",
+                        "lesson_type": "colab",
+                        "duration_minutes": 60,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "Hybrid search — combining dense and sparse retrieval",
+                        "lesson_type": "article",
+                        "duration_minutes": 30,
+                        "display_order": 3,
+                    },
                 ],
             },
             {
                 "title": "Production Hardening",
                 "display_order": 2,
                 "lessons": [
-                    {"title": "RAGAS — automated RAG evaluation", "lesson_type": "colab", "duration_minutes": 45, "display_order": 1},
-                    {"title": "Monitoring RAG in production — what metrics matter", "lesson_type": "article", "duration_minutes": 20, "display_order": 2},
+                    {
+                        "title": "RAGAS — automated RAG evaluation",
+                        "lesson_type": "colab",
+                        "duration_minutes": 45,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Monitoring RAG in production — what metrics matter",
+                        "lesson_type": "article",
+                        "duration_minutes": 20,
+                        "display_order": 2,
+                    },
                 ],
             },
         ],
@@ -92,25 +168,59 @@ PATHS_DATA = [
         ),
         "for_skill_levels": ["ml_familiar", "advanced"],
         "duration_days": 28,
-        "task_slugs": ["agent-fundamentals", "agent-langchain-research", "agent-multi-agent-system"],
+        "task_slugs": [
+            "agent-fundamentals",
+            "agent-langchain-research",
+            "agent-multi-agent-system",
+        ],
         "display_order": 3,
         "modules": [
             {
                 "title": "Agent Architecture Patterns",
                 "display_order": 1,
                 "lessons": [
-                    {"title": "ReAct, CoT, and Tree-of-Thought — which and when", "lesson_type": "article", "duration_minutes": 30, "display_order": 1},
-                    {"title": "Tool-calling with function calling APIs", "lesson_type": "colab", "duration_minutes": 45, "display_order": 2},
-                    {"title": "LangGraph stateful agent flows", "lesson_type": "colab", "duration_minutes": 90, "display_order": 3},
+                    {
+                        "title": "ReAct, CoT, and Tree-of-Thought — which and when",
+                        "lesson_type": "article",
+                        "duration_minutes": 30,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Tool-calling with function calling APIs",
+                        "lesson_type": "colab",
+                        "duration_minutes": 45,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "LangGraph stateful agent flows",
+                        "lesson_type": "colab",
+                        "duration_minutes": 90,
+                        "display_order": 3,
+                    },
                 ],
             },
             {
                 "title": "Multi-Agent Systems",
                 "display_order": 2,
                 "lessons": [
-                    {"title": "Designing agent communication protocols", "lesson_type": "article", "duration_minutes": 25, "display_order": 1},
-                    {"title": "Human-in-the-loop checkpoints — when and how", "lesson_type": "article", "duration_minutes": 20, "display_order": 2},
-                    {"title": "Cost optimization for multi-agent systems", "lesson_type": "article", "duration_minutes": 20, "display_order": 3},
+                    {
+                        "title": "Designing agent communication protocols",
+                        "lesson_type": "article",
+                        "duration_minutes": 25,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Human-in-the-loop checkpoints — when and how",
+                        "lesson_type": "article",
+                        "duration_minutes": 20,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "Cost optimization for multi-agent systems",
+                        "lesson_type": "article",
+                        "duration_minutes": 20,
+                        "display_order": 3,
+                    },
                 ],
             },
         ],
@@ -135,7 +245,9 @@ async def seed_paths(db: AsyncSession):
         path_data["task_sequence"] = task_ids
 
         # Upsert path
-        existing = await db.execute(select(LearningPath).where(LearningPath.slug == path_data["slug"]))
+        existing = await db.execute(
+            select(LearningPath).where(LearningPath.slug == path_data["slug"])
+        )
         path = existing.scalar_one_or_none()
 
         if path:

@@ -13,7 +13,7 @@ export function CinematicRunner() {
 
   useEffect(() => {
     if (isCinematicActive && currentCinematic) {
-      setPhase("INITIATING");
+      setTimeout(() => setPhase("INITIATING"), 0);
 
       // Generate random particles
       const newParticles = Array.from({ length: 40 }).map((_, i) => ({
@@ -23,7 +23,7 @@ export function CinematicRunner() {
         size: Math.random() * 4 + 2,
         delay: Math.random() * 0.5,
       }));
-      setParticles(newParticles);
+      setTimeout(() => setParticles(newParticles), 0);
 
       // Sequence Timers
       const t1 = setTimeout(() => setPhase("SPINNING"), 400);
@@ -76,8 +76,11 @@ export function CinematicRunner() {
         {["REVEAL_BADGE", "TEXT_FADE_IN", "IDLE"].includes(phase) && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             {particles.map((p) => {
-              const tx = Math.cos(p.angle) * 300 * Math.random();
-              const ty = Math.sin(p.angle) * 300 * Math.random();
+              // Deterministic pseudo-random variation based on particle index
+              const pseudoRandX = (Math.sin(p.id) + 1) / 2;
+              const pseudoRandY = (Math.cos(p.id) + 1) / 2;
+              const tx = Math.cos(p.angle) * 300 * pseudoRandX;
+              const ty = Math.sin(p.angle) * 300 * pseudoRandY;
               return (
                 <div
                   key={p.id}

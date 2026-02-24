@@ -60,19 +60,21 @@ async def list_tasks(
         if task_status == "incomplete" and completed:
             continue
 
-        items.append(TaskListItem(
-            id=task.id,
-            slug=task.slug,
-            track=task.track,
-            difficulty=task.difficulty,
-            title=task.title,
-            description=task.description,
-            xp_reward=task.xp_reward,
-            display_order=task.display_order,
-            colab_url=task.colab_url,
-            completed=completed,
-            show_beginner_guide=show_beginner,
-        ))
+        items.append(
+            TaskListItem(
+                id=task.id,
+                slug=task.slug,
+                track=task.track,
+                difficulty=task.difficulty,
+                title=task.title,
+                description=task.description,
+                xp_reward=task.xp_reward,
+                display_order=task.display_order,
+                colab_url=task.colab_url,
+                completed=completed,
+                show_beginner_guide=show_beginner,
+            )
+        )
 
     return items
 

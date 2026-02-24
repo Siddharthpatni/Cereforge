@@ -15,6 +15,7 @@ from app.core.redis import close_redis
 
 # ── Security Headers Middleware ──────────────────────────────────────────────
 
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
@@ -33,6 +34,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 # ── Request ID + Logging Middleware ──────────────────────────────────────────
+
 
 class RequestContextMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -60,6 +62,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
 
 # ── Lifespan ─────────────────────────────────────────────────────────────────
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown events."""
@@ -70,6 +73,7 @@ async def lifespan(app: FastAPI):
 
 
 # ── App Factory ──────────────────────────────────────────────────────────────
+
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -96,6 +100,7 @@ def create_app() -> FastAPI:
     if settings.SENTRY_DSN:
         try:
             import sentry_sdk
+
             sentry_sdk.init(dsn=settings.SENTRY_DSN, traces_sample_rate=0.1)
         except ImportError:
             logger.warning("sentry-sdk not installed, skipping Sentry init")
@@ -130,6 +135,7 @@ def create_app() -> FastAPI:
         redis_ok = True
         try:
             from app.core.database import engine
+
             async with engine.connect() as conn:
                 await conn.execute(__import__("sqlalchemy").text("SELECT 1"))
         except Exception:
@@ -137,6 +143,7 @@ def create_app() -> FastAPI:
 
         try:
             from app.core.redis import get_redis
+
             r = await get_redis()
             await r.ping()
         except Exception:

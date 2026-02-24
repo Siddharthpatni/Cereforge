@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 
 # ─── Request Schemas ───
 
+
 class TaskSubmissionCreate(BaseModel):
     solution_text: str = Field(..., min_length=50)
     colab_link: str | None = None
@@ -21,6 +22,7 @@ class TaskSubmissionCreate(BaseModel):
 
 
 # ─── Response Schemas ───
+
 
 class TaskResourceResponse(BaseModel):
     id: UUID

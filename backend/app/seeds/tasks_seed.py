@@ -32,8 +32,18 @@ TASKS_DATA = [
             "prompt focused on one job."
         ),
         "resources": [
-            {"title": "Prompt Engineering Guide by DAIR.AI", "url": "https://www.promptingguide.ai/", "resource_type": "article", "display_order": 1},
-            {"title": "What is an LLM? Visual Explainer by Jay Alammar", "url": "https://jalammar.github.io/illustrated-transformer/", "resource_type": "article", "display_order": 2},
+            {
+                "title": "Prompt Engineering Guide by DAIR.AI",
+                "url": "https://www.promptingguide.ai/",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+            {
+                "title": "What is an LLM? Visual Explainer by Jay Alammar",
+                "url": "https://jalammar.github.io/illustrated-transformer/",
+                "resource_type": "article",
+                "display_order": 2,
+            },
         ],
     },
     {
@@ -60,8 +70,18 @@ TASKS_DATA = [
             '"Thank you in advance". Be direct. Every word must earn its place.'
         ),
         "resources": [
-            {"title": "OpenAI Tokenizer Tool", "url": "https://platform.openai.com/tokenizer", "resource_type": "article", "display_order": 1},
-            {"title": "Token Efficiency in Production by Simon Willison", "url": "https://simonwillison.net/", "resource_type": "article", "display_order": 2},
+            {
+                "title": "OpenAI Tokenizer Tool",
+                "url": "https://platform.openai.com/tokenizer",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+            {
+                "title": "Token Efficiency in Production by Simon Willison",
+                "url": "https://simonwillison.net/",
+                "resource_type": "article",
+                "display_order": 2,
+            },
         ],
     },
     {
@@ -90,8 +110,18 @@ TASKS_DATA = [
             "(automated) + human eval (sample 100 responses)."
         ),
         "resources": [
-            {"title": "HuggingFace Fine-Tuning Tutorial", "url": "https://huggingface.co/docs/transformers/training", "resource_type": "article", "display_order": 1},
-            {"title": "Fine-tuning vs RAG comparison by Anyscale", "url": "https://www.anyscale.com/blog", "resource_type": "article", "display_order": 2},
+            {
+                "title": "HuggingFace Fine-Tuning Tutorial",
+                "url": "https://huggingface.co/docs/transformers/training",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+            {
+                "title": "Fine-tuning vs RAG comparison by Anyscale",
+                "url": "https://www.anyscale.com/blog",
+                "resource_type": "article",
+                "display_order": 2,
+            },
         ],
     },
     # ─── RAG PIPELINES TRACK ───
@@ -119,8 +149,18 @@ TASKS_DATA = [
             "Then: User Question → Query Embedding → Similarity Search → Top K Chunks → LLM + Context → Answer [online pipeline]."
         ),
         "resources": [
-            {"title": "RAG Explained by Pinecone", "url": "https://www.pinecone.io/learn/retrieval-augmented-generation/", "resource_type": "article", "display_order": 1},
-            {"title": "LangChain RAG Tutorial", "url": "https://python.langchain.com/docs/tutorials/rag/", "resource_type": "docs", "display_order": 2},
+            {
+                "title": "RAG Explained by Pinecone",
+                "url": "https://www.pinecone.io/learn/retrieval-augmented-generation/",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+            {
+                "title": "LangChain RAG Tutorial",
+                "url": "https://python.langchain.com/docs/tutorials/rag/",
+                "resource_type": "docs",
+                "display_order": 2,
+            },
         ],
     },
     {
@@ -148,8 +188,18 @@ TASKS_DATA = [
             "hybrid search natively. pgvector is cheapest if you already run PostgreSQL."
         ),
         "resources": [
-            {"title": "Chunking Strategies by Greg Kamradt", "url": "https://www.youtube.com/watch?v=8OJC21T2SL4", "resource_type": "article", "display_order": 1},
-            {"title": "Weaviate vs Pinecone vs Chroma comparison", "url": "https://weaviate.io/blog", "resource_type": "article", "display_order": 2},
+            {
+                "title": "Chunking Strategies by Greg Kamradt",
+                "url": "https://www.youtube.com/watch?v=8OJC21T2SL4",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+            {
+                "title": "Weaviate vs Pinecone vs Chroma comparison",
+                "url": "https://weaviate.io/blog",
+                "resource_type": "article",
+                "display_order": 2,
+            },
         ],
     },
     {
@@ -178,8 +228,18 @@ TASKS_DATA = [
             'escalation on keywords ("diagnosis", "dosage", "treatment") + low confidence.'
         ),
         "resources": [
-            {"title": "RAGAS Evaluation Framework on GitHub", "url": "https://github.com/explodinggradients/ragas", "resource_type": "docs", "display_order": 1},
-            {"title": "NLI for Fact Checking by HuggingFace", "url": "https://huggingface.co/tasks/text-classification", "resource_type": "article", "display_order": 2},
+            {
+                "title": "RAGAS Evaluation Framework on GitHub",
+                "url": "https://github.com/explodinggradients/ragas",
+                "resource_type": "docs",
+                "display_order": 1,
+            },
+            {
+                "title": "NLI for Fact Checking by HuggingFace",
+                "url": "https://huggingface.co/tasks/text-classification",
+                "resource_type": "article",
+                "display_order": 2,
+            },
         ],
     },
     # ─── COMPUTER VISION TRACK ───
@@ -208,8 +268,18 @@ TASKS_DATA = [
             "specialist ophthalmologists.' That's the level of depth required."
         ),
         "resources": [
-            {"title": "Stanford CS231n Course Notes", "url": "https://cs231n.github.io/", "resource_type": "article", "display_order": 1},
-            {"title": "State of Computer Vision 2024 by Roboflow", "url": "https://blog.roboflow.com/", "resource_type": "article", "display_order": 2},
+            {
+                "title": "Stanford CS231n Course Notes",
+                "url": "https://cs231n.github.io/",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+            {
+                "title": "State of Computer Vision 2024 by Roboflow",
+                "url": "https://blog.roboflow.com/",
+                "resource_type": "article",
+                "display_order": 2,
+            },
         ],
     },
     {
@@ -236,8 +306,18 @@ TASKS_DATA = [
             "images per class for 47 SKUs = ~14,100 training images. Use confidence 0.45, NMS IoU 0.5."
         ),
         "resources": [
-            {"title": "Ultralytics YOLOv8 Documentation", "url": "https://docs.ultralytics.com/", "resource_type": "docs", "display_order": 1},
-            {"title": "Edge Deployment Guide by NVIDIA", "url": "https://developer.nvidia.com/embedded/jetson-orin", "resource_type": "article", "display_order": 2},
+            {
+                "title": "Ultralytics YOLOv8 Documentation",
+                "url": "https://docs.ultralytics.com/",
+                "resource_type": "docs",
+                "display_order": 1,
+            },
+            {
+                "title": "Edge Deployment Guide by NVIDIA",
+                "url": "https://developer.nvidia.com/embedded/jetson-orin",
+                "resource_type": "article",
+                "display_order": 2,
+            },
         ],
     },
     {
@@ -265,8 +345,18 @@ TASKS_DATA = [
             "embeddings offline. LLaVA description generation will be the latency bottleneck."
         ),
         "resources": [
-            {"title": "OpenAI CLIP Paper on arXiv", "url": "https://arxiv.org/abs/2103.00020", "resource_type": "article", "display_order": 1},
-            {"title": "Faiss: Efficient Similarity Search by Meta", "url": "https://github.com/facebookresearch/faiss", "resource_type": "article", "display_order": 2},
+            {
+                "title": "OpenAI CLIP Paper on arXiv",
+                "url": "https://arxiv.org/abs/2103.00020",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+            {
+                "title": "Faiss: Efficient Similarity Search by Meta",
+                "url": "https://github.com/facebookresearch/faiss",
+                "resource_type": "article",
+                "display_order": 2,
+            },
         ],
     },
     # ─── AUTONOMOUS AGENTS TRACK ───
@@ -294,8 +384,18 @@ TASKS_DATA = [
             "checkpoints before irreversible actions."
         ),
         "resources": [
-            {"title": "ReAct Paper: Synergizing Reasoning and Acting", "url": "https://arxiv.org/abs/2210.03629", "resource_type": "article", "display_order": 1},
-            {"title": "LangChain Agents Introduction", "url": "https://python.langchain.com/docs/modules/agents/", "resource_type": "docs", "display_order": 2},
+            {
+                "title": "ReAct Paper: Synergizing Reasoning and Acting",
+                "url": "https://arxiv.org/abs/2210.03629",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+            {
+                "title": "LangChain Agents Introduction",
+                "url": "https://python.langchain.com/docs/modules/agents/",
+                "resource_type": "docs",
+                "display_order": 2,
+            },
         ],
     },
     {
@@ -312,7 +412,7 @@ TASKS_DATA = [
             "critique of what could go wrong."
         ),
         "beginner_guide": (
-            'LangChain is like LEGO for AI agents — it gives you pre-built blocks (tools, memory, prompts, parsers) '
+            "LangChain is like LEGO for AI agents — it gives you pre-built blocks (tools, memory, prompts, parsers) "
             'that you snap together. An agent has a "brain" (LLM), "hands" (tools), "memory" (history), and "goals".'
         ),
         "hint": (
@@ -320,8 +420,18 @@ TASKS_DATA = [
             "Stop condition: 5+ unique sources. Use structured output: {title, sections, sources, confidence}."
         ),
         "resources": [
-            {"title": "LangChain LCEL Expression Language", "url": "https://python.langchain.com/docs/expression_language/", "resource_type": "docs", "display_order": 1},
-            {"title": "Build a Research Agent Tutorial", "url": "https://python.langchain.com/docs/tutorials/agents/", "resource_type": "article", "display_order": 2},
+            {
+                "title": "LangChain LCEL Expression Language",
+                "url": "https://python.langchain.com/docs/expression_language/",
+                "resource_type": "docs",
+                "display_order": 1,
+            },
+            {
+                "title": "Build a Research Agent Tutorial",
+                "url": "https://python.langchain.com/docs/tutorials/agents/",
+                "resource_type": "article",
+                "display_order": 2,
+            },
         ],
     },
     {
@@ -348,8 +458,18 @@ TASKS_DATA = [
             "Reviewer uses GPT-4o, Supervisor uses GPT-4o-mini."
         ),
         "resources": [
-            {"title": "LangGraph Multi-Agent Tutorial", "url": "https://langchain-ai.github.io/langgraph/tutorials/multi_agent/", "resource_type": "docs", "display_order": 1},
-            {"title": "Microsoft AutoGen Documentation", "url": "https://microsoft.github.io/autogen/", "resource_type": "docs", "display_order": 2},
+            {
+                "title": "LangGraph Multi-Agent Tutorial",
+                "url": "https://langchain-ai.github.io/langgraph/tutorials/multi_agent/",
+                "resource_type": "docs",
+                "display_order": 1,
+            },
+            {
+                "title": "Microsoft AutoGen Documentation",
+                "url": "https://microsoft.github.io/autogen/",
+                "resource_type": "docs",
+                "display_order": 2,
+            },
         ],
     },
 ]

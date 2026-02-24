@@ -14,9 +14,9 @@ export function Tasks() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedTrack, setSelectedTrack] = useState("all");
-
   useEffect(() => {
     fetchTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTrack]);
 
   const fetchTasks = async () => {

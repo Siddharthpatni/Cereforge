@@ -14,8 +14,9 @@ export function XPCounter({ value, className }) {
       startValueRef.current = displayValue;
       endValueRef.current = val;
       startTimeRef.current = performance.now();
-      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(true), 0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export function XPCounter({ value, className }) {
 
       const currentVal = Math.floor(
         startValueRef.current +
-          (endValueRef.current - startValueRef.current) * easedProgress,
+        (endValueRef.current - startValueRef.current) * easedProgress,
       );
 
       setDisplayValue(currentVal);

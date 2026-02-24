@@ -37,9 +37,7 @@ async def get_dashboard(
     all_badges_result = await db.execute(select(Badge).order_by(Badge.display_order))
     all_badges = all_badges_result.scalars().all()
 
-    earned_result = await db.execute(
-        select(UserBadge).where(UserBadge.user_id == current_user.id)
-    )
+    earned_result = await db.execute(select(UserBadge).where(UserBadge.user_id == current_user.id))
     earned_badges = {ub.badge_id: ub for ub in earned_result.scalars().all()}
 
     badges_data = [
@@ -50,7 +48,9 @@ async def get_dashboard(
             "description": b.description,
             "xp_bonus": b.xp_bonus,
             "earned": b.id in earned_badges,
-            "earned_at": earned_badges[b.id].earned_at.isoformat() if b.id in earned_badges else None,
+            "earned_at": earned_badges[b.id].earned_at.isoformat()
+            if b.id in earned_badges
+            else None,
         }
         for b in all_badges
     ]
@@ -88,13 +88,15 @@ async def get_dashboard(
         task_result = await db.execute(select(Task).where(Task.id == sub.task_id))
         t = task_result.scalar_one_or_none()
         if t:
-            recent_completions.append({
-                "task_slug": t.slug,
-                "task_title": t.title,
-                "track": t.track,
-                "xp_earned": sub.xp_awarded,
-                "submitted_at": sub.submitted_at.isoformat(),
-            })
+            recent_completions.append(
+                {
+                    "task_slug": t.slug,
+                    "task_title": t.title,
+                    "track": t.track,
+                    "xp_earned": sub.xp_awarded,
+                    "submitted_at": sub.submitted_at.isoformat(),
+                }
+            )
 
     # Enrolled paths
     enrollments_result = await db.execute(
@@ -106,13 +108,15 @@ async def get_dashboard(
         path = e.path
         total_tasks = len(path.task_sequence) if path.task_sequence else 0
         completed_count = sum(1 for tid in (path.task_sequence or []) if tid in completed_task_ids)
-        enrolled_paths.append({
-            "slug": path.slug,
-            "title": path.title,
-            "total_tasks": total_tasks,
-            "completed_tasks": completed_count,
-            "progress": round(completed_count / total_tasks * 100, 1) if total_tasks > 0 else 0,
-        })
+        enrolled_paths.append(
+            {
+                "slug": path.slug,
+                "title": path.title,
+                "total_tasks": total_tasks,
+                "completed_tasks": completed_count,
+                "progress": round(completed_count / total_tasks * 100, 1) if total_tasks > 0 else 0,
+            }
+        )
 
     # Activity feed (recent notifications)
     activity_result = await db.execute(
@@ -180,6 +184,7 @@ async def mark_notifications_read(
 ):
     """Mark notifications as read."""
     import uuid
+
     ids = [uuid.UUID(id_str) for id_str in data.get("ids", [])]
 
     if ids:

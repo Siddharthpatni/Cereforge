@@ -31,7 +31,7 @@ export function Profile() {
       return;
     }
 
-    setLoading(true);
+    setTimeout(() => setLoading(true), 0);
     apiClient
       .get(`/users/${targetUsername}`)
       .then((res) => setProfileUser(res.data))
@@ -182,7 +182,7 @@ export function Profile() {
 
               <div className="divide-y divide-border/50">
                 {profileUser.completed_tasks &&
-                profileUser.completed_tasks.length > 0 ? (
+                  profileUser.completed_tasks.length > 0 ? (
                   profileUser.completed_tasks.map((taskLog) => (
                     <div
                       key={taskLog.id}

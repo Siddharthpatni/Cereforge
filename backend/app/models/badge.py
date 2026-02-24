@@ -31,15 +31,17 @@ class UserBadge(Base):
     __tablename__ = "user_badges"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    badge_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("badges.id"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    badge_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("badges.id"), nullable=False
+    )
     earned_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
-    __table_args__ = (
-        UniqueConstraint("user_id", "badge_id", name="uq_user_badge"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "badge_id", name="uq_user_badge"),)
 
     # Relationships
     user = relationship("User", back_populates="badges")
