@@ -62,6 +62,18 @@ class LearningPathResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class TaskBasicResponse(BaseModel):
+    id: UUID
+    slug: str
+    title: str
+    track: str
+    difficulty: str
+    xp_reward: int
+    is_completed: bool = False
+
+    model_config = {"from_attributes": True}
+
+
 class PathDetailResponse(BaseModel):
     id: UUID
     slug: str
@@ -72,6 +84,7 @@ class PathDetailResponse(BaseModel):
     task_sequence: list[UUID]
     display_order: int
     modules: list[ModuleResponse] = []
+    tasks: list[TaskBasicResponse] = []
     enrolled: bool = False
     progress: float = 0.0
     next_task: str | None = None

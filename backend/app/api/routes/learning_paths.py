@@ -129,6 +129,28 @@ async def get_learning_path(
         for m in (path.modules or [])
     ]
 
+    # Map full task objects
+    tasks_data = []
+    if path.task_sequence:
+        tasks_result = await db.execute(select(Task).where(Task.id.in_(path.task_sequence)))
+        tasks_db = {t.id: t for t in tasks_result.scalars().all()}
+        
+        for tid in path.task_sequence:
+            t = tasks_db.get(tid)
+            if t:
+                from app.schemas.common import TaskBasicResponse
+                tasks_data.append(
+                    TaskBasicResponse(
+                        id=t.id,
+                        slug=t.slug,
+                        title=t.title,
+                        track=t.track,
+                        difficulty=t.difficulty,
+                        xp_reward=t.xp_reward,
+                        is_completed=t.id in completed_task_ids,
+                    )
+                )
+
     return PathDetailResponse(
         id=path.id,
         slug=path.slug,
@@ -139,6 +161,7 @@ async def get_learning_path(
         task_sequence=path.task_sequence or [],
         display_order=path.display_order,
         modules=modules_data,
+        tasks=tasks_data,
         enrolled=enrolled,
         progress=round(progress, 1),
         next_task=next_task,

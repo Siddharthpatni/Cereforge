@@ -235,43 +235,35 @@ export function PathDetail() {
                             >
                               <div className="flex items-start justify-between gap-4">
                                 <div>
-                                  <h4 className="text-base font-semibold text-zinc-200 mb-1">
-                                    Lesson {mIndex + 1}.{lIndex + 1}:{" "}
-                                    {lesson.title}
-                                  </h4>
-                                  <p className="text-sm text-zinc-400 mb-4">
-                                    {lesson.content}
-                                  </p>
-
-                                  {lesson.tasks && lesson.tasks.length > 0 && (
-                                    <div className="space-y-2 mt-4">
-                                      {lesson.tasks.map((task) => (
-                                        <div
-                                          key={task.id}
-                                          className="flex items-center gap-3"
-                                        >
-                                          {isEnrolled ? (
-                                            <Link
-                                              to={`/tasks/${task.slug}`}
-                                              className="flex items-center gap-2 text-sm text-primary hover:underline group/link"
-                                            >
-                                              <PlayCircle className="h-4 w-4" />
-                                              <span>{task.title}</span>
-                                              <span className="text-xs text-zinc-500 font-mono ml-2 opacity-0 group-hover/link:opacity-100 transition-opacity">
-                                                (+{task.xp_reward} XP)
-                                              </span>
-                                            </Link>
-                                          ) : (
-                                            <span className="flex items-center gap-2 text-sm text-zinc-500">
-                                              <Lock className="h-3.5 w-3.5" />{" "}
-                                              {task.title}
-                                            </span>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
+                                  <div className="flex items-center gap-3 mb-1">
+                                    <h4 className="text-base font-semibold text-zinc-200">
+                                      Lesson {mIndex + 1}.{lIndex + 1}:{" "}
+                                      {lesson.title}
+                                    </h4>
+                                  </div>
+                                  <div className="flex items-center gap-3 text-sm text-zinc-400">
+                                    <Badge variant="outline" className="text-[10px] capitalize bg-zinc-800 border-zinc-700">
+                                      {lesson.lesson_type}
+                                    </Badge>
+                                    <span className="flex items-center gap-1">
+                                      {lesson.duration_minutes} min
+                                    </span>
+                                  </div>
                                 </div>
+                                {isEnrolled && lesson.external_url ? (
+                                  <a
+                                    href={lesson.external_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="shrink-0 p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                                  >
+                                    <ExternalLink className="h-5 w-5" />
+                                  </a>
+                                ) : (
+                                  <div className="shrink-0 p-2 rounded-full bg-zinc-800 text-zinc-500">
+                                    <Lock className="h-4 w-4" />
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -290,6 +282,54 @@ export function PathDetail() {
           })}
         </div>
       </div>
+
+      {/* Practical Missions Section Added Below Array */}
+      {path.tasks && path.tasks.length > 0 && (
+        <div className="pt-8 w-full border-t border-zinc-800/50">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+            Practical Missions
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {path.tasks.map((task, idx) => (
+              <Card key={task.id} className="bg-zinc-900/40 border-zinc-800 hover:border-primary/50 transition-colors">
+                <CardContent className="p-5 flex flex-col justify-between h-full">
+                  <div>
+                    <div className="flex items-center gap-2 justify-between mb-3">
+                      <Badge variant={task.track} className="text-[10px] uppercase">
+                        {task.track}
+                      </Badge>
+                      {task.is_completed && (
+                        <span className="flex items-center gap-1 text-[10px] text-success font-medium bg-success/10 px-2 py-0.5 rounded-full">
+                          <CheckCircle className="h-3 w-3" /> Done
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-lg font-bold text-zinc-200 mb-1 line-clamp-2">
+                      {idx + 1}. {task.title}
+                    </h3>
+                  </div>
+                  <div className="mt-6 flex items-center justify-between">
+                    <span className="text-xs text-primary font-mono font-medium">
+                      +{task.xp_reward} XP
+                    </span>
+                    {isEnrolled ? (
+                      <Link to={`/tasks/${task.slug}`}>
+                        <Button size="sm" variant={task.is_completed ? "outline" : "default"} className="h-8 shadow-[0_0_10px_rgba(67,56,202,0.2)]">
+                          {task.is_completed ? "Review Code" : "Start Mission"}
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button size="sm" variant="ghost" disabled className="h-8">
+                        <Lock className="h-3.5 w-3.5 mr-1" /> Locked
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
