@@ -23,6 +23,7 @@ export function TaskDetail() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    console.log("Cereforge System: Rendering Task Detail API payload.");
     apiClient
       .get(`/tasks/${slug}`)
       .then((res) => setTask(res.data))
