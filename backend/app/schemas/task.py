@@ -1,0 +1,97 @@
+"""Pydantic schemas for task-related requests and responses."""
+
+from datetime import datetime
+from typing import Optional
+from uuid import UUID
+
+from pydantic import BaseModel, Field, field_validator
+
+
+# ─── Request Schemas ───
+
+class TaskSubmissionCreate(BaseModel):
+    solution_text: str = Field(..., min_length=50)
+    colab_link: Optional[str] = None
+    notes: Optional[str] = None
+
+    @field_validator("colab_link")
+    @classmethod
+    def validate_colab_link(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v.strip():
+            if "colab.research.google.com" not in v:
+                raise ValueError("Colab link must be a valid Google Colab URL")
+        return v
+
+
+# ─── Response Schemas ───
+
+class TaskResourceResponse(BaseModel):
+    id: UUID
+    title: str
+    url: str
+    resource_type: str
+    display_order: Optional[int] = None
+
+    model_config = {"from_attributes": True}
+
+
+class TaskResponse(BaseModel):
+    id: UUID
+    slug: str
+    track: str
+    difficulty: str
+    title: str
+    description: str
+    beginner_guide: str
+    hint: str
+    xp_reward: int
+    display_order: int
+    colab_url: str
+    resources: list[TaskResourceResponse] = []
+
+    model_config = {"from_attributes": True}
+
+
+class TaskListItem(BaseModel):
+    id: UUID
+    slug: str
+    track: str
+    difficulty: str
+    title: str
+    description: str
+    xp_reward: int
+    display_order: int
+    colab_url: str
+    completed: bool = False
+    show_beginner_guide: bool = False
+
+    model_config = {"from_attributes": True}
+
+
+class BadgeEarned(BaseModel):
+    slug: str
+    name: str
+    icon: str
+    description: str
+    xp_bonus: int
+    track_color: Optional[str] = None
+
+
+class TaskSubmissionResponse(BaseModel):
+    xp_earned: int
+    total_xp: int
+    rank: dict
+    newly_earned_badges: list[BadgeEarned] = []
+    celebration_message: str
+
+
+class SubmissionDetailResponse(BaseModel):
+    id: UUID
+    task_id: UUID
+    solution_text: str
+    colab_link: Optional[str] = None
+    notes: Optional[str] = None
+    xp_awarded: int
+    submitted_at: datetime
+
+    model_config = {"from_attributes": True}

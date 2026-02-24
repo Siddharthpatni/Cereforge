@@ -1,0 +1,54 @@
+# Core
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+python-dotenv==1.0.1
+pydantic[email]==2.6.1
+pydantic-settings==2.1.0
+
+# Database
+sqlalchemy[asyncio]==2.0.27
+asyncpg==0.29.0
+alembic==1.13.1
+greenlet==3.0.3
+
+# Redis
+redis==5.0.1
+
+# Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+
+# HTTP
+httpx==0.27.0
+
+# Validation & Serialization
+orjson==3.9.13
+
+# Rate Limiting
+slowapi==0.1.9
+
+# Logging
+loguru==0.7.2
+
+# Monitoring
+sentry-sdk[fastapi]==1.40.4
+
+# AI
+anthropic==0.18.1
+
+# Task Queue
+celery[redis]==5.3.6
+
+# Email
+aiosmtplib==3.0.1
+jinja2==3.1.3
+
+# Storage
+boto3==1.34.44
+
+# CORS & Middleware
+starlette==0.36.3
+
+# Utilities
+python-multipart==0.0.9
