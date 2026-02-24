@@ -3,17 +3,16 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, desc, func
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
-from app.models.task import Task
-from app.models.submission import TaskSubmission
+from app.api.deps import get_current_user, get_db
 from app.models.badge import Badge, UserBadge
-from app.models.post import Post
-from app.models.learning_path import LearningPath, PathEnrollment
+from app.models.learning_path import PathEnrollment
 from app.models.notification import Notification
+from app.models.submission import TaskSubmission
+from app.models.task import Task
+from app.models.user import User
 from app.services.xp_service import calculate_rank
 
 router = APIRouter()
@@ -68,7 +67,7 @@ async def get_dashboard(
     # Featured / next task
     next_task = None
     all_tasks_result = await db.execute(
-        select(Task).where(Task.is_active == True).order_by(Task.display_order)
+        select(Task).where(Task.is_active).order_by(Task.display_order)
     )
     for task in all_tasks_result.scalars().all():
         if task.id not in completed_task_ids:
@@ -87,12 +86,12 @@ async def get_dashboard(
     recent_completions = []
     for sub in recent:
         task_result = await db.execute(select(Task).where(Task.id == sub.task_id))
-        task = task_result.scalar_one_or_none()
-        if task:
+        t = task_result.scalar_one_or_none()
+        if t:
             recent_completions.append({
-                "task_slug": task.slug,
-                "task_title": task.title,
-                "track": task.track,
+                "task_slug": t.slug,
+                "task_title": t.title,
+                "track": t.track,
                 "xp_earned": sub.xp_awarded,
                 "submitted_at": sub.submitted_at.isoformat(),
             })
@@ -153,7 +152,7 @@ async def get_notifications(
     """Get user notifications."""
     query = select(Notification).where(Notification.user_id == current_user.id)
     if unread_only:
-        query = query.where(Notification.is_read == False)
+        query = query.where(Notification.is_read.is_(False))
     query = query.order_by(desc(Notification.created_at)).limit(50)
 
     result = await db.execute(query)
@@ -180,8 +179,8 @@ async def mark_notifications_read(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Mark notifications as read."""
-    from uuid import UUID as PyUUID
-    ids = [PyUUID(id_str) for id_str in data.get("ids", [])]
+    import uuid
+    ids = [uuid.UUID(id_str) for id_str in data.get("ids", [])]
 
     if ids:
         result = await db.execute(

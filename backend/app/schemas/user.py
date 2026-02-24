@@ -1,11 +1,9 @@
 """Pydantic schemas for user-related requests and responses."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
-
 
 # ─── Request Schemas ───
 
@@ -14,7 +12,7 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     skill_level: str = Field(...)
-    background: Optional[str] = None
+    background: str | None = None
 
     @field_validator("skill_level")
     @classmethod
@@ -35,14 +33,14 @@ class TokenRefresh(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    username: Optional[str] = Field(None, min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_]+$")
-    skill_level: Optional[str] = None
-    background: Optional[str] = None
-    avatar_url: Optional[str] = None
+    username: str | None = Field(None, min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_]+$")
+    skill_level: str | None = None
+    background: str | None = None
+    avatar_url: str | None = None
 
     @field_validator("skill_level")
     @classmethod
-    def validate_skill_level(cls, v: Optional[str]) -> Optional[str]:
+    def validate_skill_level(cls, v: str | None) -> str | None:
         if v is not None:
             valid = {"absolute_beginner", "some_python", "ml_familiar", "advanced"}
             if v not in valid:
@@ -56,9 +54,9 @@ class UserResponse(BaseModel):
     id: UUID
     username: str
     email: str
-    avatar_url: Optional[str] = None
+    avatar_url: str | None = None
     skill_level: str
-    background: Optional[str] = None
+    background: str | None = None
     xp: int
     is_email_verified: bool
     created_at: datetime
@@ -69,8 +67,8 @@ class UserResponse(BaseModel):
 class RankInfo(BaseModel):
     name: str
     color: str
-    next_rank: Optional[str] = None
-    xp_needed: Optional[int] = None
+    next_rank: str | None = None
+    xp_needed: int | None = None
 
 
 class AuthResponse(BaseModel):
@@ -87,7 +85,7 @@ class RegisterResponse(BaseModel):
     token_type: str = "bearer"
     user: UserResponse
     rank: RankInfo
-    suggested_path: Optional[str] = None
+    suggested_path: str | None = None
     welcome_message: str
 
 

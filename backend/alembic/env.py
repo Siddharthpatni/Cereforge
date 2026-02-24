@@ -1,24 +1,16 @@
 """Alembic environment configuration for async SQLAlchemy."""
 
-from logging.config import fileConfig
 import asyncio
+from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
-from alembic import context
 
+from alembic import context
 from app.core.config import settings
 from app.core.database import Base
 
 # Import all models so they are registered with Base.metadata
-from app.models.user import User
-from app.models.task import Task, TaskResource
-from app.models.submission import TaskSubmission
-from app.models.badge import Badge, UserBadge
-from app.models.post import Post
-from app.models.comment import Comment, Vote
-from app.models.learning_path import LearningPath, PathModule, PathLesson, PathEnrollment
-from app.models.notification import Notification
 
 config = context.config
 

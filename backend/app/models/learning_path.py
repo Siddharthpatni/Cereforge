@@ -1,10 +1,10 @@
 """Learning path, module, lesson, and enrollment models."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import String, Text, Integer, Boolean, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, ARRAY, ENUM
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -19,9 +19,9 @@ class LearningPath(Base):
     slug: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    for_skill_levels: Mapped[list] = mapped_column(ARRAY(String(30)), nullable=False)
+    for_skill_levels: Mapped[list] = mapped_column(JSON, nullable=False)
     duration_days: Mapped[int] = mapped_column(Integer, nullable=False)
-    task_sequence: Mapped[list] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=False)
+    task_sequence: Mapped[list] = mapped_column(JSON, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     display_order: Mapped[int] = mapped_column(Integer, nullable=False)
 
@@ -65,7 +65,7 @@ class PathEnrollment(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     path_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("learning_paths.id"), nullable=False)
     enrolled_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
     __table_args__ = (

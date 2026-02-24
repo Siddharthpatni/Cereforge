@@ -1,10 +1,10 @@
 """Badge and UserBadge models."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import String, Text, Integer, DateTime, ForeignKey, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -19,7 +19,7 @@ class Badge(Base):
     icon: Mapped[str] = mapped_column(String(10), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     condition_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    condition_value: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    condition_value: Mapped[dict] = mapped_column(JSON, nullable=False)
     xp_bonus: Mapped[int] = mapped_column(Integer, nullable=False)
     display_order: Mapped[int] = mapped_column(Integer, nullable=False)
 
@@ -34,7 +34,7 @@ class UserBadge(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     badge_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("badges.id"), nullable=False)
     earned_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
     __table_args__ = (

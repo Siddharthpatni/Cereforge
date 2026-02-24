@@ -1,7 +1,8 @@
 """Tests for community endpoints: posts, comments, voting, accept answer."""
 
 import pytest
-from tests.conftest import register_user, auth_headers
+
+from tests.conftest import auth_headers, register_user
 
 
 @pytest.mark.asyncio
@@ -197,7 +198,7 @@ async def test_accept_answer_wrong_author(client):
     answerer_token = answerer["access_token"]
     intruder_token = intruder["access_token"]
     create_resp = await client.post("/api/v1/posts", headers=auth_headers(author_token), json={
-        "title": "Auth test", "body": "Post body", "track": "llm",
+        "title": "Authentication test", "body": "This is a sufficiently long post body", "track": "llm",
     })
     post_id = create_resp.json()["post"]["id"]
     comment_resp = await client.post(f"/api/v1/posts/{post_id}/comments", headers=auth_headers(answerer_token), json={

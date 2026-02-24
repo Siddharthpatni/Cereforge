@@ -1,8 +1,8 @@
 """Tests for the badge engine: badge awards on task completion."""
 
 import pytest
-from tests.conftest import register_user, auth_headers
 
+from tests.conftest import auth_headers, register_user
 
 SOLUTION_TEXT = "A comprehensive detailed solution that demonstrates understanding of the underlying concepts, covers edge cases, and provides a complete implementation with error handling and testing." * 2
 

@@ -1,13 +1,15 @@
 """XP calculation and rank determination service."""
 
+from typing import Any
 from uuid import UUID
+
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 
 # Rank definitions: (name, min_xp, color, border_style)
-RANKS = [
+RANKS: list[dict[str, Any]] = [
     {"name": "Trainee", "min_xp": 0, "color": "#6b7280", "border": "solid gray"},
     {"name": "Engineer", "min_xp": 200, "color": "#3b82f6", "border": "solid blue"},
     {"name": "Architect", "min_xp": 500, "color": "#8b5cf6", "border": "solid purple"},

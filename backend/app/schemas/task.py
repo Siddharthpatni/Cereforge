@@ -1,25 +1,22 @@
 """Pydantic schemas for task-related requests and responses."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
-
 
 # ─── Request Schemas ───
 
 class TaskSubmissionCreate(BaseModel):
     solution_text: str = Field(..., min_length=50)
-    colab_link: Optional[str] = None
-    notes: Optional[str] = None
+    colab_link: str | None = None
+    notes: str | None = None
 
     @field_validator("colab_link")
     @classmethod
-    def validate_colab_link(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and v.strip():
-            if "colab.research.google.com" not in v:
-                raise ValueError("Colab link must be a valid Google Colab URL")
+    def validate_colab_link(cls, v: str | None) -> str | None:
+        if v is not None and v.strip() and "colab.research.google.com" not in v:
+            raise ValueError("Colab link must be a valid Google Colab URL")
         return v
 
 
@@ -30,7 +27,7 @@ class TaskResourceResponse(BaseModel):
     title: str
     url: str
     resource_type: str
-    display_order: Optional[int] = None
+    display_order: int | None = None
 
     model_config = {"from_attributes": True}
 
@@ -74,7 +71,7 @@ class BadgeEarned(BaseModel):
     icon: str
     description: str
     xp_bonus: int
-    track_color: Optional[str] = None
+    track_color: str | None = None
 
 
 class TaskSubmissionResponse(BaseModel):
@@ -89,8 +86,8 @@ class SubmissionDetailResponse(BaseModel):
     id: UUID
     task_id: UUID
     solution_text: str
-    colab_link: Optional[str] = None
-    notes: Optional[str] = None
+    colab_link: str | None = None
+    notes: str | None = None
     xp_awarded: int
     submitted_at: datetime
 

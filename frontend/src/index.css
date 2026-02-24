@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
 
-@import './animations.css';
+@import "./animations.css";
 @import "tailwindcss";
 
 @layer base {
@@ -68,8 +68,8 @@
     --danger-bg: rgba(239, 68, 68, 0.1);
 
     /* 5. Typography Specs */
-    --font-sans: 'Inter', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-sans: "Inter", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
 
     /* For glassmorphism effects */
     --glass-bg: rgba(24, 24, 27, 0.7);

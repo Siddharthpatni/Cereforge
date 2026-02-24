@@ -1,25 +1,23 @@
 """Shared test fixtures for the CereForge test suite."""
 
 import asyncio
-import uuid
-from typing import AsyncGenerator
-
-import pytest
-import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-
-from app.main import app
-from app.core.database import Base
-from app.api.deps import get_db
-from app.models.user import User
-from app.models.task import Task
-from app.models.badge import Badge
-from app.core.config import settings
 
 # Use SQLite in-memory for tests (fast, no external DB needed)
 # For integration tests requiring Postgres features, set TEST_DATABASE_URL env var
 import os
+import uuid
+from collections.abc import AsyncGenerator
+
+import pytest
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from app.api.deps import get_db
+from app.core.database import Base
+from app.main import app
+from app.models.badge import Badge
+from app.models.task import Task
 
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
@@ -84,33 +82,33 @@ async def seed_test_data(setup_database):
             db.add(task)
 
         # Assign known slugs for specific test cases
-        llm_task = await db.get(Task, None)  # will use slug-based queries instead
+        await db.get(Task, None)  # will use slug-based queries instead
 
-        # Seed 12 badges
+        # Seed 12 badges with proper JSON dicts compatible with badge_engine.py
         badge_data = [
-            ("zero-to-ai", "Zero to AI", "🚀", "first_task", 25),
-            ("prompt-whisperer", "Prompt Whisperer", "🧠", "first_llm_task", 25),
-            ("chain-master", "Chain Master", "🔗", "all_llm_tasks", 75),
-            ("memory-architect", "Memory Architect", "🗄️", "first_rag_task", 25),
-            ("retrieval-expert", "Retrieval Expert", "📡", "all_rag_tasks", 75),
-            ("vision-pioneer", "Vision Pioneer", "👁️", "first_vision_task", 25),
-            ("perception-master", "Perception Master", "🔮", "all_vision_tasks", 75),
-            ("agent-builder", "Agent Builder", "🤖", "first_agent_task", 25),
-            ("autonomy-architect", "Autonomy Architect", "🌐", "all_agent_tasks", 75),
-            ("full-stack-ai", "Full Stack AI", "🌐", "one_per_track", 100),
-            ("community-sage", "Community Sage", "💬", "answer_accepted", 50),
-            ("cereforge-elite", "CereForge Elite", "👑", "all_tasks", 200),
+            ("zero-to-ai", "Zero to AI", "🚀", "total_tasks", {"total_tasks": 1}, 25),
+            ("prompt-whisperer", "Prompt Whisperer", "🧠", "track_count", {"track": "llm", "count": 1}, 25),
+            ("chain-master", "Chain Master", "🔗", "track_count", {"track": "llm", "count": 3}, 75),
+            ("memory-architect", "Memory Architect", "🗄️", "track_count", {"track": "rag", "count": 1}, 25),
+            ("retrieval-expert", "Retrieval Expert", "📡", "track_count", {"track": "rag", "count": 3}, 75),
+            ("vision-pioneer", "Vision Pioneer", "👁️", "track_count", {"track": "vision", "count": 1}, 25),
+            ("perception-master", "Perception Master", "🔮", "track_count", {"track": "vision", "count": 3}, 75),
+            ("agent-builder", "Agent Builder", "🤖", "track_count", {"track": "agents", "count": 1}, 25),
+            ("autonomy-architect", "Autonomy Architect", "🌐", "track_count", {"track": "agents", "count": 3}, 75),
+            ("full-stack-ai", "Full Stack AI", "🌐", "all_tracks", {}, 100),
+            ("community-sage", "Community Sage", "💬", "accepted_answers", {"count": 1}, 50),
+            ("cereforge-elite", "CereForge Elite", "👑", "total_tasks", {"total_tasks": 12}, 200),
         ]
-        for slug, name, icon, condition, xp in badge_data:
+        for idx, (slug, name, icon, ctype, cval, xp) in enumerate(badge_data):
             badge = Badge(
                 slug=slug,
                 name=name,
                 icon=icon,
-                category="achievement",
-                condition_type=condition,
-                condition_value="1",
+                condition_type=ctype,
+                condition_value=cval,
                 xp_bonus=xp,
-                description=f"Awarded for: {condition}",
+                description=f"Awarded for: {ctype}",
+                display_order=idx,
             )
             db.add(badge)
 
@@ -120,8 +118,9 @@ async def seed_test_data(setup_database):
 @pytest_asyncio.fixture
 async def client() -> AsyncGenerator[AsyncClient, None]:
     """Async HTTP client for testing the FastAPI app."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"  # type: ignore
+    ) as ac:
         yield ac
 
 
@@ -136,10 +135,10 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 async def register_user(
     client: AsyncClient,
-    email: str = None,
+    email: str | None = None,
     password: str = "TestPass123!",
     skill_level: str = "absolute_beginner",
-    username: str = None,
+    username: str | None = None,
 ) -> dict:
     """Register a user and return the full response dict."""
     email = email or f"test-{uuid.uuid4().hex[:8]}@example.com"

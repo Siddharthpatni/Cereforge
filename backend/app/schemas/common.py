@@ -1,11 +1,9 @@
 """Pydantic schemas for learning paths, badges, leaderboard, etc."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
-
 
 # ─── Badge Schemas ───
 
@@ -19,7 +17,7 @@ class BadgeResponse(BaseModel):
     xp_bonus: int
     display_order: int
     earned: bool = False
-    earned_at: Optional[datetime] = None
+    earned_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 
@@ -31,7 +29,7 @@ class LessonResponse(BaseModel):
     title: str
     lesson_type: str
     duration_minutes: int
-    external_url: Optional[str] = None
+    external_url: str | None = None
     display_order: int
 
     model_config = {"from_attributes": True}
@@ -74,14 +72,14 @@ class PathDetailResponse(BaseModel):
     modules: list[ModuleResponse] = []
     enrolled: bool = False
     progress: float = 0.0
-    next_task: Optional[str] = None
+    next_task: str | None = None
 
     model_config = {"from_attributes": True}
 
 
 class EnrollResponse(BaseModel):
     enrolled: bool = True
-    next_task_slug: Optional[str] = None
+    next_task_slug: str | None = None
 
 
 # ─── Leaderboard Schemas ───
@@ -98,7 +96,7 @@ class LeaderboardEntry(BaseModel):
 
 class LeaderboardResponse(BaseModel):
     items: list[LeaderboardEntry]
-    current_user_position: Optional[int] = None
+    current_user_position: int | None = None
 
 
 # ─── Dashboard Schemas ───
@@ -106,7 +104,7 @@ class LeaderboardResponse(BaseModel):
 class DashboardResponse(BaseModel):
     stats: dict
     rank: dict
-    next_task: Optional[dict] = None
+    next_task: dict | None = None
     recent_completions: list = []
     badges: list = []
     enrolled_paths: list = []
@@ -121,7 +119,7 @@ class NotificationResponse(BaseModel):
     title: str
     body: str
     is_read: bool
-    metadata: Optional[dict] = None
+    metadata: dict | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -145,7 +143,7 @@ class CommunityAssistRequest(BaseModel):
 # ─── Generic Response ───
 
 class SuccessResponse(BaseModel):
-    data: Optional[dict] = None
+    data: dict | None = None
     message: str = "Success"
     status: str = "success"
 

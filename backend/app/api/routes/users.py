@@ -1,19 +1,18 @@
 """User profile routes."""
 
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, func, desc
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
+from app.api.deps import get_current_user, get_db
 from app.models.badge import Badge, UserBadge
+from app.models.comment import Comment
+from app.models.post import Post
 from app.models.submission import TaskSubmission
 from app.models.task import Task
-from app.models.post import Post
-from app.models.comment import Comment
+from app.models.user import User
 from app.services.xp_service import calculate_rank
 
 router = APIRouter()
@@ -26,7 +25,7 @@ async def get_user_profile(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Get a user's public profile."""
-    result = await db.execute(select(User).where(User.username == username, User.is_active == True))
+    result = await db.execute(select(User).where(User.username == username, User.is_active))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -78,7 +77,7 @@ async def get_user_profile(
     # Posts
     posts_result = await db.execute(
         select(Post)
-        .where(Post.author_id == user.id, Post.is_deleted == False)
+        .where(Post.author_id == user.id, Post.is_deleted.is_(False))
         .order_by(desc(Post.created_at))
         .limit(20)
     )
@@ -95,10 +94,10 @@ async def get_user_profile(
 
     # Stats
     posts_count = await db.execute(
-        select(func.count(Post.id)).where(Post.author_id == user.id, Post.is_deleted == False)
+        select(func.count(Post.id)).where(Post.author_id == user.id, Post.is_deleted.is_(False))
     )
     answers_count = await db.execute(
-        select(func.count(Comment.id)).where(Comment.author_id == user.id, Comment.is_deleted == False)
+        select(func.count(Comment.id)).where(Comment.author_id == user.id, Comment.is_deleted.is_(False))
     )
 
     return {

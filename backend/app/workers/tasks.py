@@ -1,6 +1,7 @@
 """Celery background tasks."""
 
 from celery import Celery
+
 from app.core.config import settings
 
 celery_app = Celery(
@@ -22,9 +23,10 @@ celery_app.conf.update(
 def check_badges_background(user_id: str):
     """Background task to check and award badges."""
     import asyncio
+    from uuid import UUID
+
     from app.core.database import async_session_factory
     from app.services.badge_engine import check_and_award_badges
-    from uuid import UUID
 
     async def _run():
         async with async_session_factory() as db:
@@ -43,8 +45,9 @@ def send_email_background(to_email: str, subject: str, body: str):
         if not settings.email_enabled:
             return
         try:
-            import aiosmtplib
             from email.mime.text import MIMEText
+
+            import aiosmtplib
 
             msg = MIMEText(body, "html")
             msg["From"] = f"{settings.EMAILS_FROM_NAME} <{settings.EMAILS_FROM_EMAIL}>"

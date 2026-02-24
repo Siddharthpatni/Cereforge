@@ -3,18 +3,31 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, or_
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, get_current_user
-from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, get_user_id_from_token
-from app.models.user import User
+from app.api.deps import get_current_user, get_db
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    get_user_id_from_token,
+    hash_password,
+    verify_password,
+)
 from app.models.badge import UserBadge
-from app.models.submission import TaskSubmission
 from app.models.learning_path import PathEnrollment
+from app.models.submission import TaskSubmission
+from app.models.user import User
 from app.schemas.user import (
-    UserRegister, UserLogin, TokenRefresh, UserUpdate,
-    UserResponse, AuthResponse, RegisterResponse, MeResponse, RankInfo,
+    AuthResponse,
+    MeResponse,
+    RankInfo,
+    RegisterResponse,
+    TokenRefresh,
+    UserLogin,
+    UserRegister,
+    UserResponse,
+    UserUpdate,
 )
 from app.services.xp_service import calculate_rank
 

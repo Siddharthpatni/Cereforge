@@ -1,15 +1,15 @@
 """Leaderboard routes."""
 
-from typing import Annotated, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func, desc
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
-from app.models.submission import TaskSubmission
+from app.api.deps import get_current_user, get_db
 from app.models.badge import UserBadge
+from app.models.submission import TaskSubmission
+from app.models.user import User
 from app.services.xp_service import calculate_rank
 
 router = APIRouter()
@@ -28,7 +28,7 @@ async def get_leaderboard(
     # Get users ordered by XP
     users_result = await db.execute(
         select(User)
-        .where(User.is_active == True)
+        .where(User.is_active)
         .order_by(desc(User.xp), User.created_at)
         .offset(offset)
         .limit(limit)
@@ -72,7 +72,7 @@ async def get_leaderboard(
     current_position = None
     rank_result = await db.execute(
         select(func.count(User.id))
-        .where(User.is_active == True, User.xp > current_user.xp)
+        .where(User.is_active, User.xp > current_user.xp)
     )
     current_position = (rank_result.scalar() or 0) + 1
 

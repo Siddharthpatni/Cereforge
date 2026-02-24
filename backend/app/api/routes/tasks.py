@@ -1,22 +1,26 @@
 """Task routes: list, detail, submit, get submission."""
 
-from typing import Annotated, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
-from app.models.task import Task
-from app.models.submission import TaskSubmission
+from app.api.deps import get_current_user, get_db
 from app.models.post import Post
+from app.models.submission import TaskSubmission
+from app.models.task import Task
+from app.models.user import User
 from app.schemas.task import (
-    TaskSubmissionCreate, TaskResponse, TaskListItem,
-    TaskSubmissionResponse, SubmissionDetailResponse, BadgeEarned,
+    BadgeEarned,
+    SubmissionDetailResponse,
+    TaskListItem,
+    TaskResponse,
+    TaskSubmissionCreate,
+    TaskSubmissionResponse,
 )
-from app.services.xp_service import award_xp, calculate_rank
 from app.services.badge_engine import check_and_award_badges
+from app.services.xp_service import award_xp, calculate_rank
 
 router = APIRouter()
 
@@ -25,12 +29,12 @@ router = APIRouter()
 async def list_tasks(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    track: Optional[str] = Query(None),
-    difficulty: Optional[str] = Query(None),
-    task_status: Optional[str] = Query(None, alias="status"),
+    track: str | None = Query(None),
+    difficulty: str | None = Query(None),
+    task_status: str | None = Query(None, alias="status"),
 ):
     """List all tasks with optional filters."""
-    query = select(Task).where(Task.is_active == True).order_by(Task.track, Task.display_order)
+    query = select(Task).where(Task.is_active).order_by(Task.track, Task.display_order)
 
     if track:
         query = query.where(Task.track == track)
@@ -80,7 +84,7 @@ async def get_task(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Get a single task by slug with resources and related posts."""
-    result = await db.execute(select(Task).where(Task.slug == slug, Task.is_active == True))
+    result = await db.execute(select(Task).where(Task.slug == slug, Task.is_active))
     task = result.scalar_one_or_none()
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
@@ -99,7 +103,7 @@ async def get_task(
     # Related community posts
     posts_result = await db.execute(
         select(Post)
-        .where(Post.related_task_id == task.id, Post.is_deleted == False)
+        .where(Post.related_task_id == task.id, Post.is_deleted.is_(False))
         .order_by(Post.vote_score.desc())
         .limit(5)
     )
@@ -131,7 +135,7 @@ async def submit_task(
 ):
     """Submit a task solution. Awards XP and checks for badge unlocks."""
     # Find task
-    result = await db.execute(select(Task).where(Task.slug == slug, Task.is_active == True))
+    result = await db.execute(select(Task).where(Task.slug == slug, Task.is_active))
     task = result.scalar_one_or_none()
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
@@ -158,7 +162,7 @@ async def submit_task(
     db.add(submission)
 
     # Award XP
-    new_xp = await award_xp(db, current_user.id, task.xp_reward)
+    await award_xp(db, current_user.id, task.xp_reward)
 
     # Check and award badges
     newly_earned = await check_and_award_badges(db, current_user.id)
@@ -183,7 +187,7 @@ async def submit_task(
     )
 
 
-@router.get("/{slug}/submissions", response_model=Optional[SubmissionDetailResponse])
+@router.get("/{slug}/submissions", response_model=SubmissionDetailResponse | None)
 async def get_submission(
     slug: str,
     db: Annotated[AsyncSession, Depends(get_db)],

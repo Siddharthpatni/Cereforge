@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.task import Task, TaskResource
 
-
 TASKS_DATA = [
     # ─── LLM ENGINEERING TRACK ───
     {
@@ -376,7 +375,7 @@ async def seed_tasks(db: AsyncSession):
         await db.flush()
 
         # Upsert resources
-        for res_data in resources_data:
+        for res_data in resources_data:  # type: ignore
             existing_res = await db.execute(
                 select(TaskResource).where(
                     TaskResource.task_id == task.id,

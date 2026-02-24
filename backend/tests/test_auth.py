@@ -1,7 +1,8 @@
 """Tests for authentication endpoints: register, login, refresh, /me."""
 
 import pytest
-from tests.conftest import register_user, auth_headers
+
+from tests.conftest import auth_headers, register_user
 
 
 @pytest.mark.asyncio

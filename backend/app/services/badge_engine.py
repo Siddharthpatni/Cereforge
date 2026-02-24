@@ -1,17 +1,17 @@
 """Badge condition checking and awarding engine."""
 
+from typing import Any, cast
 from uuid import UUID
-from typing import Optional
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.badge import Badge, UserBadge
+from app.models.comment import Comment
+from app.models.notification import Notification
 from app.models.submission import TaskSubmission
 from app.models.task import Task
-from app.models.comment import Comment
 from app.models.user import User
-from app.models.notification import Notification
 from app.services.xp_service import award_xp
 
 # Track color mapping for badge unlock cinematic
@@ -54,7 +54,7 @@ async def check_and_award_badges(
         .where(TaskSubmission.user_id == user_id)
         .group_by(Task.track)
     )
-    track_counts = dict(completions_result.all())
+    track_counts: dict[str, int] = {row[0]: row[1] for row in completions_result.all()}
 
     # Total completions
     total_completions = sum(track_counts.values())
@@ -62,7 +62,7 @@ async def check_and_award_badges(
     # Count accepted answers
     accepted_result = await db.execute(
         select(func.count(Comment.id))
-        .where(Comment.author_id == user_id, Comment.is_accepted == True)
+        .where(Comment.author_id == user_id, Comment.is_accepted)
     )
     accepted_answers = accepted_result.scalar() or 0
 
@@ -127,11 +127,11 @@ def _check_badge_condition(
 ) -> bool:
     """Evaluate a single badge's condition."""
     ctype = badge.condition_type
-    cval = badge.condition_value
+    cval = cast(dict[str, Any], badge.condition_value or {})
 
     if ctype == "track_count":
-        track = cval.get("track")
-        count = cval.get("count", 0)
+        track = str(cval.get("track", ""))
+        count = int(cval.get("count", 0))
         return track_counts.get(track, 0) >= count
 
     elif ctype == "all_tracks":
@@ -152,13 +152,13 @@ def _check_badge_condition(
     return False
 
 
-def _get_badge_track_color(badge: Badge) -> Optional[str]:
+def _get_badge_track_color(badge: Badge) -> str | None:
     """Determine the track color for a badge's unlock cinematic."""
     ctype = badge.condition_type
-    cval = badge.condition_value
+    cval = cast(dict[str, Any], badge.condition_value or {})
 
     if ctype == "track_count":
-        track = cval.get("track")
+        track = str(cval.get("track", ""))
         return TRACK_COLORS.get(track, "#00f5ff")
     elif ctype == "all_tracks":
         return "#ffffff"

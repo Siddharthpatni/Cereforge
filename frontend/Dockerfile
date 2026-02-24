@@ -1,13 +1,10 @@
 # ── Stage 1: Build ────────────────────────────────────────────
-FROM node:18-alpine AS builder
+FROM node:22-slim AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
-
 COPY . .
-RUN npm run build
+RUN rm -rf node_modules package-lock.json && npm install && npm run build
 
 # ── Stage 2: Serve with nginx ────────────────────────────────
 FROM nginx:alpine

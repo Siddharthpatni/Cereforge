@@ -6,12 +6,18 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
-from app.models.task import Task
-from app.models.submission import TaskSubmission
+from app.api.deps import get_current_user, get_db
 from app.models.learning_path import LearningPath, PathEnrollment
-from app.schemas.common import LearningPathResponse, PathDetailResponse, ModuleResponse, LessonResponse, EnrollResponse
+from app.models.submission import TaskSubmission
+from app.models.task import Task
+from app.models.user import User
+from app.schemas.common import (
+    EnrollResponse,
+    LearningPathResponse,
+    LessonResponse,
+    ModuleResponse,
+    PathDetailResponse,
+)
 
 router = APIRouter()
 
@@ -23,7 +29,7 @@ async def list_learning_paths(
 ):
     """List all learning paths with enrollment status and progress."""
     paths_result = await db.execute(
-        select(LearningPath).where(LearningPath.is_active == True).order_by(LearningPath.display_order)
+        select(LearningPath).where(LearningPath.is_active).order_by(LearningPath.display_order)
     )
     paths = paths_result.scalars().all()
 
@@ -74,7 +80,7 @@ async def get_learning_path(
 ):
     """Get a learning path with modules, lessons, and progress."""
     result = await db.execute(
-        select(LearningPath).where(LearningPath.slug == slug, LearningPath.is_active == True)
+        select(LearningPath).where(LearningPath.slug == slug, LearningPath.is_active)
     )
     path = result.scalar_one_or_none()
     if not path:
@@ -116,7 +122,7 @@ async def get_learning_path(
             id=m.id,
             title=m.title,
             display_order=m.display_order,
-            lessons=[LessonResponse.model_validate(l) for l in m.lessons],
+            lessons=[LessonResponse.model_validate(lesson) for lesson in m.lessons],
         )
         for m in (path.modules or [])
     ]
@@ -145,7 +151,7 @@ async def enroll_in_path(
 ):
     """Enroll in a learning path."""
     result = await db.execute(
-        select(LearningPath).where(LearningPath.slug == slug, LearningPath.is_active == True)
+        select(LearningPath).where(LearningPath.slug == slug, LearningPath.is_active)
     )
     path = result.scalar_one_or_none()
     if not path:

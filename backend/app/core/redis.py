@@ -1,11 +1,11 @@
 """Redis client for caching and sessions."""
 
-from typing import Optional
+
 import redis.asyncio as redis
 
 from app.core.config import settings
 
-redis_client: Optional[redis.Redis] = None
+redis_client: redis.Redis | None = None
 
 
 async def get_redis() -> redis.Redis:

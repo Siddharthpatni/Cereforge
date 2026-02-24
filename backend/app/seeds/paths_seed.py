@@ -1,11 +1,12 @@
 """Seed all 3 learning paths with modules and lessons — idempotent."""
 
+from typing import Any, cast
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.learning_path import LearningPath, PathLesson, PathModule
 from app.models.task import Task
-from app.models.learning_path import LearningPath, PathModule, PathLesson
-
 
 PATHS_DATA = [
     {
@@ -120,8 +121,8 @@ PATHS_DATA = [
 async def seed_paths(db: AsyncSession):
     """Seed all 3 learning paths with modules and lessons — idempotent."""
     for path_data in PATHS_DATA:
-        task_slugs = path_data.pop("task_slugs")
-        modules_data = path_data.pop("modules")
+        task_slugs = cast(list[str], path_data.pop("task_slugs"))
+        modules_data = cast(list[dict[str, Any]], path_data.pop("modules"))
 
         # Resolve task slugs to IDs
         task_ids = []
@@ -147,25 +148,25 @@ async def seed_paths(db: AsyncSession):
         await db.flush()
 
         # Upsert modules and lessons
-        for mod_data in modules_data:
-            lessons_data = mod_data.pop("lessons", [])
+        for module_data in modules_data:  # type: ignore
+            lessons_data = module_data.pop("lessons", [])
 
             existing_mod = await db.execute(
                 select(PathModule).where(
                     PathModule.path_id == path.id,
-                    PathModule.title == mod_data["title"],
+                    PathModule.title == module_data["title"],
                 )
             )
             module = existing_mod.scalar_one_or_none()
             if module:
-                module.display_order = mod_data["display_order"]
+                module.display_order = module_data["display_order"]
             else:
-                module = PathModule(path_id=path.id, **mod_data)
+                module = PathModule(path_id=path.id, **module_data)
                 db.add(module)
 
             await db.flush()
 
-            for lesson_data in lessons_data:
+            for lesson_data in lessons_data:  # type: ignore
                 existing_lesson = await db.execute(
                     select(PathLesson).where(
                         PathLesson.module_id == module.id,

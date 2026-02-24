@@ -1,26 +1,24 @@
 """Pydantic schemas for community posts, comments, and voting."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
-
 
 # ─── Request Schemas ───
 
 class PostCreate(BaseModel):
     title: str = Field(..., min_length=5, max_length=300)
     body: str = Field(..., min_length=10)
-    track: Optional[str] = None
+    track: str | None = None
     tags: list[str] = Field(default_factory=list, max_length=5)
-    colab_link: Optional[str] = None
-    related_task_id: Optional[UUID] = None
+    colab_link: str | None = None
+    related_task_id: UUID | None = None
     is_beginner_friendly: bool = False
 
     @field_validator("track")
     @classmethod
-    def validate_track(cls, v: Optional[str]) -> Optional[str]:
+    def validate_track(cls, v: str | None) -> str | None:
         if v is not None:
             valid = {"llm", "rag", "vision", "agents"}
             if v not in valid:
@@ -39,13 +37,13 @@ class PostCreate(BaseModel):
 
 
 class PostUpdate(BaseModel):
-    title: Optional[str] = Field(None, min_length=5, max_length=300)
-    body: Optional[str] = Field(None, min_length=10)
+    title: str | None = Field(None, min_length=5, max_length=300)
+    body: str | None = Field(None, min_length=10)
 
 
 class CommentCreate(BaseModel):
     body: str = Field(..., min_length=1)
-    parent_id: Optional[UUID] = None
+    parent_id: UUID | None = None
 
 
 class VoteCreate(BaseModel):
@@ -73,7 +71,7 @@ class VoteCreate(BaseModel):
 class AuthorResponse(BaseModel):
     id: UUID
     username: str
-    avatar_url: Optional[str] = None
+    avatar_url: str | None = None
     xp: int
     skill_level: str
 
@@ -84,7 +82,7 @@ class CommentResponse(BaseModel):
     id: UUID
     post_id: UUID
     author: AuthorResponse
-    parent_id: Optional[UUID] = None
+    parent_id: UUID | None = None
     body: str
     vote_score: int
     is_accepted: bool
@@ -100,15 +98,15 @@ class PostResponse(BaseModel):
     author: AuthorResponse
     title: str
     body: str
-    track: Optional[str] = None
+    track: str | None = None
     tags: list[str] = []
-    colab_link: Optional[str] = None
+    colab_link: str | None = None
     status: str
-    accepted_answer_id: Optional[UUID] = None
+    accepted_answer_id: UUID | None = None
     vote_score: int
     view_count: int
     is_beginner_friendly: bool
-    related_task_id: Optional[UUID] = None
+    related_task_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -120,9 +118,9 @@ class PostListItem(BaseModel):
     author: AuthorResponse
     title: str
     body: str
-    track: Optional[str] = None
+    track: str | None = None
     tags: list[str] = []
-    colab_link: Optional[str] = None
+    colab_link: str | None = None
     status: str
     vote_score: int
     view_count: int

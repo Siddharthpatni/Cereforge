@@ -1,6 +1,7 @@
 """AI Mentor service — Anthropic Claude integration for guidance and community assist."""
 
-from typing import Optional, AsyncGenerator
+from collections.abc import AsyncGenerator
+
 from app.core.config import settings
 
 try:

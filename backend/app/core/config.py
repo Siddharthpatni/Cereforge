@@ -1,8 +1,7 @@
 """CereForge configuration — loads all settings from environment variables."""
 
-from typing import Optional
+
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -28,24 +27,24 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
 
     # AI (Anthropic)
-    ANTHROPIC_API_KEY: Optional[str] = None
+    ANTHROPIC_API_KEY: str | None = None
 
     # Email
-    SMTP_HOST: Optional[str] = None
+    SMTP_HOST: str | None = None
     SMTP_PORT: int = 587
-    SMTP_USER: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
     EMAILS_FROM_EMAIL: str = "noreply@cereforge.io"
     EMAILS_FROM_NAME: str = "CereForge"
 
     # Storage
-    S3_BUCKET_NAME: Optional[str] = None
-    S3_REGION: Optional[str] = None
-    AWS_ACCESS_KEY_ID: Optional[str] = None
-    AWS_SECRET_ACCESS_KEY: Optional[str] = None
+    S3_BUCKET_NAME: str | None = None
+    S3_REGION: str | None = None
+    AWS_ACCESS_KEY_ID: str | None = None
+    AWS_SECRET_ACCESS_KEY: str | None = None
 
     # Monitoring
-    SENTRY_DSN: Optional[str] = None
+    SENTRY_DSN: str | None = None
 
     @property
     def cors_origins(self) -> list[str]:
@@ -66,4 +65,4 @@ class Settings(BaseSettings):
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
-settings = Settings()
+settings = Settings()  # type: ignore

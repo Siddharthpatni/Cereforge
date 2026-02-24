@@ -1,27 +1,38 @@
 """Community routes: posts CRUD, comments, voting, AI assist."""
 
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
-from sqlalchemy import select, func, or_, desc
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
-from app.models.post import Post
+from app.api.deps import get_current_user, get_db
 from app.models.comment import Comment, Vote
+from app.models.post import Post
 from app.models.task import Task
+from app.models.user import User
 from app.schemas.post import (
-    PostCreate, PostUpdate, CommentCreate, VoteCreate,
-    PostResponse, PostListItem, PostListResponse, CommentResponse,
-    VoteResponse, AuthorResponse,
+    AuthorResponse,
+    CommentCreate,
+    PostCreate,
+    PostListItem,
+    PostListResponse,
+    PostResponse,
+    PostUpdate,
+    VoteCreate,
+    VoteResponse,
 )
-from app.services.xp_service import award_xp, XP_ANSWER_POSTED, XP_ANSWER_ACCEPTED, XP_POST_UPVOTED, XP_COMMENT_UPVOTED
 from app.services.badge_engine import check_and_award_badges
 from app.services.notification import create_notification
+from app.services.xp_service import (
+    XP_ANSWER_ACCEPTED,
+    XP_ANSWER_POSTED,
+    XP_COMMENT_UPVOTED,
+    XP_POST_UPVOTED,
+    award_xp,
+)
 
 router = APIRouter()
 
@@ -30,26 +41,26 @@ router = APIRouter()
 async def list_posts(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    track: Optional[str] = Query(None),
-    tag: Optional[str] = Query(None),
-    post_status: Optional[str] = Query(None, alias="status"),
-    sort: Optional[str] = Query("newest"),
-    beginner_friendly: Optional[bool] = Query(None),
-    search: Optional[str] = Query(None),
+    track: str | None = Query(None),
+    tag: str | None = Query(None),
+    post_status: str | None = Query(None, alias="status"),
+    sort: str | None = Query("newest"),
+    beginner_friendly: bool | None = Query(None),
+    search: str | None = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
 ):
     """List community posts with filters, sorting, and pagination."""
-    query = select(Post).where(Post.is_deleted == False)
+    query = select(Post).where(Post.is_deleted.is_(False))
 
     if track:
         query = query.where(Post.track == track)
     if tag:
-        query = query.where(Post.tags.any(tag))
+        query = query.where(Post.tags.any(tag))  # type: ignore
     if post_status:
         query = query.where(Post.status == post_status)
     if beginner_friendly:
-        query = query.where(Post.is_beginner_friendly == True)
+        query = query.where(Post.is_beginner_friendly)
     if search:
         query = query.where(
             or_(
@@ -81,7 +92,7 @@ async def list_posts(
     for post in posts:
         # Count comments
         comment_count_result = await db.execute(
-            select(func.count(Comment.id)).where(Comment.post_id == post.id, Comment.is_deleted == False)
+            select(func.count(Comment.id)).where(Comment.post_id == post.id, Comment.is_deleted.is_(False))
         )
         comment_count = comment_count_result.scalar() or 0
 
@@ -139,7 +150,7 @@ async def get_post(
 ):
     """Get a single post with threaded comments."""
     result = await db.execute(
-        select(Post).where(Post.id == post_id, Post.is_deleted == False)
+        select(Post).where(Post.id == post_id, Post.is_deleted.is_(False))
     )
     post = result.scalar_one_or_none()
     if not post:
@@ -152,7 +163,7 @@ async def get_post(
     # Get top-level comments (no parent)
     comments_result = await db.execute(
         select(Comment)
-        .where(Comment.post_id == post_id, Comment.parent_id == None, Comment.is_deleted == False)
+        .where(Comment.post_id == post_id, Comment.parent_id.is_(None), Comment.is_deleted.is_(False))
         .order_by(desc(Comment.is_accepted), desc(Comment.vote_score), Comment.created_at)
     )
     comments = comments_result.scalars().all()
@@ -188,7 +199,7 @@ async def update_post(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Update a post (author only)."""
-    result = await db.execute(select(Post).where(Post.id == post_id, Post.is_deleted == False))
+    result = await db.execute(select(Post).where(Post.id == post_id, Post.is_deleted.is_(False)))
     post = result.scalar_one_or_none()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
@@ -233,7 +244,7 @@ async def create_comment(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Add a comment (answer or reply) to a post."""
-    result = await db.execute(select(Post).where(Post.id == post_id, Post.is_deleted == False))
+    result = await db.execute(select(Post).where(Post.id == post_id, Post.is_deleted.is_(False)))
     post = result.scalar_one_or_none()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
@@ -277,7 +288,7 @@ async def accept_answer(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Accept a comment as the answer (post author only)."""
-    post_result = await db.execute(select(Post).where(Post.id == post_id, Post.is_deleted == False))
+    post_result = await db.execute(select(Post).where(Post.id == post_id, Post.is_deleted.is_(False)))
     post = post_result.scalar_one_or_none()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
@@ -440,7 +451,7 @@ async def ai_community_assist(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
 
     comments_result = await db.execute(
-        select(Comment).where(Comment.post_id == post_id, Comment.is_deleted == False, Comment.parent_id == None)
+        select(Comment).where(Comment.post_id == post_id, Comment.is_deleted.is_(False), Comment.parent_id.is_(None))
     )
     answers = [c.body for c in comments_result.scalars().all()]
 

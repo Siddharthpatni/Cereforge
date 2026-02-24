@@ -1,10 +1,10 @@
 """Post model (community Q&A)."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import String, Text, Integer, Boolean, DateTime, ForeignKey, Index
-from sqlalchemy.dialects.postgresql import UUID, ENUM, ARRAY
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -23,7 +23,7 @@ class Post(Base):
         ENUM("llm", "rag", "vision", "agents", name="track_enum", create_type=False),
         nullable=True,
     )
-    tags: Mapped[list] = mapped_column(ARRAY(String(50)), default=list, server_default="{}")
+    tags: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")
     colab_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
     status: Mapped[str] = mapped_column(post_status_enum, default="open", server_default="open")
     accepted_answer_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
@@ -35,12 +35,12 @@ class Post(Base):
     )
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     __table_args__ = (

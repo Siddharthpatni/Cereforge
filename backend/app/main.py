@@ -1,17 +1,17 @@
 """FastAPI application factory with middleware, CORS, and router mounting."""
 
-import uuid
 import time
+import uuid
 from contextlib import asynccontextmanager
+from datetime import UTC
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
 from loguru import logger
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
 from app.core.redis import close_redis
-
 
 # ── Security Headers Middleware ──────────────────────────────────────────────
 
@@ -101,7 +101,16 @@ def create_app() -> FastAPI:
             logger.warning("sentry-sdk not installed, skipping Sentry init")
 
     # Mount routers
-    from app.api.routes import auth, tasks, community, badges, leaderboard, learning_paths, users, dashboard
+    from app.api.routes import (
+        auth,
+        badges,
+        community,
+        dashboard,
+        leaderboard,
+        learning_paths,
+        tasks,
+        users,
+    )
 
     app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
     app.include_router(tasks.router, prefix="/api/v1/tasks", tags=["Tasks"])
@@ -115,7 +124,7 @@ def create_app() -> FastAPI:
     # ── Health endpoints ─────────────────────────────────────────────────
     @app.get("/api/v1/health", tags=["System"])
     async def health_check():
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         db_ok = True
         redis_ok = True
@@ -138,7 +147,7 @@ def create_app() -> FastAPI:
             "db": "connected" if db_ok else "disconnected",
             "redis": "connected" if redis_ok else "disconnected",
             "version": "1.0.0",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     @app.get("/api/v1/health/ready", tags=["System"])

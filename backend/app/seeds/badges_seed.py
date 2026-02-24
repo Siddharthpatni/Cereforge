@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.badge import Badge
 
-
 BADGES_DATA = [
     {
         "slug": "prompt-whisperer",

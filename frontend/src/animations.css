@@ -1,145 +1,149 @@
 /* Grid background pattern */
 .bg-grid-pattern {
-    background-size: 40px 40px;
-    background-image:
-        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
 }
 
 /* Badge cinematic background styles */
 .cinematic-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.95) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: radial-gradient(
+    circle at center,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.95) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
 
 /* Glow effects */
 .glow-primary {
-    box-shadow: 0 0 20px rgba(67, 56, 202, 0.4);
+  box-shadow: 0 0 20px rgba(67, 56, 202, 0.4);
 }
 
 .glow-success {
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
 }
 
 .glow-accent {
-    box-shadow: 0 0 30px var(--accent);
+  box-shadow: 0 0 30px var(--accent);
 }
 
 /* Loader animations */
 @keyframes spin-slow {
-    from {
-        transform: rotate(0deg);
-    }
+  from {
+    transform: rotate(0deg);
+  }
 
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-spin-slow {
-    animation: spin-slow 8s linear infinite;
+  animation: spin-slow 8s linear infinite;
 }
 
 /* XP addition pop animation */
 @keyframes xp-pop {
-    0% {
-        transform: scale(1) translateY(0);
-        opacity: 1;
-    }
+  0% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 
-    50% {
-        transform: scale(1.5) translateY(-20px);
-        opacity: 0.8;
-    }
+  50% {
+    transform: scale(1.5) translateY(-20px);
+    opacity: 0.8;
+  }
 
-    100% {
-        transform: scale(1) translateY(-40px);
-        opacity: 0;
-    }
+  100% {
+    transform: scale(1) translateY(-40px);
+    opacity: 0;
+  }
 }
 
 .animate-xp-pop {
-    animation: xp-pop 1s ease-out forwards;
+  animation: xp-pop 1s ease-out forwards;
 }
 
 /* Markdown prose styles for tasks and posts */
 .prose {
-    color: var(--foreground);
-    line-height: 1.6;
+  color: var(--foreground);
+  line-height: 1.6;
 }
 
 .prose p {
-    margin-bottom: 1em;
+  margin-bottom: 1em;
 }
 
 .prose h1,
 .prose h2,
 .prose h3,
 .prose h4 {
-    color: #fff;
-    font-weight: 600;
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
+  color: #fff;
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
 }
 
 .prose a {
-    color: var(--accent-secondary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+  color: var(--accent-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .prose a:hover {
-    color: var(--accent-llm);
+  color: var(--accent-llm);
 }
 
 .prose code {
-    font-family: var(--font-mono);
-    background-color: rgba(255, 255, 255, 0.1);
-    padding: 0.2em 0.4em;
-    border-radius: 4px;
-    font-size: 0.9em;
+  font-family: var(--font-mono);
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
 }
 
 .prose pre {
-    background-color: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1em;
-    overflow-x: auto;
-    margin-bottom: 1.5em;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1em;
+  overflow-x: auto;
+  margin-bottom: 1.5em;
 }
 
 .prose pre code {
-    background-color: transparent;
-    padding: 0;
-    border-radius: 0;
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
 }
 
 .prose ul,
 .prose ol {
-    margin-bottom: 1em;
-    padding-left: 1.5em;
+  margin-bottom: 1em;
+  padding-left: 1.5em;
 }
 
 .prose ul {
-    list-style-type: disc;
+  list-style-type: disc;
 }
 
 .prose ol {
-    list-style-type: decimal;
+  list-style-type: decimal;
 }
 
 .prose blockquote {
-    border-left: 4px solid var(--border);
-    padding-left: 1em;
-    color: #a1a1aa;
-    /* zinc-400 */
-    font-style: italic;
-    margin-bottom: 1.5em;
+  border-left: 4px solid var(--border);
+  padding-left: 1em;
+  color: #a1a1aa;
+  /* zinc-400 */
+  font-style: italic;
+  margin-bottom: 1.5em;
 }
