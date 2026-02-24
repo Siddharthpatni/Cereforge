@@ -64,25 +64,25 @@ export function Profile() {
         <div className="p-6 sm:p-8 pt-0 relative flex flex-col sm:flex-row gap-6 sm:items-end -mt-12 sm:-mt-16">
           <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-2xl bg-zinc-950 border-4 border-card flex items-center justify-center shadow-xl shrink-0 z-10">
             <span className="text-4xl sm:text-5xl font-bold font-mono text-zinc-400">
-              {profileUser.username.charAt(0).toUpperCase()}
+              {profileUser.user.username.charAt(0).toUpperCase()}
             </span>
           </div>
 
           <div className="flex-1 pb-2 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
             <div>
               <h1 className="text-3xl font-bold text-white tracking-tight">
-                {profileUser.username}
+                {profileUser.user.username}
               </h1>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <Badge
                   variant="outline"
                   className="text-primary border-primary bg-primary/5"
                 >
-                  {profileUser.rank_title}
+                  {profileUser.rank?.name || "Initiate"}
                 </Badge>
                 <span className="text-sm text-zinc-400 flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5" /> Joined{" "}
-                  {format(new Date(profileUser.created_at), "MMMM yyyy")}
+                  {format(new Date(profileUser.user.created_at), "MMMM yyyy")}
                 </span>
               </div>
             </div>
@@ -106,7 +106,7 @@ export function Profile() {
         <div className="grid grid-cols-3 divide-x divide-border/50 border-t border-border/50 bg-zinc-900/30">
           <div className="p-4 text-center">
             <div className="text-2xl font-bold text-white font-mono">
-              {profileUser.total_xp.toLocaleString()}
+              {profileUser.stats.xp.toLocaleString()}
             </div>
             <div className="text-xs text-zinc-500 uppercase font-semibold">
               Total XP
@@ -114,7 +114,7 @@ export function Profile() {
           </div>
           <div className="p-4 text-center">
             <div className="text-2xl font-bold text-white font-mono">
-              {profileUser.completed_tasks?.length || 0}
+              {profileUser.stats.tasks_completed || 0}
             </div>
             <div className="text-xs text-zinc-500 uppercase font-semibold">
               Tasks Completed
@@ -122,7 +122,7 @@ export function Profile() {
           </div>
           <div className="p-4 text-center">
             <div className="text-2xl font-bold text-white font-mono">
-              {profileUser.badges?.length || 0}
+              {profileUser.stats.badges_earned || 0}
             </div>
             <div className="text-xs text-zinc-500 uppercase font-semibold">
               Badges Earned
@@ -143,9 +143,9 @@ export function Profile() {
 
               {profileUser.badges && profileUser.badges.length > 0 ? (
                 <div className="grid grid-cols-3 gap-3">
-                  {profileUser.badges.map(({ badge }) => (
+                  {profileUser.badges.map((badge) => (
                     <div
-                      key={badge.id}
+                      key={badge.slug}
                       className="group relative flex flex-col items-center p-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-primary/50 transition-colors"
                     >
                       <span className="text-3xl mb-1 group-hover:scale-110 transition-transform">
@@ -181,35 +181,35 @@ export function Profile() {
               </div>
 
               <div className="divide-y divide-border/50">
-                {profileUser.completed_tasks &&
-                  profileUser.completed_tasks.length > 0 ? (
-                  profileUser.completed_tasks.map((taskLog) => (
+                {profileUser.completions &&
+                  profileUser.completions.length > 0 ? (
+                  profileUser.completions.map((taskLog, idx) => (
                     <div
-                      key={taskLog.id}
+                      key={taskLog.task_slug || idx}
                       className="p-4 sm:p-6 hover:bg-zinc-900/30 transition-colors flex items-center justify-between"
                     >
                       <div>
                         <Link
-                          to={`/tasks/${taskLog.task.slug}`}
+                          to={`/tasks/${taskLog.task_slug}`}
                           className="text-white font-medium hover:text-primary transition-colors block mb-1"
                         >
-                          {taskLog.task.title}
+                          {taskLog.task_title}
                         </Link>
                         <p className="text-xs text-zinc-500">
                           Completed{" "}
-                          {formatDistanceToNow(new Date(taskLog.completed_at))}{" "}
+                          {formatDistanceToNow(new Date(taskLog.submitted_at))}{" "}
                           ago
                         </p>
                       </div>
                       <div className="flex gap-2">
                         <Badge
-                          variant={taskLog.task.track}
+                          variant={taskLog.track}
                           className="text-[10px]"
                         >
-                          {taskLog.task.track.toUpperCase()}
+                          {(taskLog.track || "mission").toUpperCase()}
                         </Badge>
                         <span className="text-xs text-primary font-mono bg-primary/10 px-2 py-1 rounded inline-flex items-center">
-                          +{taskLog.xp_awarded} XP
+                          +{taskLog.xp_earned} XP
                         </span>
                       </div>
                     </div>
@@ -256,7 +256,7 @@ export function Profile() {
                             {post.comment_count || 0}
                           </span>
                           <span className="flex items-center gap-1">
-                            Score: {post.score}
+                            Score: {post.vote_score || 0}
                           </span>
                         </div>
                       </Link>

@@ -49,7 +49,7 @@ export function PathDetail() {
   const handleEnroll = async () => {
     setEnrolling(true);
     try {
-      await apiClient.post(`/paths/${path.id}/enroll`);
+      await apiClient.post(`/paths/${path.slug}/enroll`);
       addToast({
         title: "Enrolled",
         message: `You have joined ${path.title}!`,
@@ -79,7 +79,9 @@ export function PathDetail() {
     );
   if (!path) return null;
 
-  const isEnrolled = path.student_progress !== null;
+  const isEnrolled = path.enrolled;
+  const numTasks = path.task_sequence?.length || path.total_tasks || 0;
+  const numCompleted = Math.round((path.progress / 100) * numTasks) || 0;
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
@@ -136,18 +138,18 @@ export function PathDetail() {
                     Path Progress
                   </span>
                   <span className="text-white font-bold">
-                    {path.student_progress.completed_tasks} / {path.total_tasks}
+                    {numCompleted} / {numTasks}
                   </span>
                 </div>
                 <div className="w-full bg-zinc-900 rounded-full h-2.5 overflow-hidden mb-4 border border-zinc-800">
                   <div
                     className="bg-primary h-2.5 rounded-full transition-all duration-700"
                     style={{
-                      width: `${path.total_tasks > 0 ? (path.student_progress.completed_tasks / path.total_tasks) * 100 : 0}%`,
+                      width: `${path.progress || 0}%`,
                     }}
                   />
                 </div>
-                {path.student_progress.completed_tasks === path.total_tasks ? (
+                {path.progress >= 100 ? (
                   <div className="flex items-center justify-center gap-2 text-success font-medium bg-success/10 py-2 rounded-lg border border-success/20">
                     <CheckCircle className="h-5 w-5" /> Path Completed
                   </div>

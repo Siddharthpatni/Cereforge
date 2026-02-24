@@ -115,7 +115,7 @@ export function Leaderboard() {
                         )}
                       >
                         <td className="py-4 px-6 flex items-center justify-center">
-                          {getRankIcon(entry.rank)}
+                          {getRankIcon(entry.position)}
                         </td>
                         <td className="py-4 px-6">
                           <Link
@@ -130,7 +130,7 @@ export function Leaderboard() {
                                 {entry.user.username}
                               </div>
                               <div className="text-xs text-primary font-mono">
-                                {entry.user.rank_title}
+                                {entry.rank?.name || "Initiate"}
                               </div>
                             </div>
                           </Link>
@@ -142,7 +142,7 @@ export function Leaderboard() {
                           {entry.tasks_completed}
                         </td>
                         <td className="py-4 px-6 text-right font-mono font-bold text-white">
-                          {entry.total_xp.toLocaleString()}
+                          {entry.xp.toLocaleString()}
                         </td>
                       </tr>
                     ))}
