@@ -118,23 +118,34 @@ Three structured paths for different starting points:
 
 ---
 
-## Quick Start
+## Quick Start (For Reviewers / Professors)
+
+The easiest way to evaluate CereForge locally is using the one-click startup script. This script automatically generates secure environment variables, boots the Docker containers, runs database migrations, and seeds the initial AI tasks and learning paths.
 
 ```bash
 git clone https://github.com/Siddharthpatni/Cereforge.git
 cd Cereforge
 
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-# Edit backend/.env — add your database URL and generate JWT secrets
-
-docker compose up --build -d
-docker compose exec backend alembic upgrade head
-docker compose exec backend python -m app.seeds.run_all
-
-open http://localhost:5173
+# Run the 1-click setup script
+./start_demo.sh
 ```
-API docs: `http://localhost:8000/docs`
+
+**What the script does automatically:**
+1. Copies `.env.example` configurations and generates secure JWT tokens.
+2. Builds and starts the `docker-compose` stack (PostgreSQL, Redis, FastAPI, React/Vite, Celery).
+3. Waits for the database to become healthy.
+4. Runs SQLAlchemy Alembic migrations to create tables.
+5. Runs the seed scripts (`python -m app.seeds.run_all`) to populate tasks, users, and community data.
+
+**Once finished, access the platform at:**
+- Web Sandbox: `http://localhost:5173`
+- Backend API Docs: `http://localhost:8000/docs`
+
+**Pre-seeded Demo Accounts:**
+- `admin@cereforge.io` (Admin)
+- `newuser@example.com` (Beginner)
+- `pro@example.com` (Expert)
+*(Password for all demo accounts: `password123`)*
 
 ---
 
