@@ -1,5 +1,8 @@
 """Authentication routes: register, login, refresh, logout, me."""
 
+from __future__ import annotations
+
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -58,7 +61,8 @@ async def register(
         background=data.background,
     )
     db.add(user)
-    await db.flush()
+    await db.commit()
+    await db.refresh(user)
 
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
@@ -77,8 +81,6 @@ async def register(
         welcome_message = f"Welcome to CereForge, {user.username}! 🧪 Great that you have ML experience. Dive into our intermediate and expert tasks to level up your AI engineering skills."
     elif data.skill_level == "advanced":
         welcome_message = f"Welcome to CereForge, {user.username}! ⚡ Expert detected. Go straight to the expert-level tasks and show the community what you've got."
-
-    await db.commit()
 
     return RegisterResponse(
         access_token=access_token,
