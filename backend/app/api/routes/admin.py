@@ -10,7 +10,6 @@ from sqlalchemy.orm import selectinload
 from app.api.deps import get_current_user, get_db
 from app.models.post import Post
 from app.models.submission import TaskSubmission
-from app.models.task import Task
 from app.models.user import User
 
 router = APIRouter()

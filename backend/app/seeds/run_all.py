@@ -6,9 +6,9 @@ import asyncio
 
 from app.core.database import async_session_factory
 from app.seeds.badges_seed import seed_badges
+from app.seeds.community_seed import seed_community
 from app.seeds.paths_seed import seed_paths
 from app.seeds.tasks_seed import seed_tasks
-from app.seeds.community_seed import seed_community
 
 
 async def run_all_seeds():

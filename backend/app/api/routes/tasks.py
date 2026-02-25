@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Optional
 import asyncio
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -22,9 +22,9 @@ from app.schemas.task import (
     TaskSubmissionCreate,
     TaskSubmissionResponse,
 )
+from app.services.ai_detector import analyze_submission
 from app.services.badge_engine import check_and_award_badges
 from app.services.xp_service import award_xp, calculate_rank
-from app.services.ai_detector import analyze_submission
 
 router = APIRouter()
 

@@ -109,6 +109,7 @@ def create_app() -> FastAPI:
 
     # Mount routers
     from app.api.routes import (
+        admin,
         auth,
         badges,
         community,
@@ -117,7 +118,6 @@ def create_app() -> FastAPI:
         learning_paths,
         tasks,
         users,
-        admin,
     )
 
     app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])

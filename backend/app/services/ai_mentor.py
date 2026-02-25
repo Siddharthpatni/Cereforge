@@ -1,7 +1,6 @@
 """AI Mentor service — Google Gemini integration for guidance and community assist."""
 
 from __future__ import annotations
-import asyncio
 
 from collections.abc import AsyncGenerator
 

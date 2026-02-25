@@ -1,12 +1,15 @@
 """Seed community posts and comments."""
 
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import select
-from app.models.user import User
-from app.models.post import Post
-from app.models.comment import Comment, Vote
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.security import hash_password
+from app.models.comment import Comment
+from app.models.post import Post
+from app.models.user import User
+
 
 async def seed_community(db: AsyncSession) -> None:
     print("Seeding community posts...")
