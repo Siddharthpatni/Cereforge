@@ -40,8 +40,8 @@
       <br/><em>Task Detail — Beginner guide, AI Mentor, and Colab integration</em>
     </td>
     <td align="center" width="50%">
-      <img src="docs/screenshots/task-detail.png" alt="Task Interface" width="100%"/>
-      <br/><em>Task Interface — In-Browser coding environment</em>
+      <img src="docs/screenshots/paths.png" alt="Learning Paths" width="100%"/>
+      <br/><em>Learning Paths — Curated challenge sequences to master specific domains</em>
     </td>
   </tr>
   <tr>
