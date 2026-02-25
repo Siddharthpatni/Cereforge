@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, Sparkles } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAuthStore } from "@/stores/authStore";
-import apiClient from "@/api/client";
 import { cn } from "@/utils/cn";
 
 export function AIMentorPanel({ taskSlug }) {
