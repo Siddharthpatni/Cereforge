@@ -64,7 +64,7 @@ async def get_community_assist(
     client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
     answers_text = (
-        "\n\n---\n\n".join([f"Answer {i+1}: {a}" for i, a in enumerate(answers)])
+        "\n\n---\n\n".join([f"Answer {i + 1}: {a}" for i, a in enumerate(answers)])
         if answers
         else "No answers yet."
     )
