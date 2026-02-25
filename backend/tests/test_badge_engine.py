@@ -24,7 +24,7 @@ async def test_first_task_awards_zero_to_ai(client):
     """Absolute beginner submitting first task gets 'zero-to-ai' badge."""
     data = await register_user(client, username="badge_first", skill_level="absolute_beginner")
     token = data["access_token"]
-    resp = await submit_task(client, token, "test-task-llm-0")
+    resp = await submit_task(client, token, "llm-prompt-chain")
     assert resp.status_code == 200
     result = resp.json()
     badge_slugs = [b["slug"] for b in result.get("newly_earned_badges", [])]
@@ -36,7 +36,7 @@ async def test_llm_task_awards_prompt_whisperer(client):
     """Submitting an LLM task awards 'prompt-whisperer' badge."""
     data = await register_user(client, username="badge_llm", skill_level="some_python")
     token = data["access_token"]
-    resp = await submit_task(client, token, "test-task-llm-0")
+    resp = await submit_task(client, token, "llm-prompt-chain")
     assert resp.status_code == 200
     result = resp.json()
     badge_slugs = [b["slug"] for b in result.get("newly_earned_badges", [])]
@@ -49,9 +49,9 @@ async def test_all_llm_tasks_awards_chain_master(client):
     data = await register_user(client, username="badge_chain")
     token = data["access_token"]
     # LLM tasks are at indices 0, 4, 8
-    await submit_task(client, token, "test-task-llm-0")
-    await submit_task(client, token, "test-task-llm-4")
-    resp = await submit_task(client, token, "test-task-llm-8")
+    await submit_task(client, token, "llm-prompt-chain")
+    await submit_task(client, token, "llm-token-optimizer")
+    resp = await submit_task(client, token, "llm-finetuning-blueprint")
     assert resp.status_code == 200
     result = resp.json()
     badge_slugs = [b["slug"] for b in result.get("newly_earned_badges", [])]
@@ -63,10 +63,10 @@ async def test_one_per_track_awards_full_stack_ai(client):
     """Completing one task per track awards 'full-stack-ai' badge."""
     data = await register_user(client, username="badge_fullstack")
     token = data["access_token"]
-    await submit_task(client, token, "test-task-llm-0")
-    await submit_task(client, token, "test-task-rag-1")
-    await submit_task(client, token, "test-task-vision-2")
-    resp = await submit_task(client, token, "test-task-agents-3")
+    await submit_task(client, token, "llm-prompt-chain")
+    await submit_task(client, token, "rag-intro-flow")
+    await submit_task(client, token, "cv-real-world-survey")
+    resp = await submit_task(client, token, "agent-fundamentals")
     assert resp.status_code == 200
     result = resp.json()
     badge_slugs = [b["slug"] for b in result.get("newly_earned_badges", [])]
@@ -79,11 +79,11 @@ async def test_badge_awarded_once(client):
     data = await register_user(client, username="badge_once")
     token = data["access_token"]
     # Submit first LLM task — gets zero-to-ai
-    resp1 = await submit_task(client, token, "test-task-llm-0")
+    resp1 = await submit_task(client, token, "llm-prompt-chain")
     badges1 = [b["slug"] for b in resp1.json().get("newly_earned_badges", [])]
     assert "zero-to-ai" in badges1
 
     # Submit second task — zero-to-ai should NOT appear again
-    resp2 = await submit_task(client, token, "test-task-rag-1")
+    resp2 = await submit_task(client, token, "rag-intro-flow")
     badges2 = [b["slug"] for b in resp2.json().get("newly_earned_badges", [])]
     assert "zero-to-ai" not in badges2

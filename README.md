@@ -1,49 +1,56 @@
-# 🧠 CereForge
-### The AI & Autonomous Systems Learning Platform
+<div align="center">
+  <img src="docs/screenshots/dashboard.png" alt="CereForge Dashboard" width="100%" />
 
-> **Forge Your AI Mind.** Build real AI engineering skills through structured challenges,
-> earn XP and badges, and get help from a community of engineers who've been exactly
-> where you are.
+  # 🧠 CereForge
+  **The AI & Autonomous Systems Learning Platform**
+  
+  <p>
+    > <b>Forge Your AI Mind.</b> Build real AI engineering skills through structured challenges,
+    > earn XP and badges, and get help from a community of engineers who've been exactly
+    > where you are.
+  </p>
 
-[![CI](https://github.com/Siddharthpatni/Cereforge/actions/workflows/ci.yml/badge.svg)](https://github.com/Siddharthpatni/Cereforge/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![React 18](https://img.shields.io/badge/react-18-61dafb.svg)](https://react.dev/)
+  [![CI](https://github.com/Siddharthpatni/Cereforge/actions/workflows/ci.yml/badge.svg)](https://github.com/Siddharthpatni/Cereforge/actions)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+  [![React 18](https://img.shields.io/badge/react-18-61dafb.svg)](https://react.dev/)
 
----
-
-## 📋 Table of Contents
-
-- [What is CereForge?](#what-is-cereforge)
-- [Architecture & Tech Stack](#architecture--tech-stack)
-- [Features](#features)
-- [System Integrity Updates](#system-integrity-updates)
-- [Quick Start](#quick-start)
-- [Running with Docker](#running-with-docker)
-- [Manual Setup](#manual-setup)
-- [API Documentation](#api-documentation)
-- [Running Tests](#running-tests)
-- [Contributing](#contributing)
+</div>
 
 ---
 
-## What is CereForge?
+## ✨ Features & Interface
 
-CereForge is an open-source competitive learning platform built specifically for
-AI & Autonomous Systems engineers. Think Kaggle meets Stack Overflow, focused exclusively
-on the skills that matter in production AI:
+CereForge is not just another tutorial site. It's a gamified, hands-on proving ground tailored for modern **AI & Autonomous Systems**.
 
-- **LLM Engineering** — Prompt chains, fine-tuning, token optimization
-- **RAG Pipelines** — Vector stores, chunking strategies, hallucination prevention
-- **Computer Vision** — Object detection, multimodal systems, edge deployment
-- **Autonomous Agents** — LangChain agents, multi-agent systems, LangGraph
+### 🔐 Seamless Authentication & Onboarding
+Dive straight into your AI journey. Our intuitive onboarding customizes your learning path based on your existing skill level.
 
-Whether you have zero AI experience or you're already shipping production models,
-CereForge has a path for you.
+<div align="center">
+  <img src="docs/screenshots/auth.png" alt="Auth Screen" width="800" />
+</div>
+
+### 🎯 Structured Task System
+Tackle 12 progressive AI engineering challenges covering:
+- **LLM Engineering** (Prompt chains, token optimization)
+- **RAG Pipelines** (Vector stores, chunking, hallucination guardrails)
+- **Computer Vision** (Multimodal systems, YOLO, object detection)
+- **Autonomous Agents** (LangChain, LangGraph, Multi-Agent systems)
+
+<div align="center">
+  <img src="docs/screenshots/tasks.png" alt="Task Listing" width="800" />
+</div>
+
+### 💬 Vibrant Community
+Ask questions, share solutions, and vote on the best answers. Our Stack Overflow-style forum encourages collaboration and rewards helpful contributors with bonus XP and badges like *Community Sage*.
+
+<div align="center">
+  <img src="docs/screenshots/post.png" alt="Community Post" width="800" />
+</div>
 
 ---
 
-## Architecture & Tech Stack
+## 🏗️ Architecture & Tech Stack
 
 CereForge is built on a modern, decoupled architecture designed for high throughput and robust state management.
 
@@ -61,50 +68,7 @@ CereForge is built on a modern, decoupled architecture designed for high through
 
 ---
 
-## Features
-
-**🎯 Task System**
-12 hands-on AI engineering challenges with increasing difficulty. Each task includes
-plain-English explanations for beginners, technical deep-dives for experts, and a
-Google Colab notebook for practical implementation.
-
-**🏆 Gamification**
-Earn XP and climb through 5 ranks (Trainee → CereForge Elite). Unlock 12 badges
-with a cinematic reveal animation. A living leaderboard shows where you stand.
-
-**💬 Community Q&A**
-Stack Overflow-style discussion forum where engineers ask questions, share solutions,
-and vote on the best answers. Accepted answers award bonus XP to both asker and answerer.
-
-**🧠 AI Mentor**
-Powered by Claude (Anthropic). Adapts its guidance to your skill level — plain English
-analogies for beginners, precise technical language for engineers. Guides you toward
-the answer without giving it away.
-
----
-
-## System Integrity Updates
-
-CereForge has undergone extensive infrastructural hardening to ensure stable CI/CD deployments and rock-solid React mount lifetimes:
-
-### 1. Robust API Routing & Pytest Integrity
-- **Community & Voting Routes mapped:** Both `community.router` and `vote_router` instances are precisely mounted into the `main.py` entrypoint, eliminating 404 endpoint misses during unit testing.
-- **SQLAlchemy Safeguards:** The platform mitigates "fully NULL primary key" warnings by deliberately flushing transactions and hydrating newly committed objects prior to lazy-loading deeply connected relationships like User Profiles and Authors.
-- **Dependency Upgrades:** Replaced deprecated `passlib` hashing with native `bcrypt` encoding, safeguarding future Python compatibility.
-
-### 2. CI/CD Database Normalization
-The GitHub Actions workflow reliably boots testing environments using decoupled configurations:
-- Custom container execution flags (`--health-cmd "pg_isready -U cereforge"`) prevent Docker from falsely pinging PostgreSQL instances via the OS default `root` role.
-- Dynamic `TEST_DATABASE_URL` injections ensure the Pytest suite ignores local SQLite fallbacks, integrating seamlessly with the ephemeral Postgres orchestration on CI.
-
-### 3. Frontend React Suspense Boundaries
-- The application guarantees zero blank-page crashes on delayed network states by wrapping `App.jsx` entrypoints within `React.Suspense`. 
-- Graceful degradation through aesthetic `PageSkeleton` components provide a premium loading experience.
-- The `authStore.js` integrates a Zustand-persistent `isInitializing` lock, preventing the UI DOM from ever painting protected elements until identity verification calls completely resolve.
-
----
-
-## Quick Start
+## � Quick Start
 
 The fastest way to run CereForge locally:
 
@@ -118,7 +82,7 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 
 # 3. Start everything with Docker
-docker compose up --build
+docker compose up --build -d
 
 # 4. In a new terminal, run database migrations and seed data
 docker compose exec backend alembic upgrade head
@@ -128,11 +92,11 @@ docker compose exec backend python -m app.seeds.run_all
 open http://localhost:5173
 ```
 
-The API docs are available at http://localhost:8000/docs
+The API docs are available at `http://localhost:8000/docs`
 
 ---
 
-## Running Test Suites
+## 🧪 Running Test Suites
 
 **Backend Testing Segment** (Reaches 100% Coverage Pass Rates)
 ```bash
@@ -149,12 +113,13 @@ pytest tests/ -v --cov=app --cov-report=term-missing
 **Frontend Rendering Checks**
 ```bash
 cd frontend
-npm run test -- --run
+npm run lint
+npm run build
 ```
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Focus areas include:
 - New challenge tasks and engineering content matrices.
@@ -163,7 +128,7 @@ Contributions are welcome! Focus areas include:
 **Before submitting a PR:**
 1. Open an issue first to discuss the change
 2. Ensure the GitHub Actions CI Pipeline remains fully green!
-3. All tests must pass: `pytest tests/` and `npm run test -- --run`
+3. All tests must pass: `pytest tests/` and `npm run lint`
 
 ```bash
 git clone https://github.com/your-username/Cereforge.git
@@ -174,6 +139,6 @@ git push origin feature/your-feature-name
 
 ---
 
-## License
+## 📄 License
 
 MIT License — see [LICENSE](LICENSE) file for details.

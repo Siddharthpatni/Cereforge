@@ -44,7 +44,7 @@ const Profile = React.lazy(() =>
 import PageSkeleton from "./components/ui/PageSkeleton";
 
 function App() {
-  const { isInitializing, init } = useAuthStore();
+  const { isInitializing, init, isAuthenticated } = useAuthStore();
 
   // On mount, sync fresh user state
   useEffect(() => {
@@ -62,7 +62,7 @@ function App() {
           <Route
             path="/auth"
             element={
-              useAuthStore.getState().isAuthenticated ? (
+              isAuthenticated ? (
                 <Navigate to="/" replace />
               ) : (
                 <Auth />

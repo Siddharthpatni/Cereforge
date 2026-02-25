@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+from typing import Optional
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import ARRAY, JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import ENUM, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,9 +24,9 @@ class LearningPath(Base):
     slug: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    for_skill_levels: Mapped[list] = mapped_column(JSON, nullable=False)
+    for_skill_levels: Mapped[list] = mapped_column(ARRAY(String), nullable=False)
     duration_days: Mapped[int] = mapped_column(Integer, nullable=False)
-    task_sequence: Mapped[list] = mapped_column(JSON, nullable=False)
+    task_sequence: Mapped[list] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     display_order: Mapped[int] = mapped_column(Integer, nullable=False)
 
@@ -63,7 +64,7 @@ class PathLesson(Base):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     lesson_type: Mapped[str] = mapped_column(lesson_type_enum, nullable=False)
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
-    external_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    external_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     display_order: Mapped[int] = mapped_column(Integer, nullable=False)
 
     # Relationships
@@ -81,7 +82,7 @@ class PathEnrollment(Base):
         UUID(as_uuid=True), ForeignKey("learning_paths.id"), nullable=False
     )
     enrolled_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
     __table_args__ = ({"sqlite_autoincrement": True},)

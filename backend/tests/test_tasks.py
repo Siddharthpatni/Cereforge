@@ -55,10 +55,10 @@ async def test_get_task_detail(client):
     """GET /tasks/{slug} returns full task with beginner_guide and hint."""
     data = await register_user(client, username="taskdetail_user")
     token = data["access_token"]
-    resp = await client.get("/api/v1/tasks/test-task-llm-0", headers=auth_headers(token))
+    resp = await client.get("/api/v1/tasks/llm-prompt-chain", headers=auth_headers(token))
     assert resp.status_code == 200
     task = resp.json()
-    assert task["slug"] == "test-task-llm-0"
+    assert task["slug"] == "llm-prompt-chain"
     assert "beginner_guide" in task
     assert "hint" in task
 
@@ -78,7 +78,7 @@ async def test_submit_task_success(client):
     data = await register_user(client, username="submitter1")
     token = data["access_token"]
     resp = await client.post(
-        "/api/v1/tasks/test-task-llm-0/submit",
+        "/api/v1/tasks/llm-prompt-chain/submit",
         headers=auth_headers(token),
         json={
             "solution_text": "My comprehensive solution involves chaining three prompts together. First extracts sentiment. Second rewrites in professional tone. Third generates action items based on findings." * 2,
@@ -96,7 +96,7 @@ async def test_submit_task_too_short(client):
     data = await register_user(client, username="shortsubmit")
     token = data["access_token"]
     resp = await client.post(
-        "/api/v1/tasks/test-task-llm-0/submit",
+        "/api/v1/tasks/llm-prompt-chain/submit",
         headers=auth_headers(token),
         json={"solution_text": "Short"},
     )
@@ -111,9 +111,9 @@ async def test_submit_task_twice(client):
     payload = {
         "solution_text": "A comprehensive solution that meets the minimum length requirement for valid submissions in the CereForge platform." * 2,
     }
-    resp1 = await client.post("/api/v1/tasks/test-task-rag-1/submit", headers=auth_headers(token), json=payload)
+    resp1 = await client.post("/api/v1/tasks/rag-intro-flow/submit", headers=auth_headers(token), json=payload)
     assert resp1.status_code == 200
-    resp2 = await client.post("/api/v1/tasks/test-task-rag-1/submit", headers=auth_headers(token), json=payload)
+    resp2 = await client.post("/api/v1/tasks/rag-intro-flow/submit", headers=auth_headers(token), json=payload)
     assert resp2.status_code == 409
 
 
@@ -123,7 +123,7 @@ async def test_submit_awards_xp(client):
     data = await register_user(client, username="xpcheck")
     token = data["access_token"]
     await client.post(
-        "/api/v1/tasks/test-task-vision-2/submit",
+        "/api/v1/tasks/cv-vision-language/submit",
         headers=auth_headers(token),
         json={
             "solution_text": "A detailed solution covering all aspects of computer vision task implementation with edge cases handled." * 3,
@@ -141,7 +141,7 @@ async def test_task_shows_completed_after_submit(client):
     data = await register_user(client, username="completedcheck")
     token = data["access_token"]
     await client.post(
-        "/api/v1/tasks/test-task-agents-3/submit",
+        "/api/v1/tasks/agent-fundamentals/submit",
         headers=auth_headers(token),
         json={
             "solution_text": "Building an autonomous agent that handles multi-step reasoning with proper error recovery and fallback strategies." * 3,
@@ -149,6 +149,6 @@ async def test_task_shows_completed_after_submit(client):
     )
     resp = await client.get("/api/v1/tasks", headers=auth_headers(token))
     tasks = resp.json()
-    submitted = [t for t in tasks if t["slug"] == "test-task-agents-3"]
+    submitted = [t for t in tasks if t["slug"] == "agent-fundamentals"]
     assert len(submitted) == 1
     assert submitted[0]["completed"] is True

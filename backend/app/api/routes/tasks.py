@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -191,7 +191,7 @@ async def submit_task(
     )
 
 
-@router.get("/{slug}/submissions", response_model=SubmissionDetailResponse | None)
+@router.get("/{slug}/submissions", response_model=Optional[SubmissionDetailResponse])
 async def get_submission(
     slug: str,
     db: Annotated[AsyncSession, Depends(get_db)],

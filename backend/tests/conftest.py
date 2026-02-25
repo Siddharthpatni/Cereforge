@@ -1,156 +1,137 @@
-"""Shared test fixtures for the CereForge test suite."""
-
 from __future__ import annotations
 
-
 import asyncio
-
-# Use SQLite in-memory for tests (fast, no external DB needed)
-# For integration tests requiring Postgres features, set TEST_DATABASE_URL env var
-import os
-import uuid
-from collections.abc import AsyncGenerator
-
 import pytest
 import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
-from app.api.deps import get_db
-from app.core.database import Base
-from app.main import app
-from app.models.badge import Badge
-from app.models.task import Task
-
-TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL",
-    "sqlite+aiosqlite:///./test.db"
+from httpx import AsyncClient, ASGITransport
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    create_async_engine,
+    async_sessionmaker,
 )
 
-engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-TestSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+from app.main import app
+from app.core.config import settings
+from app.core.database import Base
+from app.api.deps import get_db
+from app.seeds.tasks_seed import seed_tasks
+from app.seeds.badges_seed import seed_badges
 
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an instance of the default event loop for the whole session."""
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
+    yield loop
+    loop.close()
 
-async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with TestSessionLocal() as session:
-        try:
-            yield session
-        except Exception:
-            await session.rollback()
-            raise
+# ── Test database engine ──────────────────────────────────────────────────
+# Uses the same DATABASE_URL from settings but appended with _test
+# This keeps tests isolated from development data
+TEST_DB_URL = str(settings.DATABASE_URL).replace(
+    "5433/cereforge", "5433/cereforge_test"
+).replace("5432/cereforge", "5432/cereforge_test")
 
+from sqlalchemy.pool import NullPool
+test_engine = create_async_engine(
+    TEST_DB_URL,
+    echo=False,
+    poolclass=NullPool,
+)
 
-app.dependency_overrides[get_db] = override_get_db
+TestSessionFactory = async_sessionmaker(
+    test_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=True,
+)
 
-
-import pytest
-pytest_plugins = ('anyio',)
-
-
+# ── Create and tear down schema once per test session ────────────────────
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_database():
-    """Create all tables at session start, drop at end."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
-    async with engine.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+    # Seed reference data (tasks and badges) once
+    async with TestSessionFactory() as session:
+        await seed_tasks(session)
+        await seed_badges(session)
+        await session.commit()
+    yield
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    await test_engine.dispose()
 
+# ── One fresh session per test, rolled back after ────────────────────────
+@pytest_asyncio.fixture(scope="function")
+async def db_session():
+    """
+    Each test gets its own transaction that is rolled back at the end.
+    This means:
+      - Tests never see each other's data
+      - No cleanup needed between tests
+      - No "another operation is in progress" conflicts
+    """
+    async with test_engine.connect() as conn:
+        await conn.begin()
+        session = AsyncSession(
+            bind=conn,
+            expire_on_commit=False,
+            autocommit=False,
+            autoflush=True,
+        )
+        yield session
+        await session.close()
+        await conn.rollback()
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
-async def seed_test_data(setup_database):
-    """Seed tasks and badges for tests."""
-    async with TestSessionLocal() as db:
-        # Seed 12 tasks
-        tracks = ["llm", "rag", "vision", "agents"]
-        difficulties = ["beginner", "intermediate", "expert"]
-        for i in range(12):
-            track = tracks[i % 4]
-            difficulty = difficulties[i % 3]
-            task = Task(
-                slug=f"test-task-{track}-{i}",
-                track=track,
-                difficulty=difficulty,
-                title=f"Test Task {track.upper()} #{i}",
-                description=f"A comprehensive test task for {track} engineering that covers advanced concepts and practical implementation patterns." * 3,
-                beginner_guide=f"Start by understanding what {track} means in the context of AI engineering. Think of it like building blocks." * 3,
-                hint=f"Consider using the {track} approach with careful attention to edge cases and error handling patterns." * 2,
-                xp_reward=[50, 150, 300][i % 3],
-                display_order=i,
-                colab_url=f"https://colab.research.google.com/drive/test-{track}-{i}",
-            )
-            db.add(task)
+# ── HTTP client with db override ─────────────────────────────────────────
+@pytest_asyncio.fixture(scope="function")
+async def client(db_session: AsyncSession):
+    """
+    HTTP client that uses the test db_session for every request.
+    The app's get_db dependency is overridden so every route handler
+    receives the same session that the test is using.
+    """
+    async def override_get_db():
+        yield db_session
 
-        # Assign known slugs for specific test cases
+    app.dependency_overrides[get_db] = override_get_db
 
-        # Seed 12 badges with proper JSON dicts compatible with badge_engine.py
-        badge_data = [
-            ("zero-to-ai", "Zero to AI", "🚀", "total_tasks", {"total_tasks": 1}, 25),
-            ("prompt-whisperer", "Prompt Whisperer", "🧠", "track_count", {"track": "llm", "count": 1}, 25),
-            ("chain-master", "Chain Master", "🔗", "track_count", {"track": "llm", "count": 3}, 75),
-            ("memory-architect", "Memory Architect", "🗄️", "track_count", {"track": "rag", "count": 1}, 25),
-            ("retrieval-expert", "Retrieval Expert", "📡", "track_count", {"track": "rag", "count": 3}, 75),
-            ("vision-pioneer", "Vision Pioneer", "👁️", "track_count", {"track": "vision", "count": 1}, 25),
-            ("perception-master", "Perception Master", "🔮", "track_count", {"track": "vision", "count": 3}, 75),
-            ("agent-builder", "Agent Builder", "🤖", "track_count", {"track": "agents", "count": 1}, 25),
-            ("autonomy-architect", "Autonomy Architect", "🌐", "track_count", {"track": "agents", "count": 3}, 75),
-            ("full-stack-ai", "Full Stack AI", "🌐", "all_tracks", {}, 100),
-            ("community-sage", "Community Sage", "💬", "accepted_answers", {"count": 1}, 50),
-            ("cereforge-elite", "CereForge Elite", "👑", "total_tasks", {"total_tasks": 12}, 200),
-        ]
-        for idx, (slug, name, icon, ctype, cval, xp) in enumerate(badge_data):
-            badge = Badge(
-                slug=slug,
-                name=name,
-                icon=icon,
-                condition_type=ctype,
-                condition_value=cval,
-                xp_bonus=xp,
-                description=f"Awarded for: {ctype}",
-                display_order=idx,
-            )
-            db.add(badge)
-
-        await db.commit()
-
-
-@pytest_asyncio.fixture
-async def client() -> AsyncGenerator[AsyncClient, None]:
-    """Async HTTP client for testing the FastAPI app."""
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"  # type: ignore
+        transport=ASGITransport(app=app),
+        base_url="http://test",
     ) as ac:
         yield ac
 
+    app.dependency_overrides.clear()
 
-@pytest_asyncio.fixture
-async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Direct database session for test setup/teardown."""
-    async with TestSessionLocal() as session:
-        yield session
-
-
-# ── Helper functions ──────────────────────────────────────────────────
-
+# ── Helper functions ──────────────────────────────────────────────────────
 async def register_user(
     client: AsyncClient,
+    username: str = "testuser",
     email: str | None = None,
     password: str = "TestPass123!",
     skill_level: str = "absolute_beginner",
-    username: str | None = None,
 ) -> dict:
-    """Register a user and return the full response dict."""
-    email = email or f"test-{uuid.uuid4().hex[:8]}@example.com"
-    username = username or f"user_{uuid.uuid4().hex[:8]}"
-    response = await client.post("/api/v1/auth/register", json={
-        "username": username,
-        "email": email,
-        "password": password,
-        "skill_level": skill_level,
-    })
-    return response.json() if response.status_code == 201 else {"_response": response}
-
+    """Register a user and return the response data including access_token."""
+    if email is None:
+        import uuid
+        email = f"test-{uuid.uuid4().hex[:8]}@example.com"
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": username,
+            "email": email,
+            "password": password,
+            "skill_level": skill_level,
+        },
+    )
+    assert resp.status_code == 201, (
+        f"Registration failed: {resp.status_code} {resp.text}"
+    )
+    return resp.json()
 
 def auth_headers(token: str) -> dict:
-    """Return Authorization header dict."""
+    """Return Authorization headers for a given token."""
     return {"Authorization": f"Bearer {token}"}
