@@ -1,5 +1,8 @@
 """Shared test fixtures for the CereForge test suite."""
 
+from __future__ import annotations
+
+
 import asyncio
 
 # Use SQLite in-memory for tests (fast, no external DB needed)
@@ -40,11 +43,8 @@ async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
 app.dependency_overrides[get_db] = override_get_db
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+import pytest
+pytest_plugins = ('anyio',)
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
@@ -82,7 +82,6 @@ async def seed_test_data(setup_database):
             db.add(task)
 
         # Assign known slugs for specific test cases
-        await db.get(Task, None)  # will use slug-based queries instead
 
         # Seed 12 badges with proper JSON dicts compatible with badge_engine.py
         badge_data = [
