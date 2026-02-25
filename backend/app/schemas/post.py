@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from datetime import datetime
 from uuid import UUID
 
@@ -93,7 +92,7 @@ class CommentResponse(BaseModel):
     is_accepted: bool
     created_at: datetime
     updated_at: datetime
-    replies: list["CommentResponse"] = []
+    replies: list[CommentResponse] = []
 
     model_config = {"from_attributes": True}
 

@@ -1,9 +1,9 @@
 """TaskSubmission model."""
 
 from __future__ import annotations
-from typing import Optional
+
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
@@ -23,11 +23,11 @@ class TaskSubmission(Base):
         UUID(as_uuid=True), ForeignKey("tasks.id"), nullable=False
     )
     solution_text: Mapped[str] = mapped_column(Text, nullable=False)
-    colab_link: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    colab_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     xp_awarded: Mapped[int] = mapped_column(Integer, nullable=False)
     submitted_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
     __table_args__ = (UniqueConstraint("user_id", "task_id", name="uq_user_task_submission"),)

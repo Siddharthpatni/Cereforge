@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-
 import time
 import uuid
 from contextlib import asynccontextmanager
-from datetime import timezone
+from datetime import UTC
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -159,7 +158,7 @@ def create_app() -> FastAPI:
             "db": "connected" if db_ok else "disconnected",
             "redis": "connected" if redis_ok else "disconnected",
             "version": "1.0.0",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     @app.get("/api/v1/health/ready", tags=["System"])

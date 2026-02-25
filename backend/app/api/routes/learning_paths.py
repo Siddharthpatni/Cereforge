@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -137,11 +136,12 @@ async def get_learning_path(
     if path.task_sequence:
         tasks_result = await db.execute(select(Task).where(Task.id.in_(path.task_sequence)))
         tasks_db = {t.id: t for t in tasks_result.scalars().all()}
-        
+
         for tid in path.task_sequence:
             t = tasks_db.get(tid)
             if t:
                 from app.schemas.common import TaskBasicResponse
+
                 tasks_data.append(
                     TaskBasicResponse(
                         id=t.id,

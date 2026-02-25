@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from collections.abc import AsyncGenerator
 
 from app.core.config import settings

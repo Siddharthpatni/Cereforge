@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
@@ -41,7 +40,7 @@ class UserBadge(Base):
         UUID(as_uuid=True), ForeignKey("badges.id"), nullable=False
     )
     earned_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
     __table_args__ = (UniqueConstraint("user_id", "badge_id", name="uq_user_badge"),)

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 import asyncio
 
 from app.core.database import async_session_factory

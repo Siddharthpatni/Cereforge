@@ -1,9 +1,9 @@
 """Learning path, module, lesson, and enrollment models."""
 
 from __future__ import annotations
-from typing import Optional
+
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import ENUM, UUID
@@ -63,7 +63,7 @@ class PathLesson(Base):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     lesson_type: Mapped[str] = mapped_column(lesson_type_enum, nullable=False)
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
-    external_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    external_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     display_order: Mapped[int] = mapped_column(Integer, nullable=False)
 
     # Relationships
@@ -81,7 +81,7 @@ class PathEnrollment(Base):
         UUID(as_uuid=True), ForeignKey("learning_paths.id"), nullable=False
     )
     enrolled_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
     __table_args__ = ({"sqlite_autoincrement": True},)
