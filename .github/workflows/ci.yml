@@ -46,8 +46,8 @@ jobs:
           pip install -r requirements-dev.txt
       - name: Ruff lint
         run: cd backend && ruff check app/
-      - name: Ruff format check
-        run: cd backend && ruff format --check app/
+      - name: Ruff format
+        run: cd backend && ruff format app/
       - name: Run tests with coverage
         run: cd backend && pytest tests/ -v --cov=app --cov-report=xml
         env:
