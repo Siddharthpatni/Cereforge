@@ -1,5 +1,8 @@
 """Redis client for caching and sessions."""
 
+from __future__ import annotations
+
+
 import redis.asyncio as redis
 
 from app.core.config import settings
