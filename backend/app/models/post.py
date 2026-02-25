@@ -29,6 +29,7 @@ class Post(Base):
         nullable=True,
     )
     from sqlalchemy.dialects.postgresql import ARRAY
+
     tags: Mapped[list] = mapped_column(ARRAY(String), default=list, server_default="{}")
     colab_link: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     status: Mapped[str] = mapped_column(post_status_enum, default="open", server_default="open")

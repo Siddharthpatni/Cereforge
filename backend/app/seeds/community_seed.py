@@ -65,7 +65,7 @@ async def seed_community(db: AsyncSession) -> None:
             "status": "solved",
             "votes": 8,
             "answer": "use RAG when data changes frequently or you need source citations, use fine-tuning when you want consistent tone/style and data is stable. For support tickets RAG is usually better because new products and policies change the answers over time.",
-            "is_beginner_friendly": False
+            "is_beginner_friendly": False,
         },
         {
             "title": "Getting hallucinations in my medical RAG — how to detect them?",
@@ -75,7 +75,7 @@ async def seed_community(db: AsyncSession) -> None:
             "status": "open",
             "votes": 2,
             "answer": None,
-            "is_beginner_friendly": False
+            "is_beginner_friendly": False,
         },
         {
             "title": "LangChain vs LlamaIndex — which should I learn first?",
@@ -85,7 +85,7 @@ async def seed_community(db: AsyncSession) -> None:
             "status": "solved",
             "votes": 5,
             "answer": "LangChain for agents and chains, LlamaIndex for document indexing and RAG. If you want to build agents start with LangChain. If your focus is document search start with LlamaIndex. Most production systems eventually use both.",
-            "is_beginner_friendly": True
+            "is_beginner_friendly": True,
         },
         {
             "title": "YOLO vs Detectron2 for production object detection",
@@ -95,7 +95,7 @@ async def seed_community(db: AsyncSession) -> None:
             "status": "open",
             "votes": 4,
             "answer": None,
-            "is_beginner_friendly": False
+            "is_beginner_friendly": False,
         },
         {
             "title": "My vector similarity scores are all between 0.85 and 0.95 — is that normal?",
@@ -105,7 +105,7 @@ async def seed_community(db: AsyncSession) -> None:
             "status": "solved",
             "votes": 6,
             "answer": "this is normal with cosine similarity on dense embeddings. The absolute score is less meaningful than the relative ranking. Use the top-k retrieved by rank not by threshold. Consider switching to dot product similarity if using normalized embeddings for better spread.",
-            "is_beginner_friendly": True
+            "is_beginner_friendly": True,
         },
         {
             "title": "How do multi-agent systems handle conflicting outputs from different agents?",
@@ -115,14 +115,14 @@ async def seed_community(db: AsyncSession) -> None:
             "status": "open",
             "votes": 3,
             "answer": None,
-            "is_beginner_friendly": False
-        }
+            "is_beginner_friendly": False,
+        },
     ]
 
     for p_data in posts_data:
         if p_data["title"] in existing_titles:
             continue
-            
+
         post = Post(
             id=uuid.uuid4(),
             author_id=team_user.id,
@@ -132,11 +132,11 @@ async def seed_community(db: AsyncSession) -> None:
             tags=p_data["tags"],
             status=p_data["status"],
             is_beginner_friendly=p_data["is_beginner_friendly"],
-            vote_score=p_data["votes"]
+            vote_score=p_data["votes"],
         )
         db.add(post)
         await db.flush()
-        
+
         # Add answer if any
         if p_data["answer"]:
             comment = Comment(
@@ -145,11 +145,11 @@ async def seed_community(db: AsyncSession) -> None:
                 author_id=team_user.id,
                 body=p_data["answer"],
                 is_accepted=True,
-                vote_score=p_data["votes"] // 2
+                vote_score=p_data["votes"] // 2,
             )
             db.add(comment)
             await db.flush()
-            
+
             post.accepted_answer_id = comment.id
 
     await db.commit()

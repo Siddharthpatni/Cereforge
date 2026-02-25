@@ -17,7 +17,7 @@ async def analyze_submission(solution_content: str, user_skill: str, task_diffic
         triggers.append("Extremely short submission content (<50 chars).")
 
     # Check for obvious AI hallmarks
-    ai_keywords = r'(?i)\b(openai|chatgpt|as an ai|language model|knowledge cutoff)\b'
+    ai_keywords = r"(?i)\b(openai|chatgpt|as an ai|language model|knowledge cutoff)\b"
     if re.search(ai_keywords, solution_content):
         score += 0.5
         triggers.append("Obvious AI hallmark keywords detected ('OpenAI', 'ChatGPT', etc).")
@@ -26,7 +26,7 @@ async def analyze_submission(solution_content: str, user_skill: str, task_diffic
     if user_skill == "absolute_beginner" and task_difficulty == "expert":
         score += 0.4
         triggers.append("Suspiciously high performance (Beginner solving Expert task).")
-        
+
     if task_difficulty == "beginner" and user_skill == "advanced":
         score -= 0.2
         triggers.append("Advanced user doing beginner task (score reduced).")
@@ -37,8 +37,4 @@ async def analyze_submission(solution_content: str, user_skill: str, task_diffic
 
     reason_str = " | ".join(triggers) if triggers else "No suspicious triggers detected."
 
-    return {
-        "score": round(final_score, 2),
-        "is_flagged": is_flagged,
-        "reason": reason_str
-    }
+    return {"score": round(final_score, 2), "is_flagged": is_flagged, "reason": reason_str}

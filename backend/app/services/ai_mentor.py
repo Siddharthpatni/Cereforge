@@ -18,6 +18,7 @@ MENTOR_SYSTEM_PROMPT = """You are CereForge AI Mentor, an expert AI engineering 
 
 COMMUNITY_SYSTEM_PROMPT = """You are an AI assistant analyzing a community Q&A discussion. Provide a concise summary of the question and existing answers, then add any important technical insights that were missed. Be precise. Format as: Summary | Key Points from Answers | Additional Insights | Recommended Next Steps. Stay within the domain of AI engineering."""
 
+
 async def get_mentor_guidance(
     task_title: str,
     task_description: str,
@@ -41,13 +42,14 @@ async def get_mentor_guidance(
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
                 temperature=0.7,
-            )
+            ),
         )
         async for chunk in response:
             if chunk.text:
                 yield chunk.text
     except Exception as e:
         yield f"Error communicating with AI Mentor: {str(e)}"
+
 
 async def get_community_assist(
     post_title: str,
@@ -76,7 +78,7 @@ async def get_community_assist(
             config=types.GenerateContentConfig(
                 system_instruction=COMMUNITY_SYSTEM_PROMPT,
                 temperature=0.3,
-            )
+            ),
         )
         async for chunk in response:
             if chunk.text:

@@ -30,7 +30,7 @@ class TaskSubmission(Base):
     submitted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
-    
+
     # AI Detection Flags
     is_ai_flagged: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     ai_flag_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)

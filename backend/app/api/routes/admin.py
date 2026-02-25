@@ -14,9 +14,12 @@ from app.models.user import User
 
 router = APIRouter()
 
+
 async def require_admin(current_user: Annotated[User, Depends(get_current_user)]) -> User:
     if not current_user.is_admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required"
+        )
     return current_user
 
 
@@ -32,10 +35,14 @@ async def get_admin_stats(
     total_submissions_result = await db.execute(select(func.count(TaskSubmission.id)))
     total_submissions = total_submissions_result.scalar() or 0
 
-    flagged_result = await db.execute(select(func.count(TaskSubmission.id)).where(TaskSubmission.is_ai_flagged.is_(True)))
+    flagged_result = await db.execute(
+        select(func.count(TaskSubmission.id)).where(TaskSubmission.is_ai_flagged.is_(True))
+    )
     total_flagged = flagged_result.scalar() or 0
 
-    active_posts_result = await db.execute(select(func.count(Post.id)).where(Post.is_deleted.is_(False)))
+    active_posts_result = await db.execute(
+        select(func.count(Post.id)).where(Post.is_deleted.is_(False))
+    )
     total_active_posts = active_posts_result.scalar() or 0
 
     return {
@@ -44,6 +51,7 @@ async def get_admin_stats(
         "total_flagged": total_flagged,
         "total_active_posts": total_active_posts,
     }
+
 
 @router.get("/submissions")
 async def get_recent_submissions(
@@ -58,7 +66,7 @@ async def get_recent_submissions(
         .limit(50)
     )
     submissions = result.scalars().all()
-    
+
     return [
         {
             "id": str(sub.id),
@@ -71,6 +79,7 @@ async def get_recent_submissions(
         for sub in submissions
     ]
 
+
 @router.get("/users")
 async def get_all_users(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -79,9 +88,9 @@ async def get_all_users(
     """Retrieve all users."""
     result = await db.execute(select(User).order_by(User.created_at.desc()))
     users = result.scalars().all()
-    
+
     from app.services.xp_service import calculate_rank
-    
+
     return [
         {
             "id": str(u.id),
@@ -90,10 +99,11 @@ async def get_all_users(
             "xp": u.xp,
             "rank": calculate_rank(u.xp)["name"],
             "created_at": u.created_at.isoformat(),
-            "is_admin": u.is_admin
+            "is_admin": u.is_admin,
         }
         for u in users
     ]
+
 
 @router.get("/ai-flagged")
 async def get_ai_flagged(
@@ -108,7 +118,7 @@ async def get_ai_flagged(
         .order_by(TaskSubmission.ai_flag_score.desc())
     )
     submissions = result.scalars().all()
-    
+
     return [
         {
             "id": str(sub.id),
