@@ -155,8 +155,12 @@ sequenceDiagram
     API->>DB: SELECT * FROM users WHERE email
     DB-->>API: User Record + Hashed Password
     API->>API: Verify Password
-    API->>API: Generate Access & Refresh JWT Tokens
-    API-->>U: 200 OK (access_token)
+    alt Invalid Credentials
+        API-->>U: 401 Unauthorized ("Incorrect email or password")
+    else Valid Credentials
+        API->>API: Generate Access & Refresh JWT Tokens
+        API-->>U: 200 OK (access_token)
+    end
     
     %% Subsequent Request
     U->>API: GET /api/v1/dashboard (Header: Bearer {token})
