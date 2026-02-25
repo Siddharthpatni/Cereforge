@@ -42,54 +42,37 @@ const Profile = React.lazy(() =>
   import("./pages/Profile").then((m) => ({ default: m.Profile })),
 );
 
-// Loading Fallback Component
-const PageLoader = () => (
-  <div className="flex h-full min-h-[50vh] w-full items-center justify-center">
-    <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-800 border-t-primary"></div>
-  </div>
-);
+import PageSkeleton from "./components/ui/PageSkeleton";
 
 function App() {
-  const { isAuthenticated, setUser, logout } = useAuthStore();
+  const { isInitializing, init } = useAuthStore();
 
   // On mount, sync fresh user state
   useEffect(() => {
-    if (isAuthenticated) {
-      apiClient
-        .get("/auth/me")
-        .then((res) => setUser(res.data.user, res.data.rank))
-        .catch((err) => {
-          console.error("Failed to fetch user data on mount", err);
-          if (err.response?.status === 401) logout();
-        });
-    }
-  }, [isAuthenticated, setUser, logout]);
+    init();
+  }, [init]);
+
+  if (isInitializing) {
+    return <PageSkeleton />;
+  }
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route
-          path="/auth"
-          element={
-            isAuthenticated ? (
-              <Navigate to="/" replace />
-            ) : (
-              <Suspense fallback={<PageLoader />}>
-                <Auth />
-              </Suspense>
-            )
-          }
-        />
-
-        {/* Authenticated Routes wrapped in Layout */}
-        <Route path="/" element={<Layout />}>
+      <Suspense fallback={<PageSkeleton />}>
+        <Routes>
           <Route
+            path="/auth"
             element={
-              <Suspense fallback={<PageLoader />}>
-                <Outlet />
-              </Suspense>
+              useAuthStore.getState().isAuthenticated ? (
+                <Navigate to="/" replace />
+              ) : (
+                <Auth />
+              )
             }
-          >
+          />
+
+          {/* Authenticated Routes wrapped in Layout */}
+          <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="tasks" element={<Tasks />} />
             <Route path="tasks/:slug" element={<TaskDetail />} />
@@ -99,12 +82,12 @@ function App() {
             <Route path="paths" element={<Paths />} />
             <Route path="paths/:slug" element={<PathDetail />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="profile/:username" element={<Profile />} />
           </Route>
-        </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* Catch-all unknown routes */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
