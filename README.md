@@ -36,12 +36,32 @@
   </tr>
   <tr>
     <td align="center" width="50%">
+      <img src="docs/screenshots/task-detail.png" alt="Task Detail" width="100%"/>
+      <br/><em>Task Detail — Beginner guide, AI Mentor, and Colab integration</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/task-detail.png" alt="Task Interface" width="100%"/>
+      <br/><em>Task Interface — In-Browser coding environment</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
       <img src="docs/screenshots/post.png" alt="Community Q&A" width="100%"/>
       <br/><em>Community — Stack Overflow-style Q&A for AI engineers</em>
     </td>
     <td align="center" width="50%">
+      <img src="docs/screenshots/leaderboard.png" alt="Leaderboard" width="100%"/>
+      <br/><em>Leaderboard — See where you rank against other engineers</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
       <img src="docs/screenshots/auth.png" alt="Registration" width="100%"/>
       <br/><em>Registration — Skill-level selector for personalized experience</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/mobile.png" alt="Mobile View" width="100%"/>
+      <br/><em>Mobile — Fully responsive on all screen sizes</em>
     </td>
   </tr>
 </table>
