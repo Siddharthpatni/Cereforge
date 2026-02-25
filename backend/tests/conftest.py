@@ -28,9 +28,11 @@ def event_loop():
 # ── Test database engine ──────────────────────────────────────────────────
 # Uses the same DATABASE_URL from settings but appended with _test
 # This keeps tests isolated from development data
-TEST_DB_URL = str(settings.DATABASE_URL).replace(
-    "5433/cereforge", "5433/cereforge_test"
-).replace("5432/cereforge", "5432/cereforge_test")
+TEST_DB_URL = str(settings.DATABASE_URL)
+if "cereforge_test" not in TEST_DB_URL:
+    TEST_DB_URL = TEST_DB_URL.replace(
+        "5433/cereforge", "5433/cereforge_test"
+    ).replace("5432/cereforge", "5432/cereforge_test")
 
 from sqlalchemy.pool import NullPool
 test_engine = create_async_engine(
