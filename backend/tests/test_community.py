@@ -1,5 +1,8 @@
 """Tests for community endpoints: posts, comments, voting, accept answer."""
 
+from __future__ import annotations
+
+
 import pytest
 
 from tests.conftest import auth_headers, register_user

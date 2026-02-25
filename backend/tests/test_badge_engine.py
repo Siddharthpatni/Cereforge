@@ -1,5 +1,8 @@
 """Tests for the badge engine: badge awards on task completion."""
 
+from __future__ import annotations
+
+
 import pytest
 
 from tests.conftest import auth_headers, register_user

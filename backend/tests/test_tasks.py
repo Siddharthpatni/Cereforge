@@ -1,5 +1,8 @@
 """Tests for task endpoints: list, detail, submission, badge triggers."""
 
+from __future__ import annotations
+
+
 import pytest
 
 from tests.conftest import auth_headers, register_user
