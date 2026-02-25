@@ -1,5 +1,8 @@
 """Initialize all models so they are registered with SQLAlchemy declarative base."""
 
+from __future__ import annotations
+
+
 from app.models.badge import Badge, UserBadge
 from app.models.comment import Comment, Vote
 from app.models.learning_path import LearningPath, PathEnrollment, PathLesson, PathModule
