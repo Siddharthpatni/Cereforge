@@ -20,7 +20,7 @@ export const useAuthStore = create(
         }
         try {
           // Dynamic import to avoid strict circular dependency block if apiClient imports authStore
-          const { default: apiClient } = await import("../../api/client");
+          const { default: apiClient } = await import("../api/client");
           const res = await apiClient.get("/auth/me");
           setUser(res.data.user, res.data.rank);
         } catch (err) {
