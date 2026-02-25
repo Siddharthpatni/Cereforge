@@ -36,8 +36,8 @@
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="docs/screenshots/auth.png" alt="Login page" width="100%"/>
-      <br/><em>Login page </em>
+      <img src="docs/screenshots/auth.png" alt="Registration" width="100%"/>
+      <br/><em>Registration — Skill-level selector for personalized experience</em>
     </td>
     <td align="center" width="50%">
       <img src="docs/screenshots/paths.png" alt="Learning Paths" width="100%"/>
@@ -53,13 +53,6 @@
       <img src="docs/screenshots/leaderboard.png" alt="Leaderboard" width="100%"/>
       <br/><em>Leaderboard — See where you rank against other engineers</em>
     </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/screenshots/auth.png" alt="Registration" width="100%"/>
-      <br/><em>Registration — Skill-level selector for personalized experience</em>
-    </td>
-   
   </tr>
 </table>
 
