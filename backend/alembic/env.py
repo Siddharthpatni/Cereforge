@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.database import Base
 
 # Import all models so they are registered with Base.metadata
+import app.models
 
 config = context.config
 

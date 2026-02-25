@@ -486,6 +486,10 @@ async def seed_tasks(db: AsyncSession):
         existing = await db.execute(select(Task).where(Task.slug == task_data["slug"]))
         task = existing.scalar_one_or_none()
 
+        sample_text = f"# Sample solution for {task_data['title']}\\n# Code goes here..."
+        if "sample_solution" not in task_data:
+            task_data["sample_solution"] = sample_text
+
         if task:
             # Update
             for key, value in task_data.items():

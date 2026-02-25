@@ -27,8 +27,9 @@ class Settings(BaseSettings):
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     JWT_ALGORITHM: str = "HS256"
 
-    # AI (Anthropic)
+    # AI
     ANTHROPIC_API_KEY: str | None = None
+    GEMINI_API_KEY: str | None = None
 
     # Email
     SMTP_HOST: str | None = None

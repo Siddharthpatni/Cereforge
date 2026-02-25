@@ -72,6 +72,7 @@ class TaskBasicResponse(BaseModel):
     difficulty: str
     xp_reward: int
     is_completed: bool = False
+    sample_solution: str | None = None
 
     model_config = {"from_attributes": True}
 

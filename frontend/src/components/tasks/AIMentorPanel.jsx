@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, Sparkles } from "lucide-react";
 import { Button } from "../ui/Button";
+import { useAuthStore } from "@/stores/authStore";
 import apiClient from "@/api/client";
 import { cn } from "@/utils/cn";
 
-export function AIMentorPanel({ taskId }) {
+export function AIMentorPanel({ taskSlug }) {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
@@ -37,32 +38,41 @@ export function AIMentorPanel({ taskId }) {
       // Create a temporary assistant message to show streaming
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
-      // NOTE: In a real app we would use fetch with Streams API to get chunks.
-      // For this implementation, we'll simulate the streaming locally after fetching the full response
-      // or just render it directly since the backend supports streaming but Axios doesn't handle it easily without custom adapter.
-      // To save time, we'll just await the full response text since we didn't set up the complex streaming chunk reader.
+      const token = useAuthStore.getState().accessToken;
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
-      const res = await apiClient.post(
-        `/ai/mentor/guidance?task_id=${taskId}`,
-        {
-          prompt: userMessage,
-          context_files: [], // No files for now
+      const res = await fetch(`${API_URL}/ai-mentor/guidance`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
-      );
-
-      // Simple non-streaming fallback render (assuming backend returns full text if not using EventSource)
-      // If backend forces stream, this might need parsing. Assuming simple JSON return for simplicity if not handled perfectly.
-      // Wait, our backend uses StreamingResponse. Axios will just get the whole blob.
-      const fullText = res.data;
-
-      setMessages((prev) => {
-        const newArr = [...prev];
-        newArr[newArr.length - 1].content =
-          typeof fullText === "string"
-            ? fullText
-            : fullText.message || "I couldn't process that.";
-        return newArr;
+        body: JSON.stringify({
+          task_slug: taskSlug,
+          user_message: userMessage,
+        }),
       });
+
+      if (!res.ok) {
+        throw new Error("Failed to get guidance");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        fullText += decoder.decode(value, { stream: true });
+
+        setMessages((prev) => {
+          const newArr = [...prev];
+          newArr[newArr.length - 1].content = fullText;
+          return newArr;
+        });
+      }
     } catch (err) {
       console.error(err);
       setMessages((prev) => {

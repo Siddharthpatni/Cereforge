@@ -40,8 +40,12 @@ const Leaderboard = React.lazy(() =>
 const Profile = React.lazy(() =>
   import("./pages/Profile").then((m) => ({ default: m.Profile })),
 );
+const Admin = React.lazy(() =>
+  import("./pages/Admin").then((m) => ({ default: m.Admin })),
+);
 
 import PageSkeleton from "./components/ui/PageSkeleton";
+import FullPageLoader from "./components/ui/FullPageLoader";
 
 function App() {
   const { isInitializing, init, isAuthenticated } = useAuthStore();
@@ -52,7 +56,7 @@ function App() {
   }, [init]);
 
   if (isInitializing) {
-    return <PageSkeleton />;
+    return <FullPageLoader />;
   }
 
   return (
@@ -81,6 +85,8 @@ function App() {
             <Route path="paths" element={<Paths />} />
             <Route path="paths/:slug" element={<PathDetail />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="profile/:username" element={<Profile />} />
+            <Route path="admin" element={<Admin />} />
           </Route>
 
           {/* Catch-all unknown routes */}

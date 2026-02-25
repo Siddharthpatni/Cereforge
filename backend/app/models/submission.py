@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, Boolean, Float
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,6 +30,11 @@ class TaskSubmission(Base):
     submitted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
+    
+    # AI Detection Flags
+    is_ai_flagged: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    ai_flag_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    ai_flag_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     __table_args__ = (UniqueConstraint("user_id", "task_id", name="uq_user_task_submission"),)
 

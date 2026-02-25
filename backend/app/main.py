@@ -117,6 +117,7 @@ def create_app() -> FastAPI:
         learning_paths,
         tasks,
         users,
+        admin,
     )
 
     app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
@@ -129,6 +130,7 @@ def create_app() -> FastAPI:
     app.include_router(learning_paths.router, prefix="/api/v1/paths", tags=["paths"])
     app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
     app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
+    app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
 
     # ── Health endpoints ─────────────────────────────────────────────────
     @app.get("/api/v1/health", tags=["System"])

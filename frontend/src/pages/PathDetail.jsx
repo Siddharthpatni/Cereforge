@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Lock,
   PlayCircle,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 
@@ -24,6 +25,11 @@ export function PathDetail() {
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [expandedModules, setExpandedModules] = useState({});
+  const [openSolutions, setOpenSolutions] = useState({});
+
+  const toggleSolution = (taskId) => {
+    setOpenSolutions((prev) => ({ ...prev, [taskId]: !prev[taskId] }));
+  };
 
   const fetchPath = async () => {
     try {
@@ -158,8 +164,9 @@ export function PathDetail() {
                     fullWidth
                     variant="outline"
                     className="border-primary/50 text-primary hover:bg-primary/10"
+                    onClick={() => navigate(`/tasks/${path.next_task}`)}
                   >
-                    Resume Curriculum
+                    {numCompleted === 0 ? "Start Curriculum" : "Resume Curriculum"}
                   </Button>
                 )}
               </div>
@@ -250,14 +257,18 @@ export function PathDetail() {
                                     </span>
                                   </div>
                                 </div>
-                                {isEnrolled && lesson.external_url ? (
+                                {isEnrolled ? (
                                   <a
-                                    href={lesson.external_url}
-                                    target="_blank"
+                                    href={lesson.external_url || "#"}
+                                    target={lesson.external_url ? "_blank" : "_self"}
                                     rel="noreferrer"
                                     className="shrink-0 p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                                   >
-                                    <ExternalLink className="h-5 w-5" />
+                                    {lesson.external_url ? (
+                                      <ExternalLink className="h-5 w-5" />
+                                    ) : (
+                                      <PlayCircle className="h-5 w-5" />
+                                    )}
                                   </a>
                                 ) : (
                                   <div className="shrink-0 p-2 rounded-full bg-zinc-800 text-zinc-500">
@@ -313,17 +324,39 @@ export function PathDetail() {
                       +{task.xp_reward} XP
                     </span>
                     {isEnrolled ? (
-                      <Link to={`/tasks/${task.slug}`}>
-                        <Button size="sm" variant={task.is_completed ? "outline" : "default"} className="h-8 shadow-[0_0_10px_rgba(67,56,202,0.2)]">
-                          {task.is_completed ? "Review Code" : "Start Mission"}
-                        </Button>
-                      </Link>
+                      <div className="flex gap-2">
+                        {task.is_completed && task.sample_solution && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 text-xs text-zinc-400 hover:text-white"
+                            onClick={() => toggleSolution(task.id)}
+                          >
+                            {openSolutions[task.id] ? "Hide Solution" : "View Solution"}
+                          </Button>
+                        )}
+                        <Link to={`/tasks/${task.slug}`}>
+                          <Button size="sm" variant={task.is_completed ? "outline" : "default"} className="h-8 shadow-[0_0_10px_rgba(67,56,202,0.2)]">
+                            {task.is_completed ? "Review Code" : "Start Mission"}
+                          </Button>
+                        </Link>
+                      </div>
                     ) : (
                       <Button size="sm" variant="ghost" disabled className="h-8">
                         <Lock className="h-3.5 w-3.5 mr-1" /> Locked
                       </Button>
                     )}
                   </div>
+
+                  {/* Sample Solution Expansion */}
+                  {openSolutions[task.id] && task.sample_solution && (
+                    <div className="mt-4 pt-4 border-t border-zinc-800">
+                      <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wider font-semibold">Official Solution</p>
+                      <pre className="bg-zinc-950 p-3 rounded-lg border border-zinc-800 text-xs text-zinc-300 font-mono overflow-x-auto">
+                        {task.sample_solution}
+                      </pre>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

@@ -88,8 +88,27 @@ export function Auth() {
         });
       }
     } catch (err) {
-      const msg =
-        err.response?.data?.detail || "An error occurred. Please try again.";
+      let msg = "An error occurred. Please try again.";
+      const detail = err.response?.data?.detail;
+
+      if (detail) {
+        if (Array.isArray(detail)) {
+          // FastAPI validation errors
+          msg = detail.map(e => e.msg || e.type).join(", ");
+        } else if (typeof detail === "string") {
+          msg = detail;
+        }
+      } else if (err.message) {
+        msg = err.message;
+      }
+
+      // Provide better fallback messages for common scenarios
+      if (err.response?.status === 401 || msg.toLowerCase().includes("incorrect")) {
+        msg = "Incorrect username or password. Please verify your credentials block and try again.";
+      } else if (msg === "Network Error") {
+        msg = "Unable to reach the server. Please check your connection.";
+      }
+
       addToast({ title: "Authentication Failed", message: msg, type: "error" });
     } finally {
       setLoading(false);

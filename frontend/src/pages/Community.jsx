@@ -18,6 +18,7 @@ import { formatDistanceToNow } from "date-fns";
 export function Community() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
   const [tagFilter, setTagFilter] = useState("");
 
@@ -35,12 +36,16 @@ export function Community() {
     setLoading(true);
     try {
       const url = tagFilter
-        ? `/community/posts?tag=${tagFilter}`
-        : "/community/posts";
+        ? `/posts?tag=${tagFilter}`
+        : search
+          ? `/posts?search=${search}`
+          : "/posts";
       const res = await apiClient.get(url);
       setPosts(res.data.items || res.data); // depending on pagination response
+      setError(false);
     } catch (err) {
       console.error(err);
+      setError(true);
       addToast({
         title: "Error",
         message: "Failed to load community posts",
@@ -66,7 +71,7 @@ export function Community() {
         .split(",")
         .map((t) => t.trim())
         .filter(Boolean);
-      const res = await apiClient.post("/community/posts", {
+      const res = await apiClient.post("/posts", {
         title: newTitle,
         content: newContent,
         tags: tagsArray,
@@ -147,9 +152,29 @@ export function Community() {
 
       {/* List */}
       <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-        {loading ? (
-          <div className="flex justify-center p-12">
-            <Zap className="h-8 w-8 animate-spin-slow text-primary" />
+        {error ? (
+          <div className="p-12 text-center text-red-500">
+            <p>Could not load posts. Try again.</p>
+            <Button onClick={fetchPosts} variant="outline" className="mt-4">Retry</Button>
+          </div>
+        ) : loading ? (
+          <div className="divide-y divide-border/50">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="p-4 sm:p-6 flex gap-4 animate-pulse">
+                <div className="w-8 h-12 bg-zinc-800 rounded shrink-0"></div>
+                <div className="flex-1 space-y-3">
+                  <div className="h-5 bg-zinc-800 rounded w-3/4"></div>
+                  <div className="h-4 bg-zinc-800 rounded w-full"></div>
+                  <div className="h-3 bg-zinc-800 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="p-12 text-center text-zinc-500">
+            <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
+            <p className="mb-4">No community posts yet. Be the first to start a discussion!</p>
+            <Button onClick={() => setIsModalOpen(true)}>Ask the First Question</Button>
           </div>
         ) : filteredPosts.length > 0 ? (
           <div className="divide-y divide-border/50">

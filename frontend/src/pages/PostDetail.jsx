@@ -100,7 +100,7 @@ function CommentNode({ comment, postAuthorId, onVote, onAccept, onReply }) {
           <div
             className="prose prose-sm prose-invert max-w-none text-zinc-300"
             dangerouslySetInnerHTML={{
-              __html: comment.content
+              __html: (comment.body || "")
                 .replace(/\n\n/g, "<br/><br/>")
                 .replace(/`([^`]+)`/g, "<code>$1</code>"),
             }}
@@ -182,7 +182,7 @@ export function PostDetail() {
 
   const fetchPost = async () => {
     try {
-      const res = await apiClient.get(`/community/posts/${postId}`);
+      const res = await apiClient.get(`/posts/${postId}`);
       setPost(res.data);
     } catch {
       addToast({
@@ -203,12 +203,11 @@ export function PostDetail() {
 
   const handleVote = async (id, value, targetType = "post") => {
     try {
-      const endpoint =
-        targetType === "post"
-          ? `/community/posts/${id}/vote?value=${value}`
-          : `/community/comments/${id}/vote?value=${value}`;
-
-      await apiClient.post(endpoint);
+      await apiClient.post("/vote", {
+        target_id: id,
+        target_type: targetType,
+        value: value,
+      });
 
       // Optimistic update would go here for a production app
       // For simplicity, just refetch
@@ -225,7 +224,7 @@ export function PostDetail() {
   const handleAcceptAnswer = async (commentId) => {
     try {
       await apiClient.post(
-        `/community/posts/${postId}/accept?comment_id=${commentId}`,
+        `/posts/${postId}/comments/${commentId}/accept`
       );
       addToast({
         title: "Answer Accepted",
@@ -244,8 +243,8 @@ export function PostDetail() {
 
   const handlePostComment = async (parentId, content) => {
     try {
-      await apiClient.post(`/community/posts/${postId}/comments`, {
-        content: content,
+      await apiClient.post(`/posts/${postId}/comments`, {
+        body: content,
         parent_id: parentId,
       });
       addToast({
@@ -275,9 +274,9 @@ export function PostDetail() {
   const requestAISummary = async () => {
     setSummarizing(true);
     try {
-      const res = await apiClient.post(
-        `/ai/mentor/community-assist?post_id=${postId}`,
-      );
+      const res = await apiClient.post("/ai-mentor/community-assist", {
+        post_id: postId,
+      });
       setAiSummary(res.data.summary || res.data); // depending on backend structure
     } catch {
       addToast({
@@ -375,7 +374,7 @@ export function PostDetail() {
           <div
             className="prose prose-invert max-w-none text-zinc-200"
             dangerouslySetInnerHTML={{
-              __html: post.content
+              __html: (post.body || "")
                 .replace(/\n\n/g, "<br/><br/>")
                 .replace(/`([^`]+)`/g, "<code>$1</code>"),
             }}

@@ -14,6 +14,7 @@ export const useAuthStore = create(
 
       init: async () => {
         const { isAuthenticated, setUser, logout } = get();
+        set({ isInitializing: true });
         if (!isAuthenticated) {
           set({ isInitializing: false });
           return;

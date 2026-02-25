@@ -7,8 +7,10 @@ import {
   Trophy,
   Map,
   User,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
+import { useAuthStore } from "@/stores/authStore";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -21,6 +23,7 @@ const navigation = [
 
 export function Sidebar({ className }) {
   const location = useLocation();
+  const { user } = useAuthStore();
 
   return (
     <div
@@ -59,6 +62,23 @@ export function Sidebar({ className }) {
           );
         })}
       </div>
+
+      {user?.is_admin && (
+        <div className="px-4 pb-4">
+          <Link
+            to="/admin"
+            className={cn(
+              "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border border-danger/20",
+              location.pathname.startsWith("/admin")
+                ? "bg-danger/10 text-danger"
+                : "text-danger/70 hover:bg-danger/10 hover:text-danger",
+            )}
+          >
+            <Shield className="h-5 w-5 shrink-0" aria-hidden="true" />
+            Admin Portal
+          </Link>
+        </div>
+      )}
 
       {/* Small mini-widget could go here at the bottom of sidebar */}
       <div className="p-4 border-t border-border/50 text-xs text-zinc-500">

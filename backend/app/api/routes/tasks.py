@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Annotated, Optional
+import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -23,6 +24,7 @@ from app.schemas.task import (
 )
 from app.services.badge_engine import check_and_award_badges
 from app.services.xp_service import award_xp, calculate_rank
+from app.services.ai_detector import analyze_submission
 
 router = APIRouter()
 
@@ -154,6 +156,16 @@ async def submit_task(
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Task already submitted")
 
+    # Analyze for AI detection silently
+    analysis = await analyze_submission(
+        solution_content=data.solution_text,
+        user_skill=current_user.skill_level,
+        task_difficulty=task.difficulty,
+    )
+
+    # Simulate realistic automated verification wait
+    await asyncio.sleep(2.5)
+
     # Create submission
     submission = TaskSubmission(
         user_id=current_user.id,
@@ -162,6 +174,9 @@ async def submit_task(
         colab_link=data.colab_link,
         notes=data.notes,
         xp_awarded=task.xp_reward,
+        ai_flag_score=analysis["score"],
+        is_ai_flagged=analysis["is_flagged"],
+        ai_flag_reason=analysis["reason"],
     )
     db.add(submission)
 

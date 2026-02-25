@@ -37,18 +37,28 @@ export function Profile() {
       .then((res) => setProfileUser(res.data))
       .catch((err) => {
         console.error(err);
-        navigate("/");
+        setProfileUser(null);
       })
       .finally(() => setLoading(false));
   }, [targetUsername, navigate]);
 
   if (loading)
     return (
-      <div className="p-12 text-center text-primary animate-pulse">
-        Loading Profile...
+      <div className="p-12 text-center text-primary animate-pulse flex items-center justify-center min-h-[50vh]">
+        <div className="animate-pulse flex flex-col items-center">
+          <span className="text-4xl mb-4">🧠</span>
+          <span>Loading Profile...</span>
+        </div>
       </div>
     );
-  if (!profileUser) return null;
+  if (!profileUser) return (
+    <div className="p-12 text-center text-zinc-500 min-h-[50vh] flex flex-col items-center justify-center">
+      <div className="text-6xl mb-4">👻</div>
+      <h2 className="text-2xl font-bold text-white mb-2">User Not Found</h2>
+      <p>The profile you are looking for does not exist.</p>
+      <Button variant="outline" className="mt-6" onClick={() => navigate("/")}>Return Home</Button>
+    </div>
+  );
 
   const isCurrentUser = profileUser.id === currentUser?.id;
 

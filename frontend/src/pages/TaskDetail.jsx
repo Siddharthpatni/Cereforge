@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +13,7 @@ import { ArrowLeft, CheckCircle, Flame, Send } from "lucide-react";
 export function TaskDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { addToast, queueCinematic } = useUIStore();
   const { updateXP } = useAuthStore();
 
@@ -21,6 +23,7 @@ export function TaskDetail() {
   // Submission state
   const [solutionRaw, setSolutionRaw] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isInvalidating, setIsInvalidating] = useState(false);
 
   useEffect(() => {
     console.log("Cereforge System: Rendering Task Detail API payload.");
@@ -43,12 +46,18 @@ export function TaskDetail() {
     if (!solutionRaw.trim()) return;
 
     setSubmitting(true);
+    setIsInvalidating(true);
     try {
-      const res = await apiClient.post(`/tasks/${task.id}/submit`, {
-        solution_raw: solutionRaw,
+      const res = await apiClient.post(`/tasks/${slug}/submit`, {
+        solution_text: solutionRaw,
       });
 
-      // Update local state and XP store
+      // 1. Invalidate React Query caches
+      await queryClient.invalidateQueries(['task', slug]);
+      await queryClient.invalidateQueries(['dashboard']);
+      await queryClient.invalidateQueries(['paths']);
+
+      // 2. Local state update
       setTask((prev) => ({ ...prev, is_completed: true }));
       updateXP(res.data.xp_awarded);
 
@@ -58,14 +67,13 @@ export function TaskDetail() {
         type: "success",
       });
 
-      // Queue animations for badges unlocked (if any)
+      // 3. Queue animations for badges unlocked (if any)
       if (res.data.badges_unlocked && res.data.badges_unlocked.length > 0) {
         res.data.badges_unlocked.forEach((badge) => {
-          // Simple stub data structure for the Cinematic queue
           queueCinematic({
-            name: badge.name, // the API just returns string IDs unfortunately in this quick version, but assume it returns full object or we fetch it
+            name: badge.name,
             description: "You've proven your skills. Keep building.",
-            xp_bonus: 50, // Hardcoded stub
+            xp_bonus: 50,
             track_color: "var(--accent-llm)",
             icon: "🏆",
           });
@@ -78,14 +86,18 @@ export function TaskDetail() {
         type: "error",
       });
     } finally {
+      setIsInvalidating(false);
       setSubmitting(false);
     }
   };
 
-  if (loading)
+  if (loading || isInvalidating)
     return (
-      <div className="p-12 text-center text-primary animate-pulse">
-        Initializing Environment...
+      <div className="p-12 text-center text-primary flex items-center justify-center min-h-[50vh]">
+        <div className="animate-pulse flex flex-col items-center">
+          <span className="text-4xl mb-4">🧠</span>
+          <span>{loading ? "Initializing Environment..." : "Syncing Profile..."}</span>
+        </div>
       </div>
     );
   if (!task) return null;
@@ -205,7 +217,7 @@ export function TaskDetail() {
         {/* Right Col: AI Mentor Panel */}
         <div className="space-y-6">
           <div className="sticky top-20">
-            <AIMentorPanel taskId={task.id} />
+            <AIMentorPanel taskSlug={task.slug} />
           </div>
         </div>
       </div>
