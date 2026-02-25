@@ -1,9 +1,12 @@
 """FastAPI application factory with middleware, CORS, and router mounting."""
 
+from __future__ import annotations
+
+
 import time
 import uuid
 from contextlib import asynccontextmanager
-from datetime import UTC
+from datetime import timezone
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -117,14 +120,16 @@ def create_app() -> FastAPI:
         users,
     )
 
-    app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
-    app.include_router(tasks.router, prefix="/api/v1/tasks", tags=["Tasks"])
-    app.include_router(community.router, prefix="/api/v1/community", tags=["Community"])
-    app.include_router(badges.router, prefix="/api/v1/badges", tags=["Badges"])
-    app.include_router(leaderboard.router, prefix="/api/v1/leaderboard", tags=["Leaderboard"])
-    app.include_router(learning_paths.router, prefix="/api/v1/paths", tags=["Learning Paths"])
-    app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
-    app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["Dashboard"])
+    app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+    app.include_router(tasks.router, prefix="/api/v1/tasks", tags=["tasks"])
+    app.include_router(community.router, prefix="/api/v1/posts", tags=["community"])
+    app.include_router(community.vote_router, prefix="/api/v1", tags=["votes"])
+    app.include_router(community.ai_router, prefix="/api/v1", tags=["ai-mentor"])
+    app.include_router(badges.router, prefix="/api/v1/badges", tags=["badges"])
+    app.include_router(leaderboard.router, prefix="/api/v1/leaderboard", tags=["leaderboard"])
+    app.include_router(learning_paths.router, prefix="/api/v1/paths", tags=["paths"])
+    app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
+    app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
 
     # ── Health endpoints ─────────────────────────────────────────────────
     @app.get("/api/v1/health", tags=["System"])
@@ -154,7 +159,7 @@ def create_app() -> FastAPI:
             "db": "connected" if db_ok else "disconnected",
             "redis": "connected" if redis_ok else "disconnected",
             "version": "1.0.0",
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     @app.get("/api/v1/health/ready", tags=["System"])

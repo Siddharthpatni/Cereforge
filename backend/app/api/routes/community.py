@@ -1,5 +1,8 @@
 """Community routes: posts CRUD, comments, voting, AI assist."""
 
+from __future__ import annotations
+
+
 from typing import Annotated
 from uuid import UUID
 
@@ -35,9 +38,11 @@ from app.services.xp_service import (
 )
 
 router = APIRouter()
+vote_router = APIRouter()
+ai_router = APIRouter()
 
 
-@router.get("/posts", response_model=PostListResponse)
+@router.get("", response_model=PostListResponse)
 async def list_posts(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
@@ -121,7 +126,7 @@ async def list_posts(
     return PostListResponse(items=items, total=total, page=page, pages=pages)
 
 
-@router.post("/posts", response_model=dict, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def create_post(
     data: PostCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -142,11 +147,12 @@ async def create_post(
     await db.flush()
     await db.commit()
 
+    await db.refresh(post)
     await db.refresh(post, ["author"])
     return {"post": PostResponse.model_validate(post).model_dump()}
 
 
-@router.get("/posts/{post_id}", response_model=dict)
+@router.get("/{post_id}", response_model=dict)
 async def get_post(
     post_id: UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -195,7 +201,7 @@ async def get_post(
     }
 
 
-@router.patch("/posts/{post_id}", response_model=dict)
+@router.patch("/{post_id}", response_model=dict)
 async def update_post(
     post_id: UUID,
     data: PostUpdate,
@@ -220,7 +226,7 @@ async def update_post(
     return {"post": PostResponse.model_validate(post).model_dump()}
 
 
-@router.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
     post_id: UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -240,7 +246,7 @@ async def delete_post(
     return None
 
 
-@router.post("/posts/{post_id}/comments", response_model=dict, status_code=status.HTTP_201_CREATED)
+@router.post("/{post_id}/comments", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def create_comment(
     post_id: UUID,
     data: CommentCreate,
@@ -284,7 +290,7 @@ async def create_comment(
     }
 
 
-@router.post("/posts/{post_id}/comments/{comment_id}/accept", response_model=dict)
+@router.post("/{post_id}/comments/{comment_id}/accept", response_model=dict)
 async def accept_answer(
     post_id: UUID,
     comment_id: UUID,
@@ -345,7 +351,7 @@ async def accept_answer(
     }
 
 
-@router.post("/vote", response_model=VoteResponse)
+@vote_router.post("/vote", response_model=VoteResponse)
 async def vote(
     data: VoteCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -417,7 +423,7 @@ async def vote(
     return VoteResponse(new_score=target.vote_score, user_vote=data.value)
 
 
-@router.post("/ai-mentor/guidance")
+@ai_router.post("/ai-mentor/guidance")
 async def ai_mentor_guidance(
     data: dict,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -445,7 +451,7 @@ async def ai_mentor_guidance(
     )
 
 
-@router.post("/ai-mentor/community-assist")
+@ai_router.post("/ai-mentor/community-assist")
 async def ai_community_assist(
     data: dict,
     db: Annotated[AsyncSession, Depends(get_db)],
