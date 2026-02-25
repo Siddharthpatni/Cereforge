@@ -1,5 +1,8 @@
 """Task routes: list, detail, submit, get submission."""
 
+from __future__ import annotations
+
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status

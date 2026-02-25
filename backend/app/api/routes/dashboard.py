@@ -1,5 +1,8 @@
 """Dashboard route: aggregated stats, rank, featured task, badges, activity."""
 
+from __future__ import annotations
+
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends

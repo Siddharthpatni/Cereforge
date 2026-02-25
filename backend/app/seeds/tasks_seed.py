@@ -1,5 +1,8 @@
 """Seed all 12 tasks with resources — idempotent (can run multiple times safely)."""
 
+from __future__ import annotations
+
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

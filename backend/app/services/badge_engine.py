@@ -1,5 +1,8 @@
 """Badge condition checking and awarding engine."""
 
+from __future__ import annotations
+
+
 from typing import Any, cast
 from uuid import UUID
 

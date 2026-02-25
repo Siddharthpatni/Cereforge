@@ -1,5 +1,8 @@
 """AI Mentor service — Anthropic Claude integration for guidance and community assist."""
 
+from __future__ import annotations
+
+
 from collections.abc import AsyncGenerator
 
 from app.core.config import settings

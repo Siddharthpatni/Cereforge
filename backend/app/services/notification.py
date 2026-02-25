@@ -1,5 +1,8 @@
 """Notification service for in-app notifications."""
 
+from __future__ import annotations
+
+
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession

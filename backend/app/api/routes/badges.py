@@ -1,5 +1,8 @@
 """Badge routes: list all badges with earned status."""
 
+from __future__ import annotations
+
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
