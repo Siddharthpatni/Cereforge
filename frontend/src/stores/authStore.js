@@ -10,6 +10,26 @@ export const useAuthStore = create(
       user: null,
       rank: null,
       isAuthenticated: false,
+      isInitializing: true,
+
+      init: async () => {
+        const { isAuthenticated, setUser, logout } = get();
+        if (!isAuthenticated) {
+          set({ isInitializing: false });
+          return;
+        }
+        try {
+          // Dynamic import to avoid strict circular dependency block if apiClient imports authStore
+          const { default: apiClient } = await import("../../api/client");
+          const res = await apiClient.get("/auth/me");
+          setUser(res.data.user, res.data.rank);
+        } catch (err) {
+          console.error("Failed to fetch user data on mount", err);
+          if (err.response?.status === 401) logout();
+        } finally {
+          set({ isInitializing: false });
+        }
+      },
 
       // Actions
       setTokens: (accessToken, refreshToken) => {
