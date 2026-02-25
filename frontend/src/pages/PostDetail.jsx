@@ -58,7 +58,7 @@ function CommentNode({ comment, postAuthorId, onVote, onAccept, onReply }) {
             <ChevronUp className="h-5 w-5" />
           </button>
           <span className="font-mono text-sm font-bold text-white py-1">
-            {comment.score}
+            {comment.vote_score}
           </span>
           <button
             onClick={() => onVote(comment.id, -1, "comment")}
@@ -73,7 +73,7 @@ function CommentNode({ comment, postAuthorId, onVote, onAccept, onReply }) {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="h-6 w-6 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold font-mono">
-                {comment.author?.username?.charAt(0).toUpperCase()}
+                {comment.author?.username?.charAt(0)?.toUpperCase()}
               </div>
               <span className="text-sm font-medium text-white">
                 {comment.author?.username}
@@ -183,7 +183,7 @@ export function PostDetail() {
   const fetchPost = async () => {
     try {
       const res = await apiClient.get(`/posts/${postId}`);
-      setPost(res.data);
+      setPost({ ...res.data.post, comments: res.data.comments });
     } catch {
       addToast({
         title: "Error",
@@ -318,7 +318,7 @@ export function PostDetail() {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500 border-b border-border/50 pb-6">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold font-mono text-white">
-              {post.author?.username?.charAt(0).toUpperCase()}
+              {post.author?.username?.charAt(0)?.toUpperCase()}
             </div>
             <span className="text-zinc-300 font-medium">
               u/{post.author?.username}
@@ -359,7 +359,7 @@ export function PostDetail() {
             <ChevronUp className="h-8 w-8" />
           </button>
           <span className="text-lg font-bold text-white py-1">
-            {post.score}
+            {post.vote_score}
           </span>
           <button
             onClick={() => handleVote(post.id, -1, "post")}
