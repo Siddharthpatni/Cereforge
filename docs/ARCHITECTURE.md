@@ -32,9 +32,9 @@ graph TD
     Vite -->|REST API / JSON| FastAPI
     Vite -->|Server-Sent Events| FastAPI
     
-    FastAPI <-->|SQLAlchemy (asyncpg)| PG
-    FastAPI <-->|aioredis| Redis
-    Celery <-->|aioredis| Redis
+    FastAPI -->|SQLAlchemy| PG
+    FastAPI -->|aioredis| Redis
+    Celery -->|aioredis| Redis
     
     FastAPI -->|HTTP REST| Gemini
     
@@ -49,6 +49,85 @@ graph TD
     class PG db;
     class Redis redis;
     class Gemini external;
+```
+
+
+---
+
+## 2. Proper Graphical Flow Chart: User Journey
+
+This flowchart illustrates the overarching graphical flow a user takes through the CereForge application from landing to elite mastery.
+
+```mermaid
+flowchart TD
+    %% Node Definitions
+    Start([Landing Page])
+    Register{Create Account}
+    SkillSelect[Select Initial Skill Level]
+    Dashboard[Dashboard Hub]
+    
+    subgraph Core Loop [Core Gamification Loop]
+        Tasks[Task Explorer]
+        TaskDetail{Take Challenge}
+        Code[Write Solution in Colab]
+        Submit[Submit GitHub Repo]
+        Grade{AI Grading & AI Moderation}
+        Win[Earn XP & Badges]
+        Fail[Hint / Try Again]
+    end
+    
+    subgraph Community [Social & Support]
+        Mentor[Ask AI Mentor]
+        Forum[Community Forum]
+        Post[Ask Question]
+        Answer[Provide Answer]
+    end
+    
+    subgraph Competition [Growth]
+        Leaderboard[View Leaderboard]
+        Rank[Rank Up Tiers]
+        Paths[Unlock Learning Paths]
+    end
+
+    %% Journey Flow
+    Start --> Register
+    Register --> SkillSelect
+    SkillSelect --> Dashboard
+    
+    Dashboard --> Tasks
+    Dashboard --> Leaderboard
+    Dashboard --> Paths
+    
+    Tasks --> TaskDetail
+    TaskDetail -->|Need Help?| Mentor
+    TaskDetail --> Code
+    Code --> Submit
+    Submit --> Grade
+    
+    Grade -->|Failed Filter| Fail
+    Fail --> TaskDetail
+    
+    Grade -->|Success!| Win
+    Win --> Dashboard
+    
+    %% Community Tie-ins
+    Fail -->|Ask Humans| Forum
+    Forum --> Post
+    Win -->|Help Others| Answer
+    Answer --> Win
+    
+    %% Progression
+    Win --> Rank
+    Rank --> Leaderboard
+    
+    %% Styling
+    classDef page fill:#f3f4f6,stroke:#4b5563,stroke-width:2px
+    classDef action fill:#bae6fd,stroke:#0284c7,stroke-width:2px
+    classDef decision fill:#fed7aa,stroke:#ea580c,stroke-width:2px
+    
+    class Start,Dashboard,Tasks,Forum,Leaderboard,Paths page
+    class Register,SkillSelect,Code,Submit,Post,Answer,Mentor action
+    class TaskDetail,Grade decision
 ```
 
 
