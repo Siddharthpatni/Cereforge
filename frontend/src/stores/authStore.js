@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 
 export const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       // State
       accessToken: null,
       refreshToken: null,

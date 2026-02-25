@@ -8,7 +8,6 @@ import {
 } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import { useAuthStore } from "./stores/authStore";
-import apiClient from "./api/client";
 
 // Lazy loading for performance code splitting
 const Auth = React.lazy(() =>
