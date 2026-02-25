@@ -50,6 +50,7 @@ export function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [skillLevel, setSkillLevel] = useState("some_python");
+  const [localError, setLocalError] = useState(""); // Add local error state
 
   const { setAuthData } = useAuthStore();
   const { addToast } = useUIStore();
@@ -57,6 +58,7 @@ export function Auth() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setLocalError(""); // Clear on submit
 
     try {
       if (isLogin) {
@@ -104,11 +106,12 @@ export function Auth() {
 
       // Provide better fallback messages for common scenarios
       if (err.response?.status === 401 || msg.toLowerCase().includes("incorrect")) {
-        msg = "Incorrect username or password. Please verify your credentials block and try again.";
+        msg = "Incorrect username or password. Please verify your credentials and try again.";
       } else if (msg === "Network Error") {
         msg = "Unable to reach the server. Please check your connection.";
       }
 
+      setLocalError(msg); // Set error for the UI
       addToast({ title: "Authentication Failed", message: msg, type: "error" });
     } finally {
       setLoading(false);
@@ -137,6 +140,13 @@ export function Auth() {
 
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {localError && (
+              <div className="p-3 mb-4 text-sm text-red-400 bg-red-900/20 border border-red-900/50 rounded-lg flex items-start gap-2">
+                <div className="mt-0.5 font-bold">!</div>
+                <div>{localError}</div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-sm font-medium text-zinc-300">
                 {isLogin ? "Username or Email" : "Username"}
