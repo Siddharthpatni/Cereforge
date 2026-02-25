@@ -23,15 +23,22 @@ function CommentNode({ comment, postAuthorId, onVote, onAccept, onReply }) {
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [localError, setLocalError] = useState("");
 
   const handleReplySubmit = async (e) => {
     e.preventDefault();
     if (!replyText.trim()) return;
     setSubmitting(true);
-    await onReply(comment.id, replyText);
-    setSubmitting(false);
-    setReplyText("");
-    setShowReplyBox(false);
+    setLocalError("");
+    try {
+      await onReply(comment.id, replyText);
+      setReplyText("");
+      setShowReplyBox(false);
+    } catch (err) {
+      setLocalError(err.response?.data?.detail || "Failed to post reply");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -127,6 +134,12 @@ function CommentNode({ comment, postAuthorId, onVote, onAccept, onReply }) {
           {/* Reply Form */}
           {showReplyBox && (
             <form onSubmit={handleReplySubmit} className="mt-3 relative">
+              {localError && (
+                <div className="p-2 mb-2 text-xs text-red-400 bg-red-900/20 border border-red-900/50 rounded flex items-start gap-2">
+                  <div className="font-bold">!</div>
+                  <div>{localError}</div>
+                </div>
+              )}
               <textarea
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
@@ -175,6 +188,7 @@ export function PostDetail() {
   // New Comment State
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [localError, setLocalError] = useState("");
 
   // AI Summary
   const [aiSummary, setAiSummary] = useState(null);
@@ -253,12 +267,14 @@ export function PostDetail() {
         type: "success",
       });
       fetchPost();
-    } catch {
+    } catch (err) {
+      const msg = err.response?.data?.detail || "Failed to post comment";
       addToast({
         title: "Error",
-        message: "Failed to post comment",
+        message: msg,
         type: "error",
       });
+      throw err;
     }
   };
 
@@ -266,9 +282,15 @@ export function PostDetail() {
     e.preventDefault();
     if (!newComment.trim()) return;
     setSubmitting(true);
-    await handlePostComment(null, newComment);
-    setSubmitting(false);
-    setNewComment("");
+    setLocalError("");
+    try {
+      await handlePostComment(null, newComment);
+      setNewComment("");
+    } catch (err) {
+      setLocalError(err.response?.data?.detail || "Failed to post comment");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const requestAISummary = async () => {
@@ -424,6 +446,12 @@ export function PostDetail() {
         {/* Comment Input */}
         <form onSubmit={submitComment} className="mb-10">
           <div className="space-y-2">
+            {localError && (
+              <div className="p-3 mb-2 text-sm text-red-400 bg-red-900/20 border border-red-900/50 rounded-lg flex items-start gap-2">
+                <div className="mt-0.5 font-bold">!</div>
+                <div>{localError}</div>
+              </div>
+            )}
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}

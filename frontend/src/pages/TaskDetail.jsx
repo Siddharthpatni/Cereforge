@@ -24,6 +24,7 @@ export function TaskDetail() {
   const [solutionRaw, setSolutionRaw] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [isInvalidating, setIsInvalidating] = useState(false);
+  const [localError, setLocalError] = useState("");
 
   useEffect(() => {
     console.log("Cereforge System: Rendering Task Detail API payload.");
@@ -47,6 +48,7 @@ export function TaskDetail() {
 
     setSubmitting(true);
     setIsInvalidating(true);
+    setLocalError("");
     try {
       const res = await apiClient.post(`/tasks/${slug}/submit`, {
         solution_text: solutionRaw,
@@ -80,9 +82,11 @@ export function TaskDetail() {
         });
       }
     } catch (error) {
+      const msg = error.response?.data?.detail || "Something went wrong.";
+      setLocalError(msg);
       addToast({
         title: "Submission Failed",
-        message: error.response?.data?.detail || "Something went wrong.",
+        message: msg,
         type: "error",
       });
     } finally {
@@ -188,6 +192,12 @@ export function TaskDetail() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {localError && (
+                    <div className="p-3 mb-2 text-sm text-red-400 bg-red-900/20 border border-red-900/50 rounded-lg flex items-start gap-2">
+                      <div className="mt-0.5 font-bold">!</div>
+                      <div>{localError}</div>
+                    </div>
+                  )}
                   <p className="text-sm text-zinc-400 mb-2">
                     Paste your code, Colab link, or GitHub Gist URL below.
                   </p>

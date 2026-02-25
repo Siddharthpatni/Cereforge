@@ -28,6 +28,7 @@ export function Community() {
   const [newContent, setNewContent] = useState("");
   const [newTags, setNewTags] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [localError, setLocalError] = useState("");
 
   const { addToast } = useUIStore();
   const navigate = useNavigate();
@@ -66,6 +67,7 @@ export function Community() {
     if (!newTitle.trim() || !newContent.trim()) return;
 
     setSubmitting(true);
+    setLocalError("");
     try {
       const tagsArray = newTags
         .split(",")
@@ -89,10 +91,12 @@ export function Community() {
 
       // Navigate directly to the new post
       navigate(`/community/${res.data.id}`);
-    } catch {
+    } catch (err) {
+      const msg = err.response?.data?.detail || "Failed to post question. Please try again.";
+      setLocalError(msg);
       addToast({
         title: "Error",
-        message: "Failed to post question",
+        message: msg,
         type: "error",
       });
     } finally {
@@ -270,6 +274,12 @@ export function Community() {
         title="Ask the Community"
       >
         <form onSubmit={handleCreatePost} className="space-y-4">
+          {localError && (
+            <div className="p-3 mb-2 text-sm text-red-400 bg-red-900/20 border border-red-900/50 rounded-lg flex items-start gap-2">
+              <div className="mt-0.5 font-bold">!</div>
+              <div>{localError}</div>
+            </div>
+          )}
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">Title</label>
             <input
