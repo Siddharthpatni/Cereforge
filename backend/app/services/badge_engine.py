@@ -58,6 +58,14 @@ async def check_and_award_badges(
     )
     track_counts: dict[str, int] = {row[0]: row[1] for row in completions_result.all()}
 
+    # Fetch user's weekly task completions
+    weekly_completions_result = await db.execute(
+        select(func.count(TaskSubmission.id))
+        .join(Task, TaskSubmission.task_id == Task.id)
+        .where(TaskSubmission.user_id == user_id, Task.is_weekly == True)
+    )
+    weekly_completions = weekly_completions_result.scalar() or 0
+
     # Total completions
     total_completions = sum(track_counts.values())
 
@@ -79,6 +87,7 @@ async def check_and_award_badges(
             badge=badge,
             track_counts=track_counts,
             total_completions=total_completions,
+            weekly_completions=weekly_completions,
             accepted_answers=accepted_answers,
             user_skill_level=user.skill_level,
         )
@@ -125,6 +134,7 @@ def _check_badge_condition(
     badge: Badge,
     track_counts: dict[str, int],
     total_completions: int,
+    weekly_completions: int,
     accepted_answers: int,
     user_skill_level: str,
 ) -> bool:
@@ -152,6 +162,9 @@ def _check_badge_condition(
         required_tasks = cval.get("tasks_completed", 0)
         return user_skill_level == required_skill and total_completions >= required_tasks
 
+    elif ctype == "weekly_task":
+        return weekly_completions >= cval.get("count", 0)
+
     return False
 
 
@@ -171,4 +184,6 @@ def _get_badge_track_color(badge: Badge) -> str | None:
         return "#9d4edd"
     elif ctype == "skill_and_tasks":
         return "#00f5ff"
+    elif ctype == "weekly_task":
+        return "#ff0055"
     return "#00f5ff"

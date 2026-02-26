@@ -128,6 +128,16 @@ BADGES_DATA = [
         "xp_bonus": 50,
         "display_order": 12,
     },
+    {
+        "slug": "weekly-warrior",
+        "name": "Weekly Warrior",
+        "icon": "⚔️",
+        "description": "You successfully completed a highly challenging Weekly Task.",
+        "condition_type": "weekly_task",
+        "condition_value": {"count": 1},
+        "xp_bonus": 100,
+        "display_order": 13,
+    },
 ]
 
 
