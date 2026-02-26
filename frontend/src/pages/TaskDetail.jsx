@@ -9,6 +9,7 @@ import { useUIStore } from "@/stores/uiStore";
 import { useAuthStore } from "@/stores/authStore";
 import apiClient from "@/api/client";
 import { ArrowLeft, CheckCircle, Flame, Send } from "lucide-react";
+import { BenchmarkModal } from "@/components/ui/BenchmarkModal";
 
 export function TaskDetail() {
   const { slug } = useParams();
@@ -25,6 +26,10 @@ export function TaskDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [isInvalidating, setIsInvalidating] = useState(false);
   const [localError, setLocalError] = useState("");
+
+  // Benchmark Modal State
+  const [showBenchmark, setShowBenchmark] = useState(false);
+  const [benchmarkResult, setBenchmarkResult] = useState(null);
 
   useEffect(() => {
     console.log("Cereforge System: Rendering Task Detail API payload.");
@@ -47,40 +52,18 @@ export function TaskDetail() {
     if (!solutionRaw.trim()) return;
 
     setSubmitting(true);
-    setIsInvalidating(true);
     setLocalError("");
     try {
       const res = await apiClient.post(`/tasks/${slug}/submit`, {
         solution_text: solutionRaw,
       });
 
-      // 1. Invalidate React Query caches
-      await queryClient.invalidateQueries(['task', slug]);
-      await queryClient.invalidateQueries(['dashboard']);
-      await queryClient.invalidateQueries(['paths']);
+      setSubmitting(false); // Stop the submit spinner immediately
 
-      // 2. Local state update
-      setTask((prev) => ({ ...prev, is_completed: true }));
-      updateXP(res.data.xp_awarded);
+      // Show Benchmark Modal instead of immediately updating
+      setBenchmarkResult(res.data);
+      setShowBenchmark(true);
 
-      addToast({
-        title: "Task Completed!",
-        message: `Excellent work. You earned ${res.data.xp_awarded} XP.`,
-        type: "success",
-      });
-
-      // 3. Queue animations for badges unlocked (if any)
-      if (res.data.badges_unlocked && res.data.badges_unlocked.length > 0) {
-        res.data.badges_unlocked.forEach((badge) => {
-          queueCinematic({
-            name: badge.name,
-            description: "You've proven your skills. Keep building.",
-            xp_bonus: 50,
-            track_color: "var(--accent-llm)",
-            icon: "🏆",
-          });
-        });
-      }
     } catch (error) {
       const msg = error.response?.data?.detail || "Something went wrong.";
       setLocalError(msg);
@@ -89,6 +72,45 @@ export function TaskDetail() {
         message: msg,
         type: "error",
       });
+      setIsInvalidating(false);
+      setSubmitting(false);
+    }
+  };
+
+  const handleBenchmarkContinue = async () => {
+    if (!benchmarkResult) return;
+
+    setShowBenchmark(false);
+    setIsInvalidating(true);
+
+    try {
+      // 1. Invalidate React Query caches
+      await queryClient.invalidateQueries(['task', slug]);
+      await queryClient.invalidateQueries(['dashboard']);
+      await queryClient.invalidateQueries(['paths']);
+
+      // 2. Local state update
+      setTask((prev) => ({ ...prev, is_completed: true }));
+      updateXP(benchmarkResult.xp_earned);
+
+      addToast({
+        title: "Task Completed!",
+        message: `Excellent work. You earned ${benchmarkResult.xp_earned} XP.`,
+        type: "success",
+      });
+
+      // 3. Queue animations for badges unlocked (if any)
+      if (benchmarkResult.newly_earned_badges && benchmarkResult.newly_earned_badges.length > 0) {
+        benchmarkResult.newly_earned_badges.forEach((badge) => {
+          queueCinematic({
+            name: badge.name,
+            description: "You've proven your skills. Keep building.",
+            xp_bonus: badge.xp_bonus,
+            track_color: "var(--accent-llm)",
+            icon: badge.icon || "🏆",
+          });
+        });
+      }
     } finally {
       setIsInvalidating(false);
       setSubmitting(false);
@@ -231,6 +253,14 @@ export function TaskDetail() {
           </div>
         </div>
       </div>
+
+      <BenchmarkModal
+        isOpen={showBenchmark}
+        onClose={() => setShowBenchmark(false)}
+        benchmarks={benchmarkResult?.benchmarks}
+        xpEarned={benchmarkResult?.xp_earned}
+        onContinue={handleBenchmarkContinue}
+      />
     </div>
   );
 }
