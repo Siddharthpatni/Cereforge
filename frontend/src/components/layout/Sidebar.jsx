@@ -15,6 +15,7 @@ import { useAuthStore } from "@/stores/authStore";
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Tasks", href: "/tasks", icon: BookOpen },
+  { name: "Weekly Tasks", href: "/weekly", icon: BookOpen },
   { name: "Community", href: "/community", icon: MessageSquare },
   { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
   { name: "Paths", href: "/paths", icon: Map },

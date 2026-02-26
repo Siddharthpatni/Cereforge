@@ -22,6 +22,9 @@ const Tasks = React.lazy(() =>
 const TaskDetail = React.lazy(() =>
   import("./pages/TaskDetail").then((m) => ({ default: m.TaskDetail })),
 );
+const WeeklyTasks = React.lazy(() =>
+  import("./pages/WeeklyTasks").then((m) => ({ default: m.WeeklyTasks })),
+);
 const Community = React.lazy(() =>
   import("./pages/Community").then((m) => ({ default: m.Community })),
 );
@@ -79,6 +82,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="tasks" element={<Tasks />} />
             <Route path="tasks/:slug" element={<TaskDetail />} />
+            <Route path="weekly" element={<WeeklyTasks />} />
             <Route path="community" element={<Community />} />
             <Route path="community/:postId" element={<PostDetail />} />
             <Route path="leaderboard" element={<Leaderboard />} />
