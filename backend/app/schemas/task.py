@@ -48,6 +48,7 @@ class TaskResponse(BaseModel):
     xp_reward: int
     display_order: int
     colab_url: str
+    is_weekly: bool = False
     resources: list[TaskResourceResponse] = []
 
     model_config = {"from_attributes": True}
@@ -63,6 +64,7 @@ class TaskListItem(BaseModel):
     xp_reward: int
     display_order: int
     colab_url: str
+    is_weekly: bool = False
     completed: bool = False
     show_beginner_guide: bool = False
 
@@ -78,12 +80,20 @@ class BadgeEarned(BaseModel):
     track_color: str | None = None
 
 
+class Benchmarks(BaseModel):
+    execution_time_ms: int
+    memory_usage_mb: float
+    tests_passed: int
+    total_tests: int
+    insights: list[str]
+
 class TaskSubmissionResponse(BaseModel):
     xp_earned: int
     total_xp: int
     rank: dict
     newly_earned_badges: list[BadgeEarned] = []
     celebration_message: str
+    benchmarks: Benchmarks | None = None
 
 
 class SubmissionDetailResponse(BaseModel):
