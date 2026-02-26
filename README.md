@@ -235,31 +235,40 @@ Target: backend coverage ≥ 75%, all tests pass.
 
 ## Project Structure
 
-```
-cereforge/
-├── backend/
-│   ├── app/
-│   │   ├── api/routes/       ← Route handlers (auth, tasks, community...)
-│   │   ├── core/             ← Config, database, Redis, security
-│   │   ├── models/           ← SQLAlchemy ORM models
-│   │   ├── schemas/          ← Pydantic request/response schemas
-│   │   ├── services/         ← Business logic (badges, XP, notifications)
-│   │   └── seeds/            ← Idempotent data seeders
-│   ├── tests/                ← Pytest test suite
-│   ├── alembic/              ← Database migrations
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── components/       ← Reusable UI components
-│   │   ├── pages/            ← Page-level components
-│   │   ├── stores/           ← Zustand state stores
-│   │   ├── hooks/            ← Custom React hooks
-│   │   └── api/              ← Axios client and API functions
-│   └── Dockerfile
-├── docs/screenshots/         ← README screenshots
-├── scripts/                  ← Utility scripts (take_screenshots.js)
-├── docker-compose.yml
-└── .github/workflows/ci.yml
+```text
+Cereforge/                 🤖 Root directory of the entire application
+├── docker-compose.yml     🐳 Docker setup to run the database, backend, and frontend together
+├── start_demo.sh          🚀 Script to quickly start the application and run seed data
+│
+├── frontend/              🖥️ The User Interface (React + Vite + TailwindCSS)
+│   ├── package.json       📦 Lists all Node.js dependencies (React, React Router, Tailwind, etc.)
+│   ├── vite.config.js     ⚡ Configuration for Vite (the build tool/development server)
+│   ├── index.html         📄 The main HTML file where the React app is injected
+│   └── src/               💻 Frontend Source Code
+│       ├── main.jsx       🏁 The entry point that mounts the React app to the HTML
+│       ├── App.jsx        🧭 Main component handling global routing and layout structure
+│       ├── index.css      🎨 Global CSS styles and Tailwind imports
+│       ├── components/    🧩 Reusable UI pieces (Buttons, Navbars, Cards, Forms, Modals)
+│       ├── pages/         🖼️ Full-page views (Dashboard.jsx, Login.jsx, Tasks.jsx, etc.)
+│       ├── stores/        🗃️ Global state management (e.g., managing user auth state using Zustand)
+│       ├── api/           🔌 Files handling HTTP requests to the backend (axios configs)
+│       └── utils/         🛠️ Helper functions (e.g., date formatting, validation)
+│
+└── backend/               ⚙️ The Application Logic & API (Python + FastAPI)
+    ├── pyproject.toml     🐍 Modern Python project config and dependencies
+    ├── requirements.txt   📄 List of Python packages required (FastAPI, SQLAlchemy, etc.)
+    ├── alembic.ini        🗄️ Configuration for Alembic (Database Migrations)
+    ├── alembic/           🔄 Folder storing database schema migration scripts
+    ├── tests/             🧪 Automated tests to ensure backend code works correctly
+    └── app/               🧠 Core Backend Source Code
+        ├── main.py        🏁 The FastAPI entry point (starts server, registers routes)
+        ├── core/          🛡️ Core settings, configuration, and security (auth, database connection)
+        ├── api/           🛣️ Defines all API Endpoints (URLs like /users, /tasks)
+        ├── models/        🗃️ Database Table Definitions (SQLAlchemy Models)
+        ├── schemas/       📝 Data Validation Rules (Pydantic Models for request/response shapes)
+        ├── services/      🧠 Business Logic (The actual code doing the work behind the endpoints)
+        ├── seeds/         🌱 Scripts to populate the database with initial dummy/demo data
+        └── workers/       ⏳ Code for background tasks (e.g., Celery tasks for heavy lifting)
 ```
 
 ---
