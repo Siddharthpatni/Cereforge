@@ -16,6 +16,7 @@ from app.models.task import Task
 from app.models.user import User
 from app.schemas.task import (
     BadgeEarned,
+    Benchmarks,
     SubmissionDetailResponse,
     TaskListItem,
     TaskResponse,
@@ -23,6 +24,7 @@ from app.schemas.task import (
     TaskSubmissionResponse,
 )
 from app.services.ai_detector import analyze_submission
+from app.services.task_evaluator import evaluate_submission
 from app.services.badge_engine import check_and_award_badges
 from app.services.xp_service import award_xp, calculate_rank
 
@@ -36,6 +38,7 @@ async def list_tasks(
     track: str | None = Query(None),
     difficulty: str | None = Query(None),
     task_status: str | None = Query(None, alias="status"),
+    is_weekly: bool | None = Query(None),
 ):
     """List all tasks with optional filters."""
     query = select(Task).where(Task.is_active).order_by(Task.track, Task.display_order)
@@ -44,6 +47,8 @@ async def list_tasks(
         query = query.where(Task.track == track)
     if difficulty:
         query = query.where(Task.difficulty == difficulty)
+    if is_weekly is not None:
+        query = query.where(Task.is_weekly == is_weekly)
 
     result = await db.execute(query)
     tasks = result.scalars().all()
@@ -75,6 +80,7 @@ async def list_tasks(
                 xp_reward=task.xp_reward,
                 display_order=task.display_order,
                 colab_url=task.colab_url,
+                is_weekly=task.is_weekly,
                 completed=completed,
                 show_beginner_guide=show_beginner,
             )
@@ -163,8 +169,16 @@ async def submit_task(
         task_difficulty=task.difficulty,
     )
 
-    # Simulate realistic automated verification wait
-    await asyncio.sleep(2.5)
+    # Replaced simulated delay with real AI code evaluation for insights/benchmarks
+    eval_result = await evaluate_submission(
+        solution_content=data.solution_text,
+        task_title=task.title,
+        task_difficulty=task.difficulty
+    )
+
+    # Validation Check: Reward 0 XP if flagged as AI or failed tests
+    is_invalid = analysis["is_flagged"] or eval_result["tests_passed"] < eval_result["total_tests"]
+    actual_xp = 0 if is_invalid else task.xp_reward
 
     # Create submission
     submission = TaskSubmission(
@@ -173,27 +187,30 @@ async def submit_task(
         solution_text=data.solution_text,
         colab_link=data.colab_link,
         notes=data.notes,
-        xp_awarded=task.xp_reward,
+        xp_awarded=actual_xp,
         ai_flag_score=analysis["score"],
         is_ai_flagged=analysis["is_flagged"],
         ai_flag_reason=analysis["reason"],
     )
     db.add(submission)
 
-    # Award XP
-    await award_xp(db, current_user.id, task.xp_reward)
-
-    # Check and award badges
-    newly_earned = await check_and_award_badges(db, current_user.id)
+    # Award XP and Badges (only if valid)
+    newly_earned = []
+    if actual_xp > 0:
+        await award_xp(db, current_user.id, actual_xp)
+        newly_earned = await check_and_award_badges(db, current_user.id)
 
     # Recalculate total XP (may have changed from badge bonuses)
     await db.refresh(current_user)
     rank = calculate_rank(current_user.xp)
 
-    celebration = f"🎉 Task complete! +{task.xp_reward} XP"
-    if newly_earned:
-        badge_names = ", ".join([b["name"] for b in newly_earned])
-        celebration += f" | 🏆 Badge(s) unlocked: {badge_names}!"
+    if is_invalid:
+        celebration = "Submission Recorded. (0 XP: Did not pass all tests or flagged as AI generated)"
+    else:
+        celebration = f"🎉 Task complete! +{actual_xp} XP"
+        if newly_earned:
+            badge_names = ", ".join([b["name"] for b in newly_earned])
+            celebration += f" | 🏆 Badge(s) unlocked: {badge_names}!"
 
     await db.commit()
 
@@ -203,6 +220,7 @@ async def submit_task(
         rank=rank,
         newly_earned_badges=[BadgeEarned(**b) for b in newly_earned],
         celebration_message=celebration,
+        benchmarks=Benchmarks(**eval_result)
     )
 
 
