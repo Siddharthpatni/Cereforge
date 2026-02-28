@@ -44,17 +44,20 @@ ai_router = APIRouter()
 @router.get("", response_model=PostListResponse)
 async def list_posts(
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User | None, Depends(get_current_user)] = None,
     track: str | None = Query(None),
     tag: str | None = Query(None),
     post_status: str | None = Query(None, alias="status"),
     sort: str | None = Query("newest"),
     beginner_friendly: bool | None = Query(None),
     search: str | None = Query(None),
+    bookmarked_only: bool = Query(False),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
 ):
     """List community posts with filters, sorting, and pagination."""
+    from app.models.post import PostBookmark
+
     query = select(Post).where(Post.is_deleted.is_(False))
 
     if track:
@@ -71,6 +74,11 @@ async def list_posts(
                 Post.title.ilike(f"%{search}%"),
                 Post.body.ilike(f"%{search}%"),
             )
+        )
+    
+    if bookmarked_only and current_user:
+        query = query.join(PostBookmark, Post.id == PostBookmark.post_id).where(
+            PostBookmark.user_id == current_user.id
         )
 
     # Count total
@@ -91,6 +99,17 @@ async def list_posts(
 
     result = await db.execute(query)
     posts = result.scalars().all()
+
+    # Pre-fetch bookmarks for fast resolution
+    bookmarked_post_ids = set()
+    if current_user and posts:
+        b_result = await db.execute(
+            select(PostBookmark.post_id).where(
+                PostBookmark.user_id == current_user.id,
+                PostBookmark.post_id.in_([p.id for p in posts])
+            )
+        )
+        bookmarked_post_ids = set(b_result.scalars().all())
 
     items = []
     for post in posts:
@@ -116,6 +135,7 @@ async def list_posts(
                 view_count=post.view_count,
                 is_beginner_friendly=post.is_beginner_friendly,
                 comment_count=comment_count,
+                is_bookmarked=(post.id in bookmarked_post_ids),
                 created_at=post.created_at,
             )
         )
@@ -158,7 +178,13 @@ async def get_post(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Get a single post with threaded comments."""
-    result = await db.execute(select(Post).where(Post.id == post_id, Post.is_deleted.is_(False)))
+    from sqlalchemy.orm import joinedload, noload
+
+    result = await db.execute(
+        select(Post)
+        .options(joinedload(Post.author))
+        .where(Post.id == post_id, Post.is_deleted.is_(False))
+    )
     post = result.scalar_one_or_none()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
@@ -167,15 +193,24 @@ async def get_post(
     post.view_count += 1
     await db.flush()
 
-    # Get top-level comments (no parent)
+    # Get all comments for the post at once to avoid lazy-loading issues (MissingGreenletError)
     comments_result = await db.execute(
         select(Comment)
-        .where(
-            Comment.post_id == post_id, Comment.parent_id.is_(None), Comment.is_deleted.is_(False)
+        .options(
+            joinedload(Comment.author),
+            noload(Comment.replies),
+            noload(Comment.parent)
         )
+        .where(Comment.post_id == post_id, Comment.is_deleted.is_(False))
         .order_by(desc(Comment.is_accepted), desc(Comment.vote_score), Comment.created_at)
     )
-    comments = comments_result.scalars().all()
+    all_comments = comments_result.scalars().unique().all()
+
+    # Group comments by parent_id
+    from collections import defaultdict
+    children_map = defaultdict(list)
+    for c in all_comments:
+        children_map[c.parent_id].append(c)
 
     def build_comment_tree(comment: Comment) -> dict:
         return {
@@ -188,14 +223,32 @@ async def get_post(
             "is_accepted": comment.is_accepted,
             "created_at": comment.created_at.isoformat(),
             "updated_at": comment.updated_at.isoformat(),
-            "replies": [build_comment_tree(r) for r in (comment.replies or []) if not r.is_deleted],
+            "replies": [build_comment_tree(r) for r in children_map[comment.id]],
         }
 
-    comments_data = [build_comment_tree(c) for c in comments]
+    # Start tree from top-level comments
+    comments_data = [build_comment_tree(c) for c in children_map[None]]
+
+    # Check bookmark status
+    from app.models.post import PostBookmark
+    is_bookmarked = False
+    if current_user:
+        b_result = await db.execute(
+            select(PostBookmark).where(
+                PostBookmark.user_id == current_user.id,
+                PostBookmark.post_id == post.id
+            )
+        )
+        if b_result.scalar_one_or_none():
+            is_bookmarked = True
+
     await db.commit()
 
+    post_resp = PostResponse.model_validate(post)
+    post_resp.is_bookmarked = is_bookmarked
+
     return {
-        "post": PostResponse.model_validate(post).model_dump(),
+        "post": post_resp.model_dump(),
         "comments": comments_data,
     }
 
@@ -242,6 +295,42 @@ async def delete_post(
     post.is_deleted = True
     await db.flush()
     await db.commit()
+
+
+@router.post("/{post_id}/bookmark", response_model=dict)
+async def toggle_bookmark(
+    post_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Toggle a bookmark/favorite on a community post."""
+    from app.models.post import PostBookmark
+
+    # Verify post exists
+    post_result = await db.execute(
+        select(Post).where(Post.id == post_id, Post.is_deleted.is_(False))
+    )
+    if not post_result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+
+    # Check if already bookmarked
+    b_result = await db.execute(
+        select(PostBookmark).where(
+            PostBookmark.user_id == current_user.id,
+            PostBookmark.post_id == post_id
+        )
+    )
+    bookmark = b_result.scalar_one_or_none()
+
+    if bookmark:
+        await db.delete(bookmark)
+        await db.commit()
+        return {"bookmarked": False}
+    else:
+        new_bookmark = PostBookmark(user_id=current_user.id, post_id=post_id)
+        db.add(new_bookmark)
+        await db.commit()
+        return {"bookmarked": True}
     return None
 
 
