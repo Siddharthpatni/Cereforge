@@ -6,8 +6,9 @@ import {
   ChevronDown,
   CheckCircle,
   ArrowLeft,
-  MoreVertical,
   Sparkles,
+  Trash2,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -181,6 +182,7 @@ export function PostDetail() {
   const { postId } = useParams();
   const navigate = useNavigate();
   const { addToast } = useUIStore();
+  const { user } = useAuthStore();
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -237,9 +239,7 @@ export function PostDetail() {
 
   const handleAcceptAnswer = async (commentId) => {
     try {
-      await apiClient.post(
-        `/posts/${postId}/comments/${commentId}/accept`
-      );
+      await apiClient.post(`/posts/${postId}/comments/${commentId}/accept`);
       addToast({
         title: "Answer Accepted",
         message: "You have rewarded the author with XP.",
@@ -250,6 +250,45 @@ export function PostDetail() {
       addToast({
         title: "Error",
         message: "Failed to accept answer",
+        type: "error",
+      });
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    try {
+      await apiClient.delete(`/posts/${postId}`);
+      addToast({
+        title: "Deleted",
+        message: "Post has been deleted.",
+        type: "success",
+      });
+      navigate("/community");
+    } catch (err) {
+      addToast({
+        title: "Delete Failed",
+        message: err.response?.data?.detail || "Could not delete post.",
+        type: "error",
+      });
+    }
+  };
+
+  const handleBookmarkPost = async () => {
+    try {
+      const res = await apiClient.post(`/posts/${postId}/bookmark`);
+      addToast({
+        title: res.data.bookmarked ? "Bookmarked" : "Bookmark Removed",
+        message: res.data.bookmarked
+          ? "Saved to your favorites."
+          : "Removed from favorites.",
+        type: "success",
+      });
+      fetchPost();
+    } catch (err) {
+      addToast({
+        title: "Error",
+        message: err.response?.data?.detail || "Could not toggle bookmark.",
         type: "error",
       });
     }
@@ -331,12 +370,45 @@ export function PostDetail() {
         >
           <ArrowLeft className="h-4 w-4 mr-1" /> Back to Community
         </Button>
-        <h1 className="text-3xl font-bold text-white mb-3 tracking-tight">
-          {post.is_resolved && (
-            <span className="text-success mr-2">[Resolved]</span>
-          )}
-          {post.title}
-        </h1>
+        <div className="flex items-start justify-between">
+          <h1 className="text-3xl font-bold text-white mb-3 tracking-tight">
+            {post.is_resolved && (
+              <span className="text-success mr-2">[Resolved]</span>
+            )}
+            {post.title}
+          </h1>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={post.is_bookmarked ? "default" : "outline"}
+              size="sm"
+              onClick={handleBookmarkPost}
+              className={
+                post.is_bookmarked
+                  ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
+                  : "border-zinc-700 text-zinc-400 hover:text-white"
+              }
+            >
+              <Star
+                className={cn(
+                  "h-4 w-4 mr-2",
+                  post.is_bookmarked && "fill-current",
+                )}
+              />
+              {post.is_bookmarked ? "Saved" : "Save"}
+            </Button>
+            {(user?.id === post.author?.id || user?.is_admin) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDeletePost}
+                className="border-red-900/50 text-red-500 hover:bg-red-950/30 hover:text-red-400"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            )}
+          </div>
+        </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500 border-b border-border/50 pb-6">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold font-mono text-white">
@@ -488,6 +560,6 @@ export function PostDetail() {
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 }
