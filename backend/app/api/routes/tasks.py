@@ -159,8 +159,7 @@ async def submit_task(
             TaskSubmission.task_id == task.id,
         )
     )
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Task already submitted")
+    existing_submission = existing.scalar_one_or_none()
 
     # Analyze for AI detection silently
     analysis = await analyze_submission(
@@ -180,37 +179,63 @@ async def submit_task(
     is_invalid = analysis["is_flagged"] or eval_result["tests_passed"] < eval_result["total_tests"]
     actual_xp = 0 if is_invalid else task.xp_reward
 
-    # Create submission
-    submission = TaskSubmission(
-        user_id=current_user.id,
-        task_id=task.id,
-        solution_text=data.solution_text,
-        colab_link=data.colab_link,
-        notes=data.notes,
-        xp_awarded=actual_xp,
-        ai_flag_score=analysis["score"],
-        is_ai_flagged=analysis["is_flagged"],
-        ai_flag_reason=analysis["reason"],
-    )
-    db.add(submission)
-
-    # Award XP and Badges (only if valid)
     newly_earned = []
-    if actual_xp > 0:
-        await award_xp(db, current_user.id, actual_xp)
-        newly_earned = await check_and_award_badges(db, current_user.id)
+
+    if existing_submission:
+        previously_earned_xp = existing_submission.xp_awarded > 0
+        
+        # Overwrite previous solution
+        existing_submission.solution_text = data.solution_text
+        existing_submission.colab_link = data.colab_link
+        existing_submission.notes = data.notes
+        existing_submission.ai_flag_score = analysis["score"]
+        existing_submission.is_ai_flagged = analysis["is_flagged"]
+        existing_submission.ai_flag_reason = analysis["reason"]
+
+        if not previously_earned_xp and not is_invalid:
+            # Grant retroactive XP
+            existing_submission.xp_awarded = actual_xp
+            await award_xp(db, current_user.id, actual_xp)
+            newly_earned = await check_and_award_badges(db, current_user.id)
+            celebration = f"🎉 Task complete on retry! +{actual_xp} XP"
+            if newly_earned:
+                badge_names = ", ".join([b["name"] for b in newly_earned])
+                celebration += f" | 🏆 Badge(s) unlocked: {badge_names}!"
+        elif previously_earned_xp and not is_invalid:
+            celebration = "Solution updated successfully! (XP already awarded)"
+        else:
+            celebration = "Submission updated. (0 XP: Did not pass all tests or flagged as AI generated)"
+    else:
+        # Create new submission
+        submission = TaskSubmission(
+            user_id=current_user.id,
+            task_id=task.id,
+            solution_text=data.solution_text,
+            colab_link=data.colab_link,
+            notes=data.notes,
+            xp_awarded=actual_xp,
+            ai_flag_score=analysis["score"],
+            is_ai_flagged=analysis["is_flagged"],
+            ai_flag_reason=analysis["reason"],
+        )
+        db.add(submission)
+
+        # Award XP and Badges (only if valid)
+        if actual_xp > 0:
+            await award_xp(db, current_user.id, actual_xp)
+            newly_earned = await check_and_award_badges(db, current_user.id)
+
+        if is_invalid:
+            celebration = "Submission Recorded. (0 XP: Did not pass all tests or flagged as AI generated)"
+        else:
+            celebration = f"🎉 Task complete! +{actual_xp} XP"
+            if newly_earned:
+                badge_names = ", ".join([b["name"] for b in newly_earned])
+                celebration += f" | 🏆 Badge(s) unlocked: {badge_names}!"
 
     # Recalculate total XP (may have changed from badge bonuses)
     await db.refresh(current_user)
     rank = calculate_rank(current_user.xp)
-
-    if is_invalid:
-        celebration = "Submission Recorded. (0 XP: Did not pass all tests or flagged as AI generated)"
-    else:
-        celebration = f"🎉 Task complete! +{actual_xp} XP"
-        if newly_earned:
-            badge_names = ", ".join([b["name"] for b in newly_earned])
-            celebration += f" | 🏆 Badge(s) unlocked: {badge_names}!"
 
     await db.commit()
 
