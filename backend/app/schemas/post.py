@@ -113,6 +113,7 @@ class PostResponse(BaseModel):
     related_task_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
+    is_bookmarked: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -131,6 +132,7 @@ class PostListItem(BaseModel):
     is_beginner_friendly: bool
     comment_count: int = 0
     created_at: datetime
+    is_bookmarked: bool = False
 
     model_config = {"from_attributes": True}
 

@@ -63,6 +63,7 @@ class UserResponse(BaseModel):
     background: str | None = None
     xp: int
     is_email_verified: bool
+    is_admin: bool = False
     created_at: datetime
 
     model_config = {"from_attributes": True}
