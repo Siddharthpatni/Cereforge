@@ -7,6 +7,7 @@ import {
   Search,
   Tag as TagIcon,
   Zap,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -14,6 +15,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useUIStore } from "@/stores/uiStore";
 import apiClient from "@/api/client";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/utils/cn";
 
 export function Community() {
   const [posts, setPosts] = useState([]);
@@ -21,6 +23,7 @@ export function Community() {
   const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
   const [tagFilter, setTagFilter] = useState("");
+  const [bookmarkedOnly, setBookmarkedOnly] = useState(false);
 
   // Ask Question Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,11 +39,15 @@ export function Community() {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const url = tagFilter
-        ? `/posts?tag=${tagFilter}`
-        : search
-          ? `/posts?search=${search}`
-          : "/posts";
+      let url = "/posts?";
+      const params = new URLSearchParams();
+
+      if (tagFilter) params.append("tag", tagFilter);
+      if (search) params.append("search", search);
+      if (bookmarkedOnly) params.append("bookmarked_only", "true");
+
+      url += params.toString();
+
       const res = await apiClient.get(url);
       setPosts(res.data.items || res.data); // depending on pagination response
       setError(false);
@@ -60,7 +67,7 @@ export function Community() {
   useEffect(() => {
     fetchPosts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tagFilter]);
+  }, [tagFilter, bookmarkedOnly]);
 
   const handleCreatePost = async (e) => {
     e.preventDefault();
@@ -75,7 +82,7 @@ export function Community() {
         .filter(Boolean);
       const res = await apiClient.post("/posts", {
         title: newTitle,
-        content: newContent,
+        body: newContent,
         tags: tagsArray,
       });
 
@@ -90,9 +97,11 @@ export function Community() {
       setNewTags("");
 
       // Navigate directly to the new post
-      navigate(`/community/${res.data.id}`);
+      navigate(`/community/${res.data.post.id}`);
     } catch (err) {
-      const msg = err.response?.data?.detail || "Failed to post question. Please try again.";
+      const msg =
+        err.response?.data?.detail ||
+        "Failed to post question. Please try again.";
       setLocalError(msg);
       addToast({
         title: "Error",
@@ -107,8 +116,7 @@ export function Community() {
   const filteredPosts = posts.filter(
     (p) =>
       p.title.toLowerCase().includes(search.toLowerCase()) ||
-      (p.tags &&
-        p.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))),
+      p.tags?.some((t) => t.toLowerCase().includes(search.toLowerCase())),
   );
 
   return (
@@ -151,6 +159,21 @@ export function Community() {
             onChange={(e) => setTagFilter(e.target.value)}
             className="w-full md:w-48 bg-input border border-border px-3 py-2 rounded-lg text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
           />
+          <Button
+            variant={bookmarkedOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setBookmarkedOnly(!bookmarkedOnly)}
+            className={
+              bookmarkedOnly
+                ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500 h-[38px]"
+                : "border-border text-zinc-400 hover:text-white h-[38px]"
+            }
+          >
+            <Star
+              className={cn("h-4 w-4 mr-1.5", bookmarkedOnly && "fill-current")}
+            />
+            Favorites
+          </Button>
         </div>
       </div>
 
@@ -159,11 +182,13 @@ export function Community() {
         {error ? (
           <div className="p-12 text-center text-red-500">
             <p>Could not load posts. Try again.</p>
-            <Button onClick={fetchPosts} variant="outline" className="mt-4">Retry</Button>
+            <Button onClick={fetchPosts} variant="outline" className="mt-4">
+              Retry
+            </Button>
           </div>
         ) : loading ? (
           <div className="divide-y divide-border/50">
-            {[1, 2, 3].map(i => (
+            {[1, 2, 3].map((i) => (
               <div key={i} className="p-4 sm:p-6 flex gap-4 animate-pulse">
                 <div className="w-8 h-12 bg-zinc-800 rounded shrink-0"></div>
                 <div className="flex-1 space-y-3">
@@ -177,8 +202,12 @@ export function Community() {
         ) : posts.length === 0 ? (
           <div className="p-12 text-center text-zinc-500">
             <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p className="mb-4">No community posts yet. Be the first to start a discussion!</p>
-            <Button onClick={() => setIsModalOpen(true)}>Ask the First Question</Button>
+            <p className="mb-4">
+              No community posts yet. Be the first to start a discussion!
+            </p>
+            <Button onClick={() => setIsModalOpen(true)}>
+              Ask the First Question
+            </Button>
           </div>
         ) : filteredPosts.length > 0 ? (
           <div className="divide-y divide-border/50">
