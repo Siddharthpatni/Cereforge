@@ -32,19 +32,39 @@ export function TaskDetail() {
   const [benchmarkResult, setBenchmarkResult] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
     console.log("Cereforge System: Rendering Task Detail API payload.");
-    apiClient
-      .get(`/tasks/${slug}`)
-      .then((res) => setTask(res.data))
-      .catch(() => {
-        addToast({
-          title: "Error",
-          message: "Failed to load task",
-          type: "error",
-        });
-        navigate("/tasks");
-      })
-      .finally(() => setLoading(false));
+
+    const fetchTaskData = async () => {
+      try {
+        const resTask = await apiClient.get(`/tasks/${slug}`);
+        if (isMounted) setTask(resTask.data);
+
+        // Try to fetch existing submission
+        try {
+          const resSub = await apiClient.get(`/tasks/${slug}/submissions`);
+          if (resSub.data && resSub.data.solution_text && isMounted) {
+            setSolutionRaw(resSub.data.solution_text);
+          }
+        } catch {
+          // If 404 or no submission, ignore
+        }
+      } catch {
+        if (isMounted) {
+          addToast({
+            title: "Error",
+            message: "Failed to load task",
+            type: "error",
+          });
+          navigate("/tasks");
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchTaskData();
+    return () => { isMounted = false; };
   }, [slug, navigate, addToast]);
 
   const handleSubmit = async (e) => {
@@ -207,41 +227,42 @@ export function TaskDetail() {
                   : "Submit Your Solution"}
               </h3>
 
-              {task.is_completed ? (
-                <div className="flex items-center gap-3 text-success">
-                  <CheckCircle className="h-6 w-6" />
-                  <p>You have already completed this task and earned the XP.</p>
+              {task.is_completed && (
+                <div className="flex items-center gap-3 text-success mb-6 bg-success/10 p-4 border border-success/20 rounded-lg">
+                  <CheckCircle className="h-5 w-5" />
+                  <p className="text-sm font-medium">You have already completed this task and earned full XP. You can resubmit to improve your code benchmark score!</p>
                 </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {localError && (
-                    <div className="p-3 mb-2 text-sm text-red-400 bg-red-900/20 border border-red-900/50 rounded-lg flex items-start gap-2">
-                      <div className="mt-0.5 font-bold">!</div>
-                      <div>{localError}</div>
-                    </div>
-                  )}
-                  <p className="text-sm text-zinc-400 mb-2">
-                    Paste your code, Colab link, or GitHub Gist URL below.
-                  </p>
-                  <textarea
-                    value={solutionRaw}
-                    onChange={(e) => setSolutionRaw(e.target.value)}
-                    required
-                    rows={4}
-                    className="w-full bg-input border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-mono"
-                    placeholder="https://github.com/...&#10;OR&#10;def my_agent(): ..."
-                  />
-                  <div className="flex justify-end">
-                    <Button
-                      type="submit"
-                      isLoading={submitting}
-                      className="min-w-[120px]"
-                    >
-                      <Send className="h-4 w-4 mr-2" /> Submit Code
-                    </Button>
-                  </div>
-                </form>
               )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {localError && (
+                  <div className="p-3 mb-2 text-sm text-red-400 bg-red-900/20 border border-red-900/50 rounded-lg flex items-start gap-2">
+                    <div className="mt-0.5 font-bold">!</div>
+                    <div>{localError}</div>
+                  </div>
+                )}
+                <p className="text-sm text-zinc-400 mb-2">
+                  Paste your code, Colab link, or GitHub Gist URL below.
+                </p>
+                <textarea
+                  value={solutionRaw}
+                  onChange={(e) => setSolutionRaw(e.target.value)}
+                  required
+                  rows={4}
+                  className="w-full bg-input border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-mono"
+                  placeholder="https://github.com/...&#10;OR&#10;def my_agent(): ..."
+                />
+                <div className="flex justify-end">
+                  <Button
+                    type="submit"
+                    isLoading={submitting}
+                    className="min-w-[120px]"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {task.is_completed ? "Update Solution" : "Submit Code"}
+                  </Button>
+                </div>
+              </form>
             </CardContent>
           </Card>
         </div>
