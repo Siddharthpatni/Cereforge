@@ -62,7 +62,7 @@ async def check_and_award_badges(
     weekly_completions_result = await db.execute(
         select(func.count(TaskSubmission.id))
         .join(Task, TaskSubmission.task_id == Task.id)
-        .where(TaskSubmission.user_id == user_id, Task.is_weekly == True)
+        .where(TaskSubmission.user_id == user_id, Task.is_weekly)
     )
     weekly_completions = weekly_completions_result.scalar() or 0
 

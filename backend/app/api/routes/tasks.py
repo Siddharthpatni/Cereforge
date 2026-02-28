@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -24,8 +23,8 @@ from app.schemas.task import (
     TaskSubmissionResponse,
 )
 from app.services.ai_detector import analyze_submission
-from app.services.task_evaluator import evaluate_submission
 from app.services.badge_engine import check_and_award_badges
+from app.services.task_evaluator import evaluate_submission
 from app.services.xp_service import award_xp, calculate_rank
 
 router = APIRouter()

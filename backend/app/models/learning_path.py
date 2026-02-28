@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
 
+# No typing imports needed
 from sqlalchemy import ARRAY, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import ENUM, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -64,7 +64,7 @@ class PathLesson(Base):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     lesson_type: Mapped[str] = mapped_column(lesson_type_enum, nullable=False)
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
-    external_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    external_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     display_order: Mapped[int] = mapped_column(Integer, nullable=False)
 
     # Relationships

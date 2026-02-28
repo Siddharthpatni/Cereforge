@@ -1,14 +1,14 @@
 """LLM-powered code evaluation service."""
 
-import traceback
-import logging
 import json
-from app.core.config import settings
-
-logger = logging.getLogger(__name__)
+import logging
 
 from google import genai
 from google.genai import types
+
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 # Initialize Gemini client safely
 gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY) if settings.GEMINI_API_KEY else None

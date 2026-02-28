@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
 
+# No typing imports needed
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -24,8 +24,8 @@ class TaskSubmission(Base):
         UUID(as_uuid=True), ForeignKey("tasks.id"), nullable=False
     )
     solution_text: Mapped[str] = mapped_column(Text, nullable=False)
-    colab_link: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    colab_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     xp_awarded: Mapped[int] = mapped_column(Integer, nullable=False)
     submitted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
@@ -33,8 +33,8 @@ class TaskSubmission(Base):
 
     # AI Detection Flags
     is_ai_flagged: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
-    ai_flag_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    ai_flag_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    ai_flag_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    ai_flag_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     __table_args__ = (UniqueConstraint("user_id", "task_id", name="uq_user_task_submission"),)
 
