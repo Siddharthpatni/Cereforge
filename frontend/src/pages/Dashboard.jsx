@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   Card,
@@ -16,38 +16,65 @@ import {
   Zap,
   Target,
   BookOpen,
+  RefreshCw,
 } from "lucide-react";
 import apiClient from "@/api/client";
 import { formatDistanceToNow } from "date-fns";
 
+const RANK_THRESHOLDS = [
+  { name: "Initiate", min: 0, max: 999 },
+  { name: "Adept", min: 1000, max: 2499 },
+  { name: "Master", min: 2500, max: 4999 },
+  { name: "Grandmaster", min: 5000, max: 9999 },
+  { name: "Archmage", min: 10000, max: Infinity },
+];
+
+function getNextRank(xp) {
+  const tier = RANK_THRESHOLDS.find((t) => xp <= t.max);
+  if (!tier || tier.max === Infinity) return null;
+  return { name: RANK_THRESHOLDS[RANK_THRESHOLDS.indexOf(tier) + 1]?.name, needed: tier.max - xp + 1, max: tier.max, current: tier.min };
+}
+
 export function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    apiClient
-      .get("/dashboard")
-      .then((res) => {
-        setData(res.data);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+  const loadData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    setError(false);
+    try {
+      const res = await apiClient.get("/dashboard");
+      setData(res.data);
+    } catch (err) {
+      console.error(err);
+      setError(true);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin-slow text-primary">
+      <div className="flex items-center justify-center p-12 min-h-[60vh]">
+        <div className="animate-spin text-primary">
           <Zap className="h-8 w-8" />
         </div>
       </div>
     );
   }
 
-  if (!data)
+  if (error || !data)
     return (
-      <div className="p-8 text-center text-zinc-500">
-        Failed to load dashboard data.
+      <div className="p-8 text-center text-zinc-500 min-h-[60vh] flex flex-col items-center justify-center">
+        <Zap className="h-12 w-12 mb-4 opacity-20" />
+        <p className="mb-4">Failed to load dashboard data.</p>
+        <Button onClick={() => loadData()} variant="outline">Retry</Button>
       </div>
     );
 
@@ -65,13 +92,19 @@ export function Dashboard() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">
-            Dashboard
-          </h1>
-          <p className="text-zinc-400 mt-1">
-            Track your progress and continue learning.
-          </p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Dashboard</h1>
+          <p className="text-zinc-400 mt-1">Track your progress and continue learning.</p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => loadData(true)}
+          disabled={refreshing}
+          className="shrink-0"
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Top Stats Row */}
@@ -91,20 +124,26 @@ export function Dashboard() {
                 <Zap className="h-5 w-5" />
               </div>
             </div>
-
-            <div className="mt-4 w-full bg-zinc-800 rounded-full h-1.5 mb-1 overflow-hidden">
-              <div
-                className="bg-primary h-1.5 rounded-full transition-all duration-1000"
-                style={{
-                  width: `${Math.min(100, (stats.xp / (rank.next_rank_xp || 1)) * 100)}%`,
-                }}
-              />
-            </div>
-            {rank.next_rank && (
-              <p className="text-xs text-zinc-500">
-                {rank.xp_needed} XP to {rank.next_rank}
-              </p>
-            )}
+            {(() => {
+              const next = getNextRank(stats.xp);
+              if (!next) return <p className="text-xs text-primary mt-2 font-mono">MAX RANK</p>;
+              const range = next.max - next.current + 1;
+              const progress = ((stats.xp - next.current) / range) * 100;
+              return (
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-zinc-500 mb-1">
+                    <span>{next.needed} XP to {next.name}</span>
+                    <span>{Math.round(progress)}%</span>
+                  </div>
+                  <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-primary h-1.5 rounded-full transition-all duration-700"
+                      style={{ width: `${Math.min(100, progress)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
 
@@ -401,6 +440,6 @@ export function Dashboard() {
           </Card>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
