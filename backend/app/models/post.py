@@ -73,6 +73,4 @@ class PostBookmark(Base):
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
-    __table_args__ = (
-        UniqueConstraint("user_id", "post_id", name="uq_user_post_bookmark"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "post_id", name="uq_user_post_bookmark"),)

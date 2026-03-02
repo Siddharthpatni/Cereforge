@@ -169,9 +169,7 @@ async def submit_task(
 
     # Replaced simulated delay with real AI code evaluation for insights/benchmarks
     eval_result = await evaluate_submission(
-        solution_content=data.solution_text,
-        task_title=task.title,
-        task_difficulty=task.difficulty
+        solution_content=data.solution_text, task_title=task.title, task_difficulty=task.difficulty
     )
 
     # Validation Check: Reward 0 XP if flagged as AI or failed tests
@@ -182,7 +180,7 @@ async def submit_task(
 
     if existing_submission:
         previously_earned_xp = existing_submission.xp_awarded > 0
-        
+
         # Overwrite previous solution
         existing_submission.solution_text = data.solution_text
         existing_submission.colab_link = data.colab_link
@@ -203,7 +201,9 @@ async def submit_task(
         elif previously_earned_xp and not is_invalid:
             celebration = "Solution updated successfully! (XP already awarded)"
         else:
-            celebration = "Submission updated. (0 XP: Did not pass all tests or flagged as AI generated)"
+            celebration = (
+                "Submission updated. (0 XP: Did not pass all tests or flagged as AI generated)"
+            )
     else:
         # Create new submission
         submission = TaskSubmission(
@@ -225,7 +225,9 @@ async def submit_task(
             newly_earned = await check_and_award_badges(db, current_user.id)
 
         if is_invalid:
-            celebration = "Submission Recorded. (0 XP: Did not pass all tests or flagged as AI generated)"
+            celebration = (
+                "Submission Recorded. (0 XP: Did not pass all tests or flagged as AI generated)"
+            )
         else:
             celebration = f"🎉 Task complete! +{actual_xp} XP"
             if newly_earned:
@@ -244,7 +246,7 @@ async def submit_task(
         rank=rank,
         newly_earned_badges=[BadgeEarned(**b) for b in newly_earned],
         celebration_message=celebration,
-        benchmarks=Benchmarks(**eval_result)
+        benchmarks=Benchmarks(**eval_result),
     )
 
 

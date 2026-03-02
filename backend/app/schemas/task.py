@@ -87,6 +87,7 @@ class Benchmarks(BaseModel):
     total_tests: int
     insights: list[str]
 
+
 class TaskSubmissionResponse(BaseModel):
     xp_earned: int
     total_xp: int

@@ -65,9 +65,7 @@ async def update_my_profile(
 
     # Check username uniqueness if changing
     if body.username and body.username != current_user.username:
-        existing = await db.execute(
-            select(User).where(User.username == body.username)
-        )
+        existing = await db.execute(select(User).where(User.username == body.username))
         if existing.scalar_one_or_none():
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

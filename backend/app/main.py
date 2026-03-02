@@ -73,11 +73,12 @@ async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown events."""
     # ── Startup security checks ────────────────────────────────────────────
     import os
+
     jwt_secret = os.getenv("JWT_SECRET_KEY", "")
     if len(jwt_secret) < 32:
         raise RuntimeError(
             "JWT_SECRET_KEY must be at least 32 characters. "
-            "Generate with: python -c \"import secrets; print(secrets.token_hex(64))\""
+            'Generate with: python -c "import secrets; print(secrets.token_hex(64))"'
         )
 
     required_vars = ["DATABASE_URL", "JWT_SECRET_KEY"]
@@ -158,7 +159,13 @@ def create_app() -> FastAPI:
         errors = []
         for err in exc.errors():
             field = " → ".join(str(loc) for loc in err.get("loc", []))
-            errors.append({"field": field, "message": err.get("msg", "Validation error"), "type": err.get("type")})
+            errors.append(
+                {
+                    "field": field,
+                    "message": err.get("msg", "Validation error"),
+                    "type": err.get("type"),
+                }
+            )
         return JSONResponse(
             status_code=422,
             content={"detail": errors, "type": "validation_error"},
@@ -198,7 +205,6 @@ def create_app() -> FastAPI:
     @app.get("/api/v1/ping", tags=["System"])
     async def ping():
         return {"pong": True}
-
 
     # ── Health endpoints ─────────────────────────────────────────────────
     @app.get("/api/v1/health", tags=["System"])

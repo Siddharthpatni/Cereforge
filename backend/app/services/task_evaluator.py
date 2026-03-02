@@ -19,7 +19,7 @@ async def evaluate_submission(solution_content: str, task_title: str, task_diffi
     Evaluates a user's code submission using Anthropic Claude.
     Returns estimated execution metrics and actionable insights as a dictionary.
     """
-    
+
     # Check if API key is actually set, otherwise return graceful fallback immediately
     if not settings.GEMINI_API_KEY:
         logger.warning("No Gemini API key configured. Returning simulated benchmark data.")
@@ -31,10 +31,10 @@ async def evaluate_submission(solution_content: str, task_title: str, task_diffi
             "insights": [
                 "Your logic is structurally sound.",
                 "Consider adding more robust error handling.",
-                "Execution time could be optimized by reducing redundant loops."
-            ]
+                "Execution time could be optimized by reducing redundant loops.",
+            ],
         }
-    
+
     # If the user submitted a simple colab link instead of code, handle gracefully
     if solution_content.strip().startswith("http") and "colab" in solution_content:
         return {
@@ -45,10 +45,10 @@ async def evaluate_submission(solution_content: str, task_title: str, task_diffi
             "insights": [
                 "You submitted a Colab link. We cannot automatically benchmark external notebooks.",
                 "Ensure your notebook runs end-to-end without errors before submitting.",
-                "Consider pasting your core algorithmic code here next time for AI-powered benchmarking."
-            ]
+                "Consider pasting your core algorithmic code here next time for AI-powered benchmarking.",
+            ],
         }
-    
+
     prompt = f"""
     You are an expert Senior Staff AI/Software Engineer.
     Evaluate the following solution for the task "{task_title}" (Difficulty: {task_difficulty}).
@@ -77,33 +77,40 @@ async def evaluate_submission(solution_content: str, task_title: str, task_diffi
             model="gemini-2.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
-                temperature=0.2,
-                response_mime_type="application/json"
-            )
+                temperature=0.2, response_mime_type="application/json"
+            ),
         )
-        
+
         # Parse the JSON response
         response_text = response.text.strip()
-        
+
         # Robustly strip markdown blocks
         import re
-        response_text = re.sub(r'^```[a-zA-Z]*\n', '', response_text)
-        response_text = re.sub(r'\n```$', '', response_text)
+
+        response_text = re.sub(r"^```[a-zA-Z]*\n", "", response_text)
+        response_text = re.sub(r"\n```$", "", response_text)
         response_text = response_text.strip()
-            
+
         print("RAW GEMINI RESPONSE REPR:", repr(response_text))
-            
+
         result = json.loads(response_text)
-        
+
         # Ensure correct types and fallback if missing
         return {
             "execution_time_ms": int(result.get("execution_time_ms", 124)),
             "memory_usage_mb": float(result.get("memory_usage_mb", 45.5)),
             "tests_passed": int(result.get("tests_passed", 0)),
             "total_tests": int(result.get("total_tests", 1)),
-            "insights": result.get("insights", ["Good effort, but could be optimized further.", "Review best practices.", "Structure looks okay."])
+            "insights": result.get(
+                "insights",
+                [
+                    "Good effort, but could be optimized further.",
+                    "Review best practices.",
+                    "Structure looks okay.",
+                ],
+            ),
         }
-        
+
     except Exception as e:
         # Fallback if API fails or parsing fails
         logger.error(f"Error evaluating submission: {e}", exc_info=True)
@@ -115,6 +122,6 @@ async def evaluate_submission(solution_content: str, task_title: str, task_diffi
             "insights": [
                 "Could not connect to evaluator.",
                 "Ensure your code logic is sound.",
-                "Try submitting again later for full insights."
-            ]
+                "Try submitting again later for full insights.",
+            ],
         }

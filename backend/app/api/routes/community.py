@@ -75,7 +75,7 @@ async def list_posts(
                 Post.body.ilike(f"%{search}%"),
             )
         )
-    
+
     if bookmarked_only and current_user:
         query = query.join(PostBookmark, Post.id == PostBookmark.post_id).where(
             PostBookmark.user_id == current_user.id
@@ -106,7 +106,7 @@ async def list_posts(
         b_result = await db.execute(
             select(PostBookmark.post_id).where(
                 PostBookmark.user_id == current_user.id,
-                PostBookmark.post_id.in_([p.id for p in posts])
+                PostBookmark.post_id.in_([p.id for p in posts]),
             )
         )
         bookmarked_post_ids = set(b_result.scalars().all())
@@ -196,11 +196,7 @@ async def get_post(
     # Get all comments for the post at once to avoid lazy-loading issues (MissingGreenletError)
     comments_result = await db.execute(
         select(Comment)
-        .options(
-            joinedload(Comment.author),
-            noload(Comment.replies),
-            noload(Comment.parent)
-        )
+        .options(joinedload(Comment.author), noload(Comment.replies), noload(Comment.parent))
         .where(Comment.post_id == post_id, Comment.is_deleted.is_(False))
         .order_by(desc(Comment.is_accepted), desc(Comment.vote_score), Comment.created_at)
     )
@@ -208,6 +204,7 @@ async def get_post(
 
     # Group comments by parent_id
     from collections import defaultdict
+
     children_map = defaultdict(list)
     for c in all_comments:
         children_map[c.parent_id].append(c)
@@ -231,12 +228,12 @@ async def get_post(
 
     # Check bookmark status
     from app.models.post import PostBookmark
+
     is_bookmarked = False
     if current_user:
         b_result = await db.execute(
             select(PostBookmark).where(
-                PostBookmark.user_id == current_user.id,
-                PostBookmark.post_id == post.id
+                PostBookmark.user_id == current_user.id, PostBookmark.post_id == post.id
             )
         )
         if b_result.scalar_one_or_none():
@@ -316,8 +313,7 @@ async def toggle_bookmark(
     # Check if already bookmarked
     b_result = await db.execute(
         select(PostBookmark).where(
-            PostBookmark.user_id == current_user.id,
-            PostBookmark.post_id == post_id
+            PostBookmark.user_id == current_user.id, PostBookmark.post_id == post_id
         )
     )
     bookmark = b_result.scalar_one_or_none()
