@@ -22,10 +22,15 @@ async def get_leaderboard(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
     page: int = Query(1, ge=1),
-    limit: int = Query(50, ge=1, le=100),
+    size: int = Query(20, ge=1, le=100, alias="size"),
 ):
-    """Get the global leaderboard sorted by XP."""
-    offset = (page - 1) * limit
+    """Get the global leaderboard sorted by XP with pagination."""
+    offset = (page - 1) * size
+
+    # Total user count for pagination
+    total_result = await db.execute(select(func.count(User.id)).where(User.is_active))
+    total = total_result.scalar() or 0
+    pages = max(1, (total + size - 1) // size)
 
     # Get users ordered by XP
     users_result = await db.execute(
@@ -33,7 +38,7 @@ async def get_leaderboard(
         .where(User.is_active)
         .order_by(desc(User.xp), User.created_at)
         .offset(offset)
-        .limit(limit)
+        .limit(size)
     )
     users = users_result.scalars().all()
 
@@ -48,10 +53,11 @@ async def get_leaderboard(
         )
         tasks_completed = tasks_result.scalar() or 0
 
-        # Count and get badges
-        badges_result = await db.execute(select(UserBadge).where(UserBadge.user_id == user.id))
-        user_badges = badges_result.scalars().all()
-        top_badges = [ub.badge.icon for ub in user_badges[:3]] if user_badges else []
+        # Count badges
+        badges_result = await db.execute(
+            select(func.count(UserBadge.id)).where(UserBadge.user_id == user.id)
+        )
+        badges_count = badges_result.scalar() or 0
 
         items.append(
             {
@@ -64,19 +70,30 @@ async def get_leaderboard(
                 "rank": rank,
                 "xp": user.xp,
                 "tasks_completed": tasks_completed,
-                "badges_count": len(user_badges),
-                "top_badges": top_badges,
+                "badges_count": badges_count,
             }
         )
 
-    # Find current user's position
-    current_position = None
+    # Find current user's rank
     rank_result = await db.execute(
         select(func.count(User.id)).where(User.is_active, User.xp > current_user.xp)
     )
-    current_position = (rank_result.scalar() or 0) + 1
+    current_rank = (rank_result.scalar() or 0) + 1
+
+    # Current user's task count
+    my_tasks_result = await db.execute(
+        select(func.count(TaskSubmission.id)).where(TaskSubmission.user_id == current_user.id)
+    )
+    my_tasks = my_tasks_result.scalar() or 0
 
     return {
         "items": items,
-        "current_user_position": current_position,
+        "total": total,
+        "page": page,
+        "pages": pages,
+        "current_user_rank": {
+            "rank": current_rank,
+            "total_xp": current_user.xp,
+            "tasks_completed": my_tasks,
+        },
     }

@@ -8,12 +8,17 @@ from contextlib import asynccontextmanager
 from datetime import timezone
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from loguru import logger
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
 from app.core.redis import close_redis
+
 
 # ── Security Headers Middleware ──────────────────────────────────────────────
 
@@ -146,6 +151,56 @@ def create_app() -> FastAPI:
     app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
     app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
     app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
+
+    # ── Global Exception Handlers ────────────────────────────────────────────
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        """Return a clean 422 with per-field error messages."""
+        errors = []
+        for err in exc.errors():
+            field = " → ".join(str(loc) for loc in err.get("loc", []))
+            errors.append({"field": field, "message": err.get("msg", "Validation error"), "type": err.get("type")})
+        return JSONResponse(
+            status_code=422,
+            content={"detail": errors, "type": "validation_error"},
+        )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+        """Return a clean JSON error for all HTTP exceptions."""
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail, "status_code": exc.status_code},
+        )
+
+    @app.exception_handler(ValueError)
+    async def value_error_handler(request: Request, exc: ValueError):
+        """Catch unhandled ValueError as a 400 Bad Request."""
+        logger.warning(f"ValueError: {exc} | path={request.url.path}")
+        return JSONResponse(
+            status_code=400,
+            content={"detail": str(exc), "type": "bad_request"},
+        )
+
+    @app.exception_handler(Exception)
+    async def generic_exception_handler(request: Request, exc: Exception):
+        """Catch all unhandled exceptions — return 500 without leaking stack traces."""
+        request_id = getattr(request.state, "request_id", "unknown")
+        logger.error(f"Unhandled exception [{request_id}]: {type(exc).__name__}: {exc}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": "An unexpected server error occurred. Please try again or contact support.",
+                "request_id": request_id,
+            },
+        )
+
+    # ── Lightweight ping ─────────────────────────────────────────────────────
+    @app.get("/api/v1/ping", tags=["System"])
+    async def ping():
+        return {"pong": True}
+
 
     # ── Health endpoints ─────────────────────────────────────────────────
     @app.get("/api/v1/health", tags=["System"])
