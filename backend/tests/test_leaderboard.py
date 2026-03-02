@@ -10,7 +10,7 @@ from tests.conftest import auth_headers, register_user
 
 @pytest.mark.asyncio
 async def test_leaderboard_returns_users(client):
-    """GET /leaderboard returns 200 with at least 1 user."""
+    """GET /leaderboard returns 200 with at least 1 user and pagination fields."""
     data = await register_user(client, username="lb_user1")
     token = data["access_token"]
     resp = await client.get("/api/v1/leaderboard", headers=auth_headers(token))
@@ -18,6 +18,10 @@ async def test_leaderboard_returns_users(client):
     body = resp.json()
     assert "items" in body
     assert len(body["items"]) >= 1
+    # New pagination fields
+    assert "total" in body
+    assert "pages" in body
+    assert body["total"] >= 1
 
 
 @pytest.mark.asyncio
@@ -32,12 +36,16 @@ async def test_leaderboard_sorted_by_xp(client):
 
 
 @pytest.mark.asyncio
-async def test_current_user_position(client):
-    """Leaderboard response includes current_user_position."""
-    data = await register_user(client, username="lb_position")
+async def test_current_user_rank(client):
+    """Leaderboard response includes current_user_rank with rank, total_xp, tasks_completed."""
+    data = await register_user(client, username="lb_rank_check")
     token = data["access_token"]
     resp = await client.get("/api/v1/leaderboard", headers=auth_headers(token))
     body = resp.json()
-    assert "current_user_position" in body
-    assert isinstance(body["current_user_position"], int)
-    assert body["current_user_position"] >= 1
+    assert "current_user_rank" in body
+    rank_info = body["current_user_rank"]
+    assert "rank" in rank_info
+    assert "total_xp" in rank_info
+    assert "tasks_completed" in rank_info
+    assert isinstance(rank_info["rank"], int)
+    assert rank_info["rank"] >= 1
