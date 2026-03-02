@@ -8,7 +8,7 @@ import { AIMentorPanel } from "@/components/tasks/AIMentorPanel";
 import { useUIStore } from "@/stores/uiStore";
 import { useAuthStore } from "@/stores/authStore";
 import apiClient from "@/api/client";
-import { ArrowLeft, CheckCircle, Flame, Send } from "lucide-react";
+import { ArrowLeft, CheckCircle, Flame, Send, Clock } from "lucide-react";
 import { BenchmarkModal } from "@/components/ui/BenchmarkModal";
 
 export function TaskDetail() {
@@ -179,8 +179,21 @@ export function TaskDetail() {
               )}
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">{task.title}</h1>
-            <div className="flex items-center gap-4 text-sm text-primary font-mono bg-primary/10 inline-flex px-3 py-1 rounded-md border border-primary/20">
-              <Flame className="h-4 w-4" /> Reward: {task.xp_reward} XP
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-4 text-sm text-primary font-mono bg-primary/10 inline-flex px-3 py-1 rounded-md border border-primary/20">
+                <Flame className="h-4 w-4" /> Reward: {task.xp_reward} XP
+              </div>
+              {(() => {
+                const text = [task.description, task.beginner_guide, task.hint].filter(Boolean).join(" ");
+                const words = text.split(/\s+/).length;
+                const mins = Math.max(1, Math.round(words / 200));
+                return (
+                  <div className="flex items-center gap-1.5 text-sm text-zinc-400 bg-zinc-800/60 px-3 py-1 rounded-md border border-zinc-700/50">
+                    <Clock className="h-3.5 w-3.5" />
+                    ~{mins} min read
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
