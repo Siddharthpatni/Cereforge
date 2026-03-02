@@ -474,11 +474,378 @@ TASKS_DATA = [
             },
         ],
     },
+    # ─── ADDITIONAL LLM TASKS ───
+    {
+        "slug": "llm-structured-output",
+        "track": "llm",
+        "difficulty": "intermediate",
+        "title": "Structured JSON from Any LLM",
+        "xp_reward": 100,
+        "display_order": 4,
+        "colab_url": "https://colab.research.google.com/drive/NF_llm_004_structured_output",
+        "description": (
+            "Production LLM systems almost never consume raw text — they need clean JSON. "
+            "In this task you will: (1) define a Pydantic schema for a job posting extraction model "
+            "(company, role, salary_range, required_skills, remote_friendly), (2) use an instructor-patched "
+            "OpenAI client to extract structured data from 5 raw job descriptions, (3) handle validation errors "
+            "gracefully with retry logic, and (4) measure extraction accuracy. Target: >90% field accuracy "
+            "on the provided test set."
+        ),
+        "beginner_guide": (
+            "Structured output means getting the LLM to always respond in a format your code can parse, "
+            "like JSON. The library `instructor` wraps OpenAI and forces the model to match your Pydantic schema. "
+            "Think of it as giving the model a form to fill in, not a blank page to write on."
+        ),
+        "hint": (
+            "Use `instructor.patch(client)` then pass `response_model=YourSchema` to `chat.completions.create`. "
+            "For retry logic, `instructor` has a built-in `max_retries` parameter."
+        ),
+        "resources": [
+            {
+                "title": "Instructor library docs",
+                "url": "https://python.useinstructor.com/",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+            {
+                "title": "OpenAI Function Calling Guide",
+                "url": "https://platform.openai.com/docs/guides/function-calling",
+                "resource_type": "article",
+                "display_order": 2,
+            },
+        ],
+    },
+    {
+        "slug": "llm-fine-tuning-intro",
+        "track": "llm",
+        "difficulty": "expert",
+        "title": "Fine-Tune a Small LLM on Custom Data",
+        "xp_reward": 200,
+        "display_order": 5,
+        "colab_url": "https://colab.research.google.com/drive/NF_llm_005_fine_tuning",
+        "description": (
+            "When prompting isn't enough, you fine-tune. In this task you will: "
+            "(1) prepare a dataset of 200 customer service Q&A pairs in JSONL chat format, "
+            "(2) fine-tune `Qwen2.5-0.5B-Instruct` using `trl` + `peft` with LoRA (r=8, alpha=16) "
+            "on a free T4 Colab GPU, (3) evaluate using ROUGE-L and a held-out test set, "
+            "(4) compare base model vs fine-tuned model responses on 10 edge cases. "
+            "Submit your training metrics and a 3-sentence reflection on what improved."
+        ),
+        "beginner_guide": (
+            "Fine-tuning means taking a pre-trained model and teaching it your specific style or vocabulary "
+            "by training it on your own examples. LoRA is a smart technique that only trains a tiny fraction "
+            "of the model weights, making it affordable even on a free GPU. Think of it as giving the AI "
+            "a short apprenticeship in your domain."
+        ),
+        "hint": (
+            "Use `datasets.Dataset.from_list()` for your JSONL data. For LoRA config, start with "
+            "`target_modules=['q_proj', 'v_proj']`. The `SFTTrainer` from `trl` handles the training loop."
+        ),
+        "resources": [
+            {
+                "title": "HuggingFace PEFT Documentation",
+                "url": "https://huggingface.co/docs/peft",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+            {
+                "title": "TRL SFTTrainer Guide",
+                "url": "https://huggingface.co/docs/trl/sft_trainer",
+                "resource_type": "article",
+                "display_order": 2,
+            },
+        ],
+    },
+    {
+        "slug": "llm-eval-framework",
+        "track": "llm",
+        "difficulty": "intermediate",
+        "title": "Build an LLM Evaluation Framework",
+        "xp_reward": 150,
+        "display_order": 6,
+        "colab_url": "https://colab.research.google.com/drive/NF_llm_006_eval_framework",
+        "description": (
+            "How do you know if your LLM is actually good? In this task you will build a mini evaluation "
+            "framework that tests a chatbot on 3 dimensions: (1) factual accuracy (using a QA dataset with "
+            "known answers), (2) instruction following (does it maintain format/length constraints?), "
+            "(3) safety (does it refuse harmful requests?). Run your evaluation against both GPT-4o-mini "
+            "and a Gemini Flash model. Produce a comparison report table showing pass rates per category."
+        ),
+        "hint": "Use LangSmith or a simple dict-based scorer. For safety, curate 10 red-team prompts.",
+        "resources": [
+            {
+                "title": "OpenAI Evals Framework",
+                "url": "https://github.com/openai/evals",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+        ],
+    },
+    # ─── ADDITIONAL RAG TASKS ───
+    {
+        "slug": "rag-reranker",
+        "track": "rag",
+        "difficulty": "intermediate",
+        "title": "Add a Neural Reranker to Your RAG Pipeline",
+        "xp_reward": 150,
+        "display_order": 5,
+        "colab_url": "https://colab.research.google.com/drive/NF_rag_005_reranker",
+        "description": (
+            "Basic embedding search ranks documents by cosine similarity, but a neural reranker reads "
+            "both the query and each candidate together — like a human judging relevance. "
+            "In this task: (1) build a baseline retrieval pipeline using ChromaDB on 200 Wikipedia chunks, "
+            "(2) add `cross-encoder/ms-marco-MiniLM-L-12-v2` as a reranker on top of the top-20 retrieved chunks, "
+            "(3) measure NDCG@5 with and without the reranker on 50 test queries, "
+            "(4) analyze the 3 biggest improvements. Target: ≥ 8% NDCG@5 improvement."
+        ),
+        "beginner_guide": (
+            "A reranker is a second model that re-reads your top retrieved documents and re-scores them "
+            "more carefully. The first retrieval step is fast (vector similarity); the reranker is slower "
+            "but smarter. You only run the reranker on the top 20 candidates, so it stays affordable."
+        ),
+        "hint": "Use `sentence_transformers.CrossEncoder`. Sort by `.predict()` scores descending.",
+        "resources": [
+            {
+                "title": "SentenceTransformers Cross-Encoder",
+                "url": "https://www.sbert.net/docs/cross_encoder/pretrained_models.html",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+        ],
+    },
+    {
+        "slug": "rag-multimodal",
+        "track": "rag",
+        "difficulty": "expert",
+        "title": "Multimodal RAG — Search Over Documents with Images",
+        "xp_reward": 200,
+        "display_order": 6,
+        "colab_url": "https://colab.research.google.com/drive/NF_rag_006_multimodal",
+        "description": (
+            "Most RAG systems ignore images in PDFs. This task makes them first-class citizens. "
+            "Using LlamaParse or PyMuPDF, extract text AND images from a 50-page technical PDF. "
+            "Embed images using CLIP and text using text-embedding-3-small. Store both in Qdrant with "
+            "payload metadata. Build a unified retriever that searches both modalities and fuses results. "
+            "Demonstrate: a query about a chart in the PDF returns the correct image chunk."
+        ),
+        "hint": "Qdrant supports multiple vector fields per point. Use `vectors={'text': ..., 'image': ...}`.",
+        "resources": [
+            {
+                "title": "Qdrant Multi-vector Tutorial",
+                "url": "https://qdrant.tech/documentation/tutorials/multimodal/",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+        ],
+    },
+    {
+        "slug": "rag-streaming-pipeline",
+        "track": "rag",
+        "difficulty": "intermediate",
+        "title": "Real-Time Streaming RAG Responses",
+        "xp_reward": 125,
+        "display_order": 7,
+        "colab_url": "https://colab.research.google.com/drive/NF_rag_007_streaming",
+        "description": (
+            "Waiting 10 seconds for a full RAG response kills UX. Streaming changes everything. "
+            "In this task: (1) build a FastAPI endpoint that retrieves context then streams an LLM response "
+            "token-by-token using Server-Sent Events, (2) build a simple React frontend that displays "
+            "the streaming text, (3) add a source citations sidebar that appears when retrieval completes, "
+            "(4) measure time-to-first-token and compare to non-streaming. Target: TTFT < 300ms."
+        ),
+        "hint": "Use `StreamingResponse` in FastAPI with `async def generate()` yielding `f'data: {chunk}\\n\\n'`.",
+        "resources": [
+            {
+                "title": "FastAPI Streaming Response Docs",
+                "url": "https://fastapi.tiangolo.com/advanced/custom-response/#streamingresponse",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+        ],
+    },
+    # ─── ADDITIONAL VISION TASKS ───
+    {
+        "slug": "cv-object-detection",
+        "track": "vision",
+        "difficulty": "intermediate",
+        "title": "Real-Time Object Detection with YOLOv8",
+        "xp_reward": 150,
+        "display_order": 5,
+        "colab_url": "https://colab.research.google.com/drive/NF_cv_005_yolo",
+        "description": (
+            "YOLO (You Only Look Once) is the industry standard for real-time object detection. "
+            "In this task: (1) load YOLOv8n from Ultralytics and run inference on 20 provided street images, "
+            "(2) fine-tune on a custom 500-image dataset of hard hats and safety vests from Roboflow, "
+            "(3) evaluate with mAP@0.5 on a held-out test set, (4) export to ONNX and measure inference "
+            "latency on CPU. Target: mAP@0.5 > 0.75 on the safety gear dataset."
+        ),
+        "hint": "Use `model.train(data='safety.yaml', epochs=30, imgsz=640)`. Roboflow provides the YAML automatically.",
+        "resources": [
+            {
+                "title": "Ultralytics YOLOv8 Docs",
+                "url": "https://docs.ultralytics.com/",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+            {
+                "title": "Roboflow Universe Datasets",
+                "url": "https://universe.roboflow.com/",
+                "resource_type": "article",
+                "display_order": 2,
+            },
+        ],
+    },
+    {
+        "slug": "cv-image-classification-cnn",
+        "track": "vision",
+        "difficulty": "beginner",
+        "title": "Train Your First Image Classifier",
+        "xp_reward": 75,
+        "display_order": 6,
+        "colab_url": "https://colab.research.google.com/drive/NF_cv_006_classifier",
+        "description": (
+            "Before transformers, CNNs ruled computer vision. Understanding them makes everything else click. "
+            "In this task: (1) use PyTorch to build a 4-layer CNN (Conv → ReLU → Pool, repeated twice + FC layers), "
+            "(2) train on CIFAR-10 for 10 epochs, (3) visualize feature maps from the first conv layer using "
+            "matplotlib, (4) apply data augmentation (random flip, color jitter) and show the accuracy improvement. "
+            "Target: ≥ 75% test accuracy on CIFAR-10."
+        ),
+        "beginner_guide": (
+            "A CNN is like a grid of filters that scan across an image looking for patterns. "
+            "Early filters detect edges, later filters detect shapes, the final layer classifies. "
+            "CIFAR-10 has 60,000 tiny 32x32 images across 10 classes — perfect for learning."
+        ),
+        "hint": "Use `torchvision.datasets.CIFAR10`. Start with `nn.Conv2d(3, 32, 3)` for the first layer.",
+        "resources": [
+            {
+                "title": "PyTorch CNN Tutorial",
+                "url": "https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+        ],
+    },
+    {
+        "slug": "cv-segmentation",
+        "track": "vision",
+        "difficulty": "expert",
+        "title": "Semantic Segmentation for Autonomous Driving",
+        "xp_reward": 225,
+        "display_order": 7,
+        "colab_url": "https://colab.research.google.com/drive/NF_cv_007_segmentation",
+        "description": (
+            "While object detection draws boxes, segmentation labels every single pixel. "
+            "In this task: (1) download 500 images from the Cityscapes dataset, "
+            "(2) fine-tune a SegFormer-B0 model for road, car, pedestrian, and sky classes, "
+            "(3) evaluate with mIoU (mean Intersection over Union), (4) generate a video overlay "
+            "showing the segmentation mask on a 30-second dashcam clip. "
+            "Target: mIoU >= 0.60 on the validation split."
+        ),
+        "hint": "Use `transformers.SegformerForSemanticSegmentation.from_pretrained('nvidia/segformer-b0')`. "
+        "Use bilinear interpolation to upsample output logits to input image size.",
+        "resources": [
+            {
+                "title": "HuggingFace SegFormer Guide",
+                "url": "https://huggingface.co/docs/transformers/model_doc/segformer",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+        ],
+    },
+    # ─── ADDITIONAL AGENTS TASKS ───
+    {
+        "slug": "agent-tool-builder",
+        "track": "agents",
+        "difficulty": "intermediate",
+        "title": "Build and Register 5 Custom Agent Tools",
+        "xp_reward": 150,
+        "display_order": 5,
+        "colab_url": "https://colab.research.google.com/drive/NF_ag_005_tool_builder",
+        "description": (
+            "The power of an AI agent is only as large as its toolbox. "
+            "In this task, implement 5 custom tools using LangChain's `@tool` decorator: "
+            "(1) `web_search` using DuckDuckGo API, (2) `code_executor` using a sandboxed Python REPL, "
+            "(3) `file_reader` with PDF and CSV support, (4) `calculator` with safe eval, "
+            "(5) `memory_store` backed by a JSON file. "
+            "Create an agent with all 5 tools and demo it solving a multi-step research task."
+        ),
+        "beginner_guide": (
+            "A 'tool' is a function the agent can call when it decides it needs help. "
+            "You define what the function does; the agent decides WHEN to call it based on the task. "
+            "This is how AI agents browse the web, run code, or read files."
+        ),
+        "hint": "Decorate with `@tool` and write a clear docstring — the agent reads the docstring to "
+        "decide when to use the tool. Bad docstring = agent misuses the tool.",
+        "resources": [
+            {
+                "title": "LangChain Custom Tools Guide",
+                "url": "https://python.langchain.com/docs/how_to/custom_tools/",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+        ],
+    },
+    {
+        "slug": "agent-memory-system",
+        "track": "agents",
+        "difficulty": "intermediate",
+        "title": "Long-Term Memory for AI Agents",
+        "xp_reward": 175,
+        "display_order": 6,
+        "colab_url": "https://colab.research.google.com/drive/NF_ag_006_memory",
+        "description": (
+            "Stateless agents forget everything between sessions. Memory fixes that. "
+            "Build a personal assistant agent with 3-tier memory: "
+            "(1) working memory (current conversation in context window), "
+            "(2) episodic memory (past conversations stored in a vector DB, retrieved by similarity), "
+            "(3) semantic memory (distilled facts about the user stored as structured JSON). "
+            "Demonstrate: start a conversation, end it, start a new one, and show the agent "
+            "correctly recalls facts from the previous session without them being in context."
+        ),
+        "hint": "Use Mem0 or build custom with ChromaDB. For semantic memory, ask the LLM to "
+        "extract key facts and store them in a `user_facts.json` file after each session.",
+        "resources": [
+            {
+                "title": "Mem0 Documentation",
+                "url": "https://docs.mem0.ai/",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+        ],
+    },
+    {
+        "slug": "agent-orchestrator",
+        "track": "agents",
+        "difficulty": "expert",
+        "title": "Build a Multi-Agent Orchestration System",
+        "xp_reward": 250,
+        "display_order": 7,
+        "colab_url": "https://colab.research.google.com/drive/NF_ag_007_orchestrator",
+        "description": (
+            "Real-world AI pipelines use teams of specialized agents, not one monolith. "
+            "Design a 4-agent research pipeline: (1) Planner agent that breaks a question into subtasks, "
+            "(2) Researcher agent that calls web search tools, (3) Analyst agent that synthesizes findings, "
+            "(4) Writer agent that produces the final report. Implement using LangGraph with a shared "
+            "state graph. Add a human-in-the-loop approval checkpoint before the Writer publishes. "
+            "Demo: produce a 1-page research report on 'impact of AI on software engineering jobs'."
+        ),
+        "hint": "LangGraph's `StateGraph` is the key. Each node is an agent. Use `conditional_edges` "
+        "for the human checkpoint. The state dict passes between all nodes.",
+        "resources": [
+            {
+                "title": "LangGraph Multi-Agent Tutorial",
+                "url": "https://langchain-ai.github.io/langgraph/tutorials/multi_agent/multi-agent-network/",
+                "resource_type": "article",
+                "display_order": 1,
+            },
+        ],
+    },
 ]
 
 
 async def seed_tasks(db: AsyncSession):
-    """Seed all 12 tasks with resources — idempotent."""
+    """Seed all 24 tasks with resources — idempotent."""
+
     for task_data in TASKS_DATA:
         resources_data = task_data.pop("resources", [])
 
