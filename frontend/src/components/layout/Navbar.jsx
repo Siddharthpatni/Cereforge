@@ -79,16 +79,19 @@ export function Navbar() {
         {user && (
           <div className="flex items-center gap-3 pr-4 border-r border-border">
             <div className="hidden sm:flex flex-col items-end">
-              <span
-                className="text-xs font-semibold"
-                style={{ color: rank?.color || "#a1a1aa" }}
-              >
-                {rank?.name || "Trainee"}
-              </span>
-              <span className="text-[10px] text-zinc-500">Rank</span>
+              <span className="text-[10px] font-bold text-white mb-0.5">{user?.username}</span>
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-[10px] font-bold uppercase tracking-wider"
+                  style={{ color: rank?.color || "#a1a1aa" }}
+                >
+                  {rank?.name || "Trainee"}
+                </span>
+                <span className="text-[10px] text-zinc-500">Rank</span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-1 bg-secondary rounded-full px-3 py-1 border border-border">
+            <div className="flex items-center gap-1 bg-secondary rounded-full px-2.5 py-1 border border-border shadow-inner">
               <span className="text-xs font-bold text-white">
                 <XPCounter value={user?.xp || 0} />
               </span>
@@ -99,14 +102,26 @@ export function Navbar() {
 
         {/* Notifications & Profile Menu Stub */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-zinc-400 hover:text-white"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
-          </Button>
+          <div className="relative group">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-zinc-400 hover:text-white"
+            >
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            </Button>
+            {/* Popover content */}
+            <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-zinc-900 border border-border rounded-xl shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all z-50">
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+                <Bell className="h-4 w-4 text-primary" />
+                <span className="text-sm font-bold text-white">Notifications</span>
+              </div>
+              <p className="text-xs text-zinc-400">
+                You're all caught up! Complete tasks to earn badges and climb the leaderboard.
+              </p>
+            </div>
+          </div>
 
           <Button
             variant="ghost"

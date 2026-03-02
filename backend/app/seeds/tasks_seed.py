@@ -571,6 +571,11 @@ TASKS_DATA = [
             "(3) safety (does it refuse harmful requests?). Run your evaluation against both GPT-4o-mini "
             "and a Gemini Flash model. Produce a comparison report table showing pass rates per category."
         ),
+        "beginner_guide": (
+            "Evaluation is the most underrated part of LLM engineering. This task teaches you how to "
+            "systematically test if your AI is actually doing what you want across accuracy, logic, "
+            "and safety. You'll build a 'judge' model that evaluates your 'student' model."
+        ),
         "hint": "Use LangSmith or a simple dict-based scorer. For safety, curate 10 red-team prompts.",
         "resources": [
             {
@@ -599,9 +604,9 @@ TASKS_DATA = [
             "(4) analyze the 3 biggest improvements. Target: ≥ 8% NDCG@5 improvement."
         ),
         "beginner_guide": (
-            "A reranker is a second model that re-reads your top retrieved documents and re-scores them "
-            "more carefully. The first retrieval step is fast (vector similarity); the reranker is slower "
-            "but smarter. You only run the reranker on the top 20 candidates, so it stays affordable."
+            "A reranker is like a second, smarter judge that looks at the top results from your first "
+            "search and re-orders them to be even more relevant. It's slower than the first search, "
+            "so we only use it on the top 20 candidates."
         ),
         "hint": "Use `sentence_transformers.CrossEncoder`. Sort by `.predict()` scores descending.",
         "resources": [
@@ -628,6 +633,11 @@ TASKS_DATA = [
             "payload metadata. Build a unified retriever that searches both modalities and fuses results. "
             "Demonstrate: a query about a chart in the PDF returns the correct image chunk."
         ),
+        "beginner_guide": (
+            "Standard RAG only sees text. Multimodal RAG sees everything — charts, photos, and diagrams. "
+            "We use CLIP to turn images into math (vectors) just like we do with text, so you can search "
+            "for 'a chart showing revenue growth' and actually find it."
+        ),
         "hint": "Qdrant supports multiple vector fields per point. Use `vectors={'text': ..., 'image': ...}`.",
         "resources": [
             {
@@ -652,6 +662,11 @@ TASKS_DATA = [
             "token-by-token using Server-Sent Events, (2) build a simple React frontend that displays "
             "the streaming text, (3) add a source citations sidebar that appears when retrieval completes, "
             "(4) measure time-to-first-token and compare to non-streaming. Target: TTFT < 300ms."
+        ),
+        "beginner_guide": (
+            "Streaming makes AI feel fast by showing you words as they are generated, rather than making "
+            "you wait for the whole paragraph. It's a key part of great AI user experience, especially "
+            "for long RAG answers."
         ),
         "hint": "Use `StreamingResponse` in FastAPI with `async def generate()` yielding `f'data: {chunk}\\n\\n'`.",
         "resources": [
@@ -678,6 +693,11 @@ TASKS_DATA = [
             "(2) fine-tune on a custom 500-image dataset of hard hats and safety vests from Roboflow, "
             "(3) evaluate with mAP@0.5 on a held-out test set, (4) export to ONNX and measure inference "
             "latency on CPU. Target: mAP@0.5 > 0.75 on the safety gear dataset."
+        ),
+        "beginner_guide": (
+            "Object detection doesn't just see 'there is a person' — it draws a box exactly where they are. "
+            "YOLOv8 is the fastest way to do this, making it possible to track moving objects in real-time "
+            "video on a standard computer."
         ),
         "hint": "Use `model.train(data='safety.yaml', epochs=30, imgsz=640)`. Roboflow provides the YAML automatically.",
         "resources": [
@@ -741,6 +761,11 @@ TASKS_DATA = [
             "showing the segmentation mask on a 30-second dashcam clip. "
             "Target: mIoU >= 0.60 on the validation split."
         ),
+        "beginner_guide": (
+            "Segmentation is the 'surgical' version of computer vision. Instead of boxes, it colors "
+            "every pixel based on what it is — road, car, sidewalk, or tree. This is how self-driving "
+            "cars know exactly where the drivable road ends and the sidewalk begins."
+        ),
         "hint": "Use `transformers.SegformerForSemanticSegmentation.from_pretrained('nvidia/segformer-b0')`. "
         "Use bilinear interpolation to upsample output logits to input image size.",
         "resources": [
@@ -802,6 +827,11 @@ TASKS_DATA = [
             "Demonstrate: start a conversation, end it, start a new one, and show the agent "
             "correctly recalls facts from the previous session without them being in context."
         ),
+        "beginner_guide": (
+            "Memory gives agents a 'life story'. Without it, they are like someone with amnesia — "
+            "every conversation starts from zero. By storing past interactions in a database, the agent "
+            "can remember your name, your preferences, and what you worked on yesterday."
+        ),
         "hint": "Use Mem0 or build custom with ChromaDB. For semantic memory, ask the LLM to "
         "extract key facts and store them in a `user_facts.json` file after each session.",
         "resources": [
@@ -828,6 +858,11 @@ TASKS_DATA = [
             "(4) Writer agent that produces the final report. Implement using LangGraph with a shared "
             "state graph. Add a human-in-the-loop approval checkpoint before the Writer publishes. "
             "Demo: produce a 1-page research report on 'impact of AI on software engineering jobs'."
+        ),
+        "beginner_guide": (
+            "Orchestration is like being a conductor for an AI orchestra. Instead of one model doing "
+            "everything, you have specialists (Researcher, Analyst, Writer) and a 'brain' that directs "
+            "the flow of work between them to complete complex projects."
         ),
         "hint": "LangGraph's `StateGraph` is the key. Each node is an agent. Use `conditional_edges` "
         "for the human checkpoint. The state dict passes between all nodes.",

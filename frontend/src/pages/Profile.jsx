@@ -76,7 +76,7 @@ export function Profile() {
     </div>
   );
 
-  const isCurrentUser = profileUser.id === currentUser?.id;
+  const isCurrentUser = profileUser.user.id === currentUser?.id;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
