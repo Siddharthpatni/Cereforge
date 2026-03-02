@@ -227,11 +227,223 @@ PATHS_DATA = [
             },
         ],
     },
+    # ─── NEW PATHS ───────────────────────────────────────────────────────────────
+    {
+        "slug": "vision-engineering-path",
+        "title": "Computer Vision Engineering",
+        "description": (
+            "From understanding pixels to building production vision systems. "
+            "This path covers classical CV, convolutional networks, transfer learning, "
+            "object detection with YOLO, and semantic segmentation. "
+            "You'll have end-to-end projects in every module — not just theory."
+        ),
+        "for_skill_levels": ["some_python", "ml_familiar"],
+        "duration_days": 24,
+        "task_slugs": [
+            "cv-real-world-survey",
+            "cv-image-classification-cnn",
+            "cv-transfer-learning",
+            "cv-object-detection",
+            "cv-segmentation",
+        ],
+        "display_order": 4,
+        "modules": [
+            {
+                "title": "Vision Foundations (Days 1–5)",
+                "display_order": 1,
+                "lessons": [
+                    {
+                        "title": "How computers see images — pixels, channels, and tensors",
+                        "lesson_type": "article",
+                        "duration_minutes": 20,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Classical CV: edge detection, HOG, and SIFT",
+                        "lesson_type": "colab",
+                        "duration_minutes": 40,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "Introduction to CNNs — intuition first",
+                        "lesson_type": "video",
+                        "duration_minutes": 25,
+                        "display_order": 3,
+                    },
+                ],
+            },
+            {
+                "title": "Training Deep Classifiers (Days 6–12)",
+                "display_order": 2,
+                "lessons": [
+                    {
+                        "title": "Train CIFAR-10 from scratch with PyTorch",
+                        "lesson_type": "colab",
+                        "duration_minutes": 60,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Transfer learning with EfficientNet — why it works",
+                        "lesson_type": "article",
+                        "duration_minutes": 25,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "Data augmentation strategies for real-world data",
+                        "lesson_type": "colab",
+                        "duration_minutes": 45,
+                        "display_order": 3,
+                    },
+                ],
+            },
+            {
+                "title": "Object Detection (Days 13–18)",
+                "display_order": 3,
+                "lessons": [
+                    {
+                        "title": "YOLO architecture — from v1 to v8",
+                        "lesson_type": "article",
+                        "duration_minutes": 30,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Custom dataset training with Roboflow",
+                        "lesson_type": "colab",
+                        "duration_minutes": 75,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "Model export and deployment with ONNX",
+                        "lesson_type": "colab",
+                        "duration_minutes": 45,
+                        "display_order": 3,
+                    },
+                ],
+            },
+            {
+                "title": "Segmentation (Days 19–24)",
+                "display_order": 4,
+                "lessons": [
+                    {
+                        "title": "Semantic vs instance segmentation — which to use",
+                        "lesson_type": "article",
+                        "duration_minutes": 20,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "SegFormer fine-tuning on custom classes",
+                        "lesson_type": "colab",
+                        "duration_minutes": 90,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "Evaluating with mIoU and per-class metrics",
+                        "lesson_type": "article",
+                        "duration_minutes": 20,
+                        "display_order": 3,
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        "slug": "llm-finetuning-mastery-path",
+        "title": "LLM Fine-Tuning Mastery",
+        "description": (
+            "Go beyond prompt engineering. This advanced path teaches you how to permanently "
+            "change model behavior through supervised fine-tuning, preference optimization (DPO), "
+            "and RLHF concepts. By the end you'll be able to fine-tune any open-source LLM "
+            "for production use on a single GPU."
+        ),
+        "for_skill_levels": ["ml_familiar", "advanced"],
+        "duration_days": 28,
+        "task_slugs": [
+            "llm-prompt-chain",
+            "llm-structured-output",
+            "llm-fine-tuning-intro",
+            "llm-eval-framework",
+        ],
+        "display_order": 5,
+        "modules": [
+            {
+                "title": "Dataset Preparation (Days 1–7)",
+                "display_order": 1,
+                "lessons": [
+                    {
+                        "title": "Chat format — what is a conversation dataset",
+                        "lesson_type": "article",
+                        "duration_minutes": 20,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Data quality over quantity — why 500 beats 50,000",
+                        "lesson_type": "article",
+                        "duration_minutes": 25,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "Labeling with Argilla and Doccano",
+                        "lesson_type": "colab",
+                        "duration_minutes": 45,
+                        "display_order": 3,
+                    },
+                ],
+            },
+            {
+                "title": "LoRA Fine-Tuning (Days 8–16)",
+                "display_order": 2,
+                "lessons": [
+                    {
+                        "title": "LoRA math explained — low-rank approximation intuition",
+                        "lesson_type": "article",
+                        "duration_minutes": 30,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Fine-tune Qwen2.5-0.5B on T4 Colab",
+                        "lesson_type": "colab",
+                        "duration_minutes": 90,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "QLoRA — 4-bit quantized training",
+                        "lesson_type": "colab",
+                        "duration_minutes": 60,
+                        "display_order": 3,
+                    },
+                ],
+            },
+            {
+                "title": "Evaluation & Deployment (Days 17–28)",
+                "display_order": 3,
+                "lessons": [
+                    {
+                        "title": "ROUGE-L, perplexity, and LLM-as-judge scoring",
+                        "lesson_type": "article",
+                        "duration_minutes": 25,
+                        "display_order": 1,
+                    },
+                    {
+                        "title": "Merging LoRA weights and pushing to HuggingFace Hub",
+                        "lesson_type": "colab",
+                        "duration_minutes": 30,
+                        "display_order": 2,
+                    },
+                    {
+                        "title": "Serving your model with vLLM for low-latency inference",
+                        "lesson_type": "colab",
+                        "duration_minutes": 45,
+                        "display_order": 3,
+                    },
+                ],
+            },
+        ],
+    },
 ]
 
 
 async def seed_paths(db: AsyncSession):
-    """Seed all 3 learning paths with modules and lessons — idempotent."""
+    """Seed all 5 learning paths with modules and lessons — idempotent."""
     for path_data in PATHS_DATA:
         task_slugs = cast(list[str], path_data.pop("task_slugs"))
         modules_data = cast(list[dict[str, Any]], path_data.pop("modules"))
