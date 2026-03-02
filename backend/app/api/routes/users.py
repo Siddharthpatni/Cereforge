@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +19,80 @@ from app.models.user import User
 from app.services.xp_service import calculate_rank
 
 router = APIRouter()
+
+VALID_SKILL_LEVELS = {"absolute_beginner", "some_python", "ml_familiar", "advanced"}
+
+
+class ProfileUpdate(BaseModel):
+    """Fields a user may update on their own profile."""
+
+    username: Optional[str] = Field(None, min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_]+$")
+    background: Optional[str] = Field(None, max_length=500)
+    skill_level: Optional[str] = None
+
+
+@router.get("/me")
+async def get_my_profile(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Get the currently authenticated user's own profile."""
+    return {
+        "id": str(current_user.id),
+        "username": current_user.username,
+        "email": current_user.email,
+        "avatar_url": current_user.avatar_url,
+        "skill_level": current_user.skill_level,
+        "background": current_user.background,
+        "xp": current_user.xp,
+        "is_admin": current_user.is_admin,
+        "created_at": current_user.created_at.isoformat(),
+    }
+
+
+@router.patch("/me")
+async def update_my_profile(
+    body: ProfileUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Update the currently authenticated user's profile."""
+    if body.skill_level and body.skill_level not in VALID_SKILL_LEVELS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"skill_level must be one of: {', '.join(sorted(VALID_SKILL_LEVELS))}",
+        )
+
+    # Check username uniqueness if changing
+    if body.username and body.username != current_user.username:
+        existing = await db.execute(
+            select(User).where(User.username == body.username)
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username is already taken.",
+            )
+        current_user.username = body.username
+
+    if body.background is not None:
+        current_user.background = body.background
+    if body.skill_level is not None:
+        current_user.skill_level = body.skill_level
+
+    await db.commit()
+    await db.refresh(current_user)
+
+    return {
+        "id": str(current_user.id),
+        "username": current_user.username,
+        "email": current_user.email,
+        "avatar_url": current_user.avatar_url,
+        "skill_level": current_user.skill_level,
+        "background": current_user.background,
+        "xp": current_user.xp,
+        "created_at": current_user.created_at.isoformat(),
+    }
 
 
 @router.get("/{username}")

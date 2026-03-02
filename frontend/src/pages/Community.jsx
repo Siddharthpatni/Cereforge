@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   MessageSquare,
   ChevronUp,
+  CheckCircle,
   Plus,
   Search,
   Tag as TagIcon,
@@ -13,9 +14,12 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { useUIStore } from "@/stores/uiStore";
+import { useAuthStore } from "@/stores/authStore";
 import apiClient from "@/api/client";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/utils/cn";
+
+const TRACKS = ["llm", "rag", "vision", "agents"];
 
 export function Community() {
   const [posts, setPosts] = useState([]);
@@ -23,6 +27,7 @@ export function Community() {
   const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
   const [tagFilter, setTagFilter] = useState("");
+  const [trackFilter, setTrackFilter] = useState("all");
   const [bookmarkedOnly, setBookmarkedOnly] = useState(false);
 
   // Ask Question Modal State
@@ -30,35 +35,30 @@ export function Community() {
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [newTags, setNewTags] = useState("");
+  const [newTrack, setNewTrack] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState("");
 
   const { addToast } = useUIStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
 
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      let url = "/posts?";
       const params = new URLSearchParams();
-
       if (tagFilter) params.append("tag", tagFilter);
       if (search) params.append("search", search);
       if (bookmarkedOnly) params.append("bookmarked_only", "true");
+      if (trackFilter !== "all") params.append("track", trackFilter);
 
-      url += params.toString();
-
-      const res = await apiClient.get(url);
-      setPosts(res.data.items || res.data); // depending on pagination response
+      const res = await apiClient.get(`/posts?${params.toString()}`);
+      setPosts(res.data.items || res.data);
       setError(false);
     } catch (err) {
       console.error(err);
       setError(true);
-      addToast({
-        title: "Error",
-        message: "Failed to load community posts",
-        type: "error",
-      });
+      addToast({ title: "Error", message: "Failed to load community posts", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,24 @@ export function Community() {
   useEffect(() => {
     fetchPosts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tagFilter, bookmarkedOnly]);
+  }, [tagFilter, bookmarkedOnly, trackFilter]);
+
+  const handleVote = async (postId, value) => {
+    if (!user) {
+      addToast({ title: "Sign in required", message: "You must be signed in to vote.", type: "warning" });
+      return;
+    }
+    try {
+      await apiClient.post("/vote", { target_id: postId, target_type: "post", value });
+      fetchPosts();
+    } catch (err) {
+      addToast({
+        title: "Vote Failed",
+        message: err.response?.data?.detail || "Could not cast vote.",
+        type: "warning",
+      });
+    }
+  };
 
   const handleCreatePost = async (e) => {
     e.preventDefault();
@@ -76,38 +93,29 @@ export function Community() {
     setSubmitting(true);
     setLocalError("");
     try {
-      const tagsArray = newTags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean);
+      const tagsArray = newTags.split(",").map((t) => t.trim()).filter(Boolean);
       const res = await apiClient.post("/posts", {
         title: newTitle,
         body: newContent,
         tags: tagsArray,
+        ...(newTrack && { track: newTrack }),
       });
 
-      addToast({
-        title: "Success",
-        message: "Question posted successfully.",
-        type: "success",
-      });
+      addToast({ title: "Success", message: "Question posted successfully.", type: "success" });
       setIsModalOpen(false);
       setNewTitle("");
       setNewContent("");
       setNewTags("");
-
-      // Navigate directly to the new post
+      setNewTrack("");
       navigate(`/community/${res.data.post.id}`);
     } catch (err) {
-      const msg =
-        err.response?.data?.detail ||
-        "Failed to post question. Please try again.";
-      setLocalError(msg);
-      addToast({
-        title: "Error",
-        message: msg,
-        type: "error",
-      });
+      const msg = err.response?.data?.detail || "Failed to post question. Please try again.";
+      // Pydantic validation errors come as an array
+      const errorMsg = Array.isArray(msg)
+        ? msg.map((e) => e.msg || e.type).join(", ")
+        : msg;
+      setLocalError(errorMsg);
+      addToast({ title: "Error", message: errorMsg, type: "error" });
     } finally {
       setSubmitting(false);
     }
@@ -123,9 +131,7 @@ export function Community() {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">
-            Community
-          </h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Community</h1>
           <p className="text-zinc-400 mt-1">
             Discuss AI challenges, share solutions, and help fellow engineers.
           </p>
@@ -138,7 +144,36 @@ export function Community() {
         </Button>
       </div>
 
-      {/* Filters */}
+      {/* Track Filter */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setTrackFilter("all")}
+          className={cn(
+            "px-3 py-1 text-xs font-semibold rounded-full border transition-colors",
+            trackFilter === "all"
+              ? "bg-secondary text-white border-zinc-600"
+              : "bg-transparent text-zinc-400 border-transparent hover:bg-zinc-800",
+          )}
+        >
+          All Tracks
+        </button>
+        {TRACKS.map((track) => (
+          <button
+            key={track}
+            onClick={() => setTrackFilter(track)}
+            className={cn(
+              "px-3 py-1 text-xs font-semibold rounded-full border transition-colors uppercase",
+              trackFilter === track
+                ? "bg-primary/20 text-primary border-primary/40"
+                : "bg-transparent text-zinc-400 border-transparent hover:bg-zinc-800",
+            )}
+          >
+            {track}
+          </button>
+        ))}
+      </div>
+
+      {/* Search/Tag Filters */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card p-4 rounded-xl border border-border">
         <div className="relative w-full md:flex-1">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
@@ -147,6 +182,7 @@ export function Community() {
             placeholder="Search discussions..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && fetchPosts()}
             className="w-full bg-input border border-border pl-10 pr-4 py-2 rounded-lg text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
           />
         </div>
@@ -154,10 +190,10 @@ export function Community() {
           <TagIcon className="h-4 w-4 text-zinc-500" />
           <input
             type="text"
-            placeholder="Filter by explicitly exact tag..."
+            placeholder="Filter by tag..."
             value={tagFilter}
             onChange={(e) => setTagFilter(e.target.value)}
-            className="w-full md:w-48 bg-input border border-border px-3 py-2 rounded-lg text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+            className="w-full md:w-40 bg-input border border-border px-3 py-2 rounded-lg text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
           />
           <Button
             variant={bookmarkedOnly ? "default" : "outline"}
@@ -169,22 +205,18 @@ export function Community() {
                 : "border-border text-zinc-400 hover:text-white h-[38px]"
             }
           >
-            <Star
-              className={cn("h-4 w-4 mr-1.5", bookmarkedOnly && "fill-current")}
-            />
+            <Star className={cn("h-4 w-4 mr-1.5", bookmarkedOnly && "fill-current")} />
             Favorites
           </Button>
         </div>
       </div>
 
-      {/* List */}
+      {/* Post List */}
       <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
         {error ? (
           <div className="p-12 text-center text-red-500">
             <p>Could not load posts. Try again.</p>
-            <Button onClick={fetchPosts} variant="outline" className="mt-4">
-              Retry
-            </Button>
+            <Button onClick={fetchPosts} variant="outline" className="mt-4">Retry</Button>
           </div>
         ) : loading ? (
           <div className="divide-y divide-border/50">
@@ -202,12 +234,8 @@ export function Community() {
         ) : posts.length === 0 ? (
           <div className="p-12 text-center text-zinc-500">
             <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p className="mb-4">
-              No community posts yet. Be the first to start a discussion!
-            </p>
-            <Button onClick={() => setIsModalOpen(true)}>
-              Ask the First Question
-            </Button>
+            <p className="mb-4">No community posts yet. Be the first to start a discussion!</p>
+            <Button onClick={() => setIsModalOpen(true)}>Ask the First Question</Button>
           </div>
         ) : filteredPosts.length > 0 ? (
           <div className="divide-y divide-border/50">
@@ -216,13 +244,17 @@ export function Community() {
                 key={post.id}
                 className="p-4 sm:p-6 hover:bg-zinc-900/40 transition-colors flex gap-4"
               >
-                {/* Vote Counter Stub */}
+                {/* Vote Counter — connected */}
                 <div className="flex flex-col items-center shrink-0">
-                  <div className="text-zinc-400 hover:text-success cursor-pointer mb-1">
+                  <button
+                    onClick={() => handleVote(post.id, 1)}
+                    className="text-zinc-400 hover:text-success cursor-pointer mb-1 transition-colors"
+                    title="Upvote"
+                  >
                     <ChevronUp className="h-6 w-6" />
-                  </div>
+                  </button>
                   <span className="font-mono font-bold text-white px-2">
-                    {post.score}
+                    {post.vote_score ?? 0}
                   </span>
                 </div>
 
@@ -230,17 +262,17 @@ export function Community() {
                 <div className="flex-1 min-w-0">
                   <Link to={`/community/${post.id}`} className="block">
                     <h3 className="text-lg font-semibold text-white hover:text-primary transition-colors line-clamp-2">
-                      {post.is_resolved && (
+                      {post.status === "solved" && (
                         <CheckCircle
                           className="inline-block h-4 w-4 text-success mr-2 mb-1"
-                          title="Resolved"
+                          title="Solved"
                         />
                       )}
                       {post.title}
                     </h3>
                   </Link>
                   <p className="text-sm text-zinc-400 mt-1 line-clamp-1">
-                    {post.content}
+                    {post.body || ""}
                   </p>
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
@@ -258,8 +290,7 @@ export function Community() {
 
                     <div className="flex items-center gap-4 text-xs text-zinc-500 ml-auto">
                       <span className="flex items-center gap-1">
-                        <MessageSquare className="h-3 w-3" />{" "}
-                        {post.comment_count}
+                        <MessageSquare className="h-3 w-3" /> {post.comment_count ?? 0}
                       </span>
                       <span>
                         By{" "}
@@ -267,9 +298,7 @@ export function Community() {
                           {post.author?.username || "Unknown"}
                         </span>
                       </span>
-                      <span>
-                        {formatDistanceToNow(new Date(post.created_at))} ago
-                      </span>
+                      <span>{formatDistanceToNow(new Date(post.created_at))} ago</span>
                     </div>
                   </div>
                 </div>
@@ -280,13 +309,14 @@ export function Community() {
           <div className="p-12 text-center text-zinc-500">
             <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
             <p>No discussions found.</p>
-            {(search || tagFilter) && (
+            {(search || tagFilter || trackFilter !== "all") && (
               <Button
                 variant="ghost"
                 className="mt-4"
                 onClick={() => {
                   setSearch("");
                   setTagFilter("");
+                  setTrackFilter("all");
                 }}
               >
                 Clear Filters
@@ -297,11 +327,7 @@ export function Community() {
       </div>
 
       {/* Ask Question Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Ask the Community"
-      >
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Ask the Community">
         <form onSubmit={handleCreatePost} className="space-y-4">
           {localError && (
             <div className="p-3 mb-2 text-sm text-red-400 bg-red-900/20 border border-red-900/50 rounded-lg flex items-start gap-2">
@@ -328,31 +354,41 @@ export function Community() {
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-foreground focus:outline-none focus:border-primary resize-y"
-              placeholder="Provide context, what you've tried, and any code blocks using markdown..."
+              placeholder="Provide context, what you've tried, and any code blocks..."
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-zinc-300">
-              Tags{" "}
-              <span className="text-zinc-500 font-normal">
-                (comma separated)
-              </span>
-            </label>
-            <input
-              value={newTags}
-              onChange={(e) => setNewTags(e.target.value)}
-              className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
-              placeholder="python, RL, dqn"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-300">
+                Tags <span className="text-zinc-500 font-normal">(comma separated)</span>
+              </label>
+              <input
+                value={newTags}
+                onChange={(e) => setNewTags(e.target.value)}
+                className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
+                placeholder="python, RL, dqn"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-300">
+                Track <span className="text-zinc-500 font-normal">(optional)</span>
+              </label>
+              <select
+                value={newTrack}
+                onChange={(e) => setNewTrack(e.target.value)}
+                className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
+              >
+                <option value="">General</option>
+                {TRACKS.map((t) => (
+                  <option key={t} value={t}>{t.toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setIsModalOpen(false)}
-            >
+            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" isLoading={submitting}>

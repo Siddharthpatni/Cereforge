@@ -5,19 +5,35 @@ import {
   Code,
   MessageSquare,
   Calendar,
-  ChevronRight,
+  Pencil,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import apiClient from "@/api/client";
 import { useAuthStore } from "@/stores/authStore";
 import { formatDistanceToNow, format } from "date-fns";
 
+const SKILL_LEVELS = [
+  { id: "absolute_beginner", label: "Absolute Beginner" },
+  { id: "some_python", label: "Some Python" },
+  { id: "ml_familiar", label: "ML Familiar" },
+  { id: "advanced", label: "Advanced" },
+];
+
 export function Profile() {
   const { username } = useParams();
   const navigate = useNavigate();
-  const { user: currentUser } = useAuthStore();
+  const { user: currentUser, setUser } = useAuthStore();
+
+  // Edit Profile modal state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editUsername, setEditUsername] = useState("");
+  const [editBackground, setEditBackground] = useState("");
+  const [editSkillLevel, setEditSkillLevel] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
 
   const [profileUser, setProfileUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -90,6 +106,12 @@ export function Profile() {
                 >
                   {profileUser.rank?.name || "Initiate"}
                 </Badge>
+                {profileUser.user.skill_level && (
+                  <Badge variant="outline" className="text-zinc-400 border-zinc-700">
+                    {SKILL_LEVELS.find((s) => s.id === profileUser.user.skill_level)?.label ||
+                      profileUser.user.skill_level}
+                  </Badge>
+                )}
                 <span className="text-sm text-zinc-400 flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5" /> Joined{" "}
                   {format(new Date(profileUser.user.created_at), "MMMM yyyy")}
@@ -98,16 +120,31 @@ export function Profile() {
             </div>
 
             {isCurrentUser && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  useAuthStore.getState().logout();
-                  navigate("/auth");
-                }}
-              >
-                Sign Out
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditUsername(profileUser.user.username);
+                    setEditBackground(profileUser.user.background || "");
+                    setEditSkillLevel(profileUser.user.skill_level || "some_python");
+                    setEditError("");
+                    setEditOpen(true);
+                  }}
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-1.5" /> Edit Profile
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    useAuthStore.getState().logout();
+                    navigate("/auth");
+                  }}
+                >
+                  Sign Out
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -282,6 +319,91 @@ export function Profile() {
           </Card>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title="Edit Profile">
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setEditSaving(true);
+            setEditError("");
+            try {
+              const res = await apiClient.patch("/users/me", {
+                username: editUsername,
+                background: editBackground,
+                skill_level: editSkillLevel,
+              });
+              // Sync authStore so nav/header reflects new username immediately
+              setUser(res.data);
+              // Re-fetch profile data
+              const updated = await apiClient.get(`/users/${res.data.username}`);
+              setProfileUser(updated.data);
+              setEditOpen(false);
+            } catch (err) {
+              const detail = err.response?.data?.detail;
+              setEditError(
+                Array.isArray(detail)
+                  ? detail.map((d) => d.msg || d.type).join(", ")
+                  : detail || "Failed to save changes.",
+              );
+            } finally {
+              setEditSaving(false);
+            }
+          }}
+          className="space-y-4"
+        >
+          {editError && (
+            <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-900/50 rounded-lg">
+              {editError}
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-zinc-300">Username</label>
+            <input
+              value={editUsername}
+              onChange={(e) => setEditUsername(e.target.value)}
+              required
+              minLength={3}
+              maxLength={30}
+              pattern="^[a-zA-Z0-9_]+$"
+              title="Letters, numbers, underscores only"
+              className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
+            />
+            <p className="text-xs text-zinc-500">Letters, numbers, underscores only.</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-zinc-300">Background / Bio</label>
+            <textarea
+              rows={3}
+              value={editBackground}
+              onChange={(e) => setEditBackground(e.target.value)}
+              maxLength={500}
+              className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-foreground focus:outline-none focus:border-primary resize-none"
+              placeholder="Tell the community a bit about yourself..."
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-zinc-300">Skill Level</label>
+            <select
+              value={editSkillLevel}
+              onChange={(e) => setEditSkillLevel(e.target.value)}
+              className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
+            >
+              {SKILL_LEVELS.map((s) => (
+                <option key={s.id} value={s.id}>{s.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+            <Button type="button" variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button type="submit" isLoading={editSaving}>Save Changes</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

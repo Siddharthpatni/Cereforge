@@ -8,23 +8,26 @@ import apiClient from "@/api/client";
 import { cn } from "@/utils/cn";
 
 const TRACKS = ["llm", "rag", "vision", "agents"];
+const DIFFICULTIES = ["beginner", "intermediate", "expert"];
 
 export function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedTrack, setSelectedTrack] = useState("all");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("all");
   useEffect(() => {
     fetchTasks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTrack]);
+  }, [selectedTrack, selectedDifficulty]);
 
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const url =
-        selectedTrack === "all" ? "/tasks" : `/tasks?track=${selectedTrack}`;
-      const res = await apiClient.get(url);
+      const params = new URLSearchParams();
+      if (selectedTrack !== "all") params.append("track", selectedTrack);
+      if (selectedDifficulty !== "all") params.append("difficulty", selectedDifficulty);
+      const res = await apiClient.get(`/tasks?${params.toString()}`);
       setTasks(res.data);
     } catch (err) {
       console.error(err);
@@ -54,8 +57,8 @@ export function Tasks() {
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 bg-card rounded-xl border border-border">
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <Filter className="h-4 w-4 text-zinc-400" />
+        <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
+          <Filter className="h-4 w-4 text-zinc-400 shrink-0" />
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedTrack("all")}
@@ -75,11 +78,42 @@ export function Tasks() {
                 className={cn(
                   "px-3 py-1 text-xs font-semibold rounded-full border transition-colors uppercase",
                   selectedTrack === track
-                    ? `bg-[rgba(255,255,255,0.1)] text-white border-zinc-600`
+                    ? `bg-primary/20 text-primary border-primary/40`
                     : "bg-transparent text-zinc-400 border-transparent hover:bg-zinc-800",
                 )}
               >
                 {track}
+              </button>
+            ))}
+          </div>
+
+          <div className="w-px h-4 bg-zinc-700 mx-1 hidden md:block" />
+
+          {/* Difficulty filter */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedDifficulty("all")}
+              className={cn(
+                "px-3 py-1 text-xs font-semibold rounded-full border transition-colors",
+                selectedDifficulty === "all"
+                  ? "bg-secondary text-white border-zinc-600"
+                  : "bg-transparent text-zinc-400 border-transparent hover:bg-zinc-800",
+              )}
+            >
+              All Levels
+            </button>
+            {DIFFICULTIES.map((diff) => (
+              <button
+                key={diff}
+                onClick={() => setSelectedDifficulty(diff)}
+                className={cn(
+                  "px-3 py-1 text-xs font-semibold rounded-full border transition-colors capitalize",
+                  selectedDifficulty === diff
+                    ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
+                    : "bg-transparent text-zinc-400 border-transparent hover:bg-zinc-800",
+                )}
+              >
+                {diff}
               </button>
             ))}
           </div>
@@ -163,6 +197,7 @@ export function Tasks() {
             onClick={() => {
               setSearch("");
               setSelectedTrack("all");
+              setSelectedDifficulty("all");
             }}
           >
             Clear Filters
