@@ -22,6 +22,7 @@ export function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [currentUserRank, setCurrentUserRank] = useState(null);
+  const [timeframe, setTimeframe] = useState("all");
 
   useEffect(() => {
     fetchLeaderboard(page);
@@ -82,9 +83,25 @@ export function Leaderboard() {
             <Trophy className="h-8 w-8 text-primary" /> Global Leaderboard
           </h1>
           <p className="text-zinc-400 mt-1">
-            Compete with AI engineers worldwide. Rank up by completing
-            challenges.
+            Compete with AI engineers worldwide. Rank up by completing challenges.
           </p>
+        </div>
+        {/* Timeframe tabs */}
+        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
+          {["week", "month", "all"].map((tf) => (
+            <button
+              key={tf}
+              onClick={() => { setTimeframe(tf); setPage(1); }}
+              className={cn(
+                "px-4 py-1.5 text-xs font-semibold rounded-md capitalize transition-colors",
+                timeframe === tf
+                  ? "bg-primary text-white"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+              )}
+            >
+              {tf === "all" ? "All-Time" : tf === "week" ? "This Week" : "This Month"}
+            </button>
+          ))}
         </div>
       </div>
 
