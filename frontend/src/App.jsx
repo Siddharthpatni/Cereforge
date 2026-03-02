@@ -49,6 +49,8 @@ const Admin = React.lazy(() =>
 
 import PageSkeleton from "./components/ui/PageSkeleton";
 import FullPageLoader from "./components/ui/FullPageLoader";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
+import NotFound from "./pages/NotFound";
 
 function App() {
   const { isInitializing, init, isAuthenticated } = useAuthStore();
@@ -63,41 +65,43 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Suspense fallback={<PageSkeleton />}>
-        <Routes>
-          <Route
-            path="/auth"
-            element={
-              isAuthenticated ? (
-                <Navigate to="/" replace />
-              ) : (
-                <Auth />
-              )
-            }
-          />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Suspense fallback={<PageSkeleton />}>
+          <Routes>
+            <Route
+              path="/auth"
+              element={
+                isAuthenticated ? (
+                  <Navigate to="/" replace />
+                ) : (
+                  <Auth />
+                )
+              }
+            />
 
-          {/* Authenticated Routes wrapped in Layout */}
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="tasks" element={<Tasks />} />
-            <Route path="tasks/:slug" element={<TaskDetail />} />
-            <Route path="weekly" element={<WeeklyTasks />} />
-            <Route path="community" element={<Community />} />
-            <Route path="community/:postId" element={<PostDetail />} />
-            <Route path="leaderboard" element={<Leaderboard />} />
-            <Route path="paths" element={<Paths />} />
-            <Route path="paths/:slug" element={<PathDetail />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="profile/:username" element={<Profile />} />
-            <Route path="admin" element={<Admin />} />
-          </Route>
+            {/* Authenticated Routes wrapped in Layout */}
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="tasks" element={<Tasks />} />
+              <Route path="tasks/:slug" element={<TaskDetail />} />
+              <Route path="weekly" element={<WeeklyTasks />} />
+              <Route path="community" element={<Community />} />
+              <Route path="community/:postId" element={<PostDetail />} />
+              <Route path="leaderboard" element={<Leaderboard />} />
+              <Route path="paths" element={<Paths />} />
+              <Route path="paths/:slug" element={<PathDetail />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="profile/:username" element={<Profile />} />
+              <Route path="admin" element={<Admin />} />
+            </Route>
 
-          {/* Catch-all unknown routes */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
+            {/* Proper 404 page — not a redirect */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

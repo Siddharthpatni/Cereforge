@@ -50,8 +50,8 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - APP_NAME=CereForge
       - APP_ENV=${APP_ENV:-development}
-      - APP_SECRET_KEY=${APP_SECRET_KEY:-dev-secret-key-change-in-production-please}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-jwt-secret-change-in-production-please}
+      - APP_SECRET_KEY=${APP_SECRET_KEY:-dev-secret-key-do-not-use-in-production-replace-me}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-jwt-secret-do-not-use-in-production-replace-me}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     depends_on:
       db:

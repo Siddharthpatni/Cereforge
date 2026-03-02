@@ -107,8 +107,12 @@ export function Auth() {
       // Provide better fallback messages for common scenarios
       if (err.response?.status === 401 || msg.toLowerCase().includes("incorrect")) {
         msg = "Incorrect username or password. Please verify your credentials and try again.";
-      } else if (msg === "Network Error") {
-        msg = "Unable to reach the server. Please check your connection.";
+      } else if (err.response?.status === 409) {
+        msg = detail || "Username or email is already registered.";
+      } else if (err.response?.status === 500) {
+        msg = "Server error — the database may be temporarily unavailable. Please start the backend services and try again.";
+      } else if (!err.response || err.message === "Network Error") {
+        msg = "Unable to reach the server. Make sure Docker is running and the backend is started.";
       }
 
       setLocalError(msg); // Set error for the UI
