@@ -117,6 +117,11 @@ export function Profile() {
                   {format(new Date(profileUser.user.created_at), "MMMM yyyy")}
                 </span>
               </div>
+              {profileUser.user.background && (
+                <p className="text-sm text-zinc-400 mt-3 max-w-xl leading-relaxed">
+                  {profileUser.user.background}
+                </p>
+              )}
             </div>
 
             {isCurrentUser && (

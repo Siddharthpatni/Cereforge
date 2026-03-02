@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  AlertCircle,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -19,6 +20,7 @@ export function Leaderboard() {
   const [data, setData] = useState({ items: [], total: 0, pages: 1 });
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [currentUserRank, setCurrentUserRank] = useState(null);
 
   useEffect(() => {
@@ -27,6 +29,7 @@ export function Leaderboard() {
 
   const fetchLeaderboard = async (pageNum) => {
     setLoading(true);
+    setError(false);
     try {
       const res = await apiClient.get(`/leaderboard?page=${pageNum}&size=20`);
       setData({
@@ -39,6 +42,7 @@ export function Leaderboard() {
       }
     } catch (err) {
       console.error(err);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -60,6 +64,15 @@ export function Leaderboard() {
         );
     }
   };
+
+  if (error)
+    return (
+      <div className="p-8 text-center text-zinc-500 min-h-[60vh] flex flex-col items-center justify-center">
+        <AlertCircle className="h-12 w-12 mb-4 opacity-20" />
+        <p className="mb-4">Failed to load leaderboard.</p>
+        <Button onClick={() => fetchLeaderboard(page)} variant="outline">Retry</Button>
+      </div>
+    );
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
