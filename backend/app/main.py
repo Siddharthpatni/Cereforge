@@ -8,7 +8,6 @@ from contextlib import asynccontextmanager
 from datetime import timezone
 
 from fastapi import FastAPI, Request
-from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -18,7 +17,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
 from app.core.redis import close_redis
-
 
 # ── Security Headers Middleware ──────────────────────────────────────────────
 
