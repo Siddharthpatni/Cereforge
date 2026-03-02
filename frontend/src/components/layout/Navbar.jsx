@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, Bell, Menu, X } from "lucide-react";
+import { LogOut, Bell, Menu, X, Search } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { XPCounter } from "../signature/XPCounter";
 import { Button } from "../ui/Button";
@@ -9,6 +9,26 @@ export function Navbar() {
   const { user, rank, logout } = useAuthStore();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const searchRef = useRef(null);
+
+  // Global / or Cmd+K shortcut focuses the search field (navigates to /tasks)
+  useEffect(() => {
+    const handleKey = (e) => {
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      const isTyping = tag === "input" || tag === "textarea" || tag === "select";
+      if (isTyping) return;
+      if (e.key === "/" || (e.key === "k" && (e.metaKey || e.ctrlKey))) {
+        e.preventDefault();
+        navigate("/tasks");
+        setTimeout(() => {
+          const input = document.querySelector("input[type='text'], input[placeholder*='Search'], input[placeholder*='search']");
+          if (input) input.focus();
+        }, 100);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [navigate]);
 
   const handleLogout = () => {
     logout();
@@ -40,7 +60,20 @@ export function Navbar() {
         </Link>
       </div>
 
-      {/* Right Actions */}
+      {/* Global Search Pill */}
+      <button
+        ref={searchRef}
+        onClick={() => navigate("/tasks")}
+        className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-zinc-900/60 text-zinc-500 text-xs hover:border-zinc-600 hover:text-zinc-300 transition-colors cursor-pointer"
+        title="Press / or ⌘K to search tasks"
+      >
+        <Search className="h-3.5 w-3.5" />
+        <span>Search tasks...</span>
+        <kbd className="hidden sm:flex ml-1 items-center gap-0.5 bg-zinc-800 border border-zinc-700 rounded px-1.5 py-0.5 font-mono text-[10px] text-zinc-400">
+          ⌘K
+        </kbd>
+      </button>
+
       <div className="flex items-center gap-4 sm:gap-6">
         {/* Ranked XP Counter */}
         {user && (
