@@ -21,8 +21,9 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # JWT
-    JWT_SECRET_KEY: str = "change-me"
+    # JWT — JWT_SECRET_KEY must be at least 32 chars (validated at startup)
+    # Generate with: python -c "import secrets; print(secrets.token_hex(64))"
+    JWT_SECRET_KEY: str
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     JWT_ALGORITHM: str = "HS256"

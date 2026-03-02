@@ -11,8 +11,8 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class PostCreate(BaseModel):
-    title: str = Field(..., min_length=5, max_length=300)
-    body: str = Field(..., min_length=10)
+    title: str = Field(..., min_length=10, max_length=300)
+    body: str = Field(..., min_length=20, max_length=50000)
     track: str | None = None
     tags: list[str] = Field(default_factory=list, max_length=5)
     colab_link: str | None = None
@@ -40,12 +40,12 @@ class PostCreate(BaseModel):
 
 
 class PostUpdate(BaseModel):
-    title: str | None = Field(None, min_length=5, max_length=300)
-    body: str | None = Field(None, min_length=10)
+    title: str | None = Field(None, min_length=10, max_length=300)
+    body: str | None = Field(None, min_length=20, max_length=50000)
 
 
 class CommentCreate(BaseModel):
-    body: str = Field(..., min_length=1)
+    body: str = Field(..., min_length=5, max_length=5000)
     parent_id: UUID | None = None
 
 

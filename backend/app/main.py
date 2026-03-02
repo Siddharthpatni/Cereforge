@@ -68,7 +68,22 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown events."""
+    # ── Startup security checks ────────────────────────────────────────────
+    import os
+    jwt_secret = os.getenv("JWT_SECRET_KEY", "")
+    if len(jwt_secret) < 32:
+        raise RuntimeError(
+            "JWT_SECRET_KEY must be at least 32 characters. "
+            "Generate with: python -c \"import secrets; print(secrets.token_hex(64))\""
+        )
+
+    required_vars = ["DATABASE_URL", "JWT_SECRET_KEY"]
+    missing = [v for v in required_vars if not os.getenv(v)]
+    if missing:
+        raise RuntimeError(f"Missing required environment variables: {missing}")
+
     logger.info(f"Starting {settings.APP_NAME} v1.0.0")
+    logger.info(f"Environment: {settings.APP_ENV}")
     yield
     await close_redis()
     logger.info(f"Shutting down {settings.APP_NAME}")

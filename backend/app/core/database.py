@@ -15,6 +15,8 @@ engine = create_async_engine(
     max_overflow=settings.DATABASE_MAX_OVERFLOW,
     echo=settings.APP_ENV == "development",
     pool_pre_ping=True,
+    pool_timeout=30,       # Max seconds waiting for a connection from pool
+    pool_recycle=1800,     # Recycle connections every 30 min to avoid stale handles
 )
 
 async_session_factory = async_sessionmaker(

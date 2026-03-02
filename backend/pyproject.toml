@@ -4,7 +4,11 @@ target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "SIM"]
-ignore = ["E501", "UP007"]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "UP007",  # Use X | Y instead of Optional (conflicts with SQLAlchemy Mapped under Python 3.9)
+    "UP045",  # Use X | None for type annotations (same issue as UP007 with SQLAlchemy Mapped)
+]
 
 [tool.mypy]
 python_version = "3.9"

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
+from typing import Optional
 
-# No typing imports needed
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -33,7 +33,7 @@ class Comment(Base):
     author_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
-    parent_id: Mapped[uuid.UUID | None] = mapped_column(
+    parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(  # noqa: UP045
         UUID(as_uuid=True), ForeignKey("comments.id"), nullable=True
     )
     body: Mapped[str] = mapped_column(Text, nullable=False)
