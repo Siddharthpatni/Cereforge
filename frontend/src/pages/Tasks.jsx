@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { CheckCircle, Zap, Filter, Search } from "lucide-react";
+import { CheckCircle, Zap, Filter, Search, AlertCircle } from "lucide-react";
 import apiClient from "@/api/client";
 import { cn } from "@/utils/cn";
 
@@ -13,6 +13,7 @@ const DIFFICULTIES = ["beginner", "intermediate", "expert"];
 export function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedTrack, setSelectedTrack] = useState("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
@@ -23,6 +24,7 @@ export function Tasks() {
 
   const fetchTasks = async () => {
     setLoading(true);
+    setError(false);
     try {
       const params = new URLSearchParams();
       if (selectedTrack !== "all") params.append("track", selectedTrack);
@@ -31,6 +33,7 @@ export function Tasks() {
       setTasks(res.data);
     } catch (err) {
       console.error(err);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -41,6 +44,18 @@ export function Tasks() {
       t.title.toLowerCase().includes(search.toLowerCase()) ||
       t.description.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const completedCount = tasks.filter((t) => t.completed).length;
+  const totalCount = tasks.length;
+
+  if (error)
+    return (
+      <div className="p-8 text-center text-zinc-500 min-h-[60vh] flex flex-col items-center justify-center">
+        <AlertCircle className="h-12 w-12 mb-4 opacity-20" />
+        <p className="mb-4">Failed to load tasks.</p>
+        <Button onClick={fetchTasks} variant="outline">Retry</Button>
+      </div>
+    );
 
   return (
     <div className="space-y-6">
@@ -53,6 +68,28 @@ export function Tasks() {
             Select an AI challenge, read the guide, and submit your solution.
           </p>
         </div>
+        {!loading && totalCount > 0 && (
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-right">
+              <p className="text-2xl font-bold text-white">{completedCount}<span className="text-zinc-500 text-base font-normal"> / {totalCount}</span></p>
+              <p className="text-xs text-zinc-500">tasks completed</p>
+            </div>
+            <div className="relative h-12 w-12">
+              <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#27272a" strokeWidth="3" />
+                <circle
+                  cx="18" cy="18" r="15.9" fill="none"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="3"
+                  strokeDasharray={`${totalCount ? (completedCount / totalCount) * 100 : 0} 100`}
+                  strokeLinecap="round"
+                  style={{ transition: "stroke-dasharray 0.8s ease" }}
+                />
+              </svg>
+              <CheckCircle className="h-4 w-4 text-primary absolute inset-0 m-auto" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
