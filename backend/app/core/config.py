@@ -13,8 +13,8 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://cereforge:cereforge@localhost:5432/cereforge"
-    DATABASE_POOL_SIZE: int = 20
-    DATABASE_MAX_OVERFLOW: int = 10
+    DATABASE_POOL_SIZE: int = 5  # Reduced for serverless/managed DBs like Supabase
+    DATABASE_MAX_OVERFLOW: int = 0
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -49,7 +49,23 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> list[str]:
+        if self.APP_CORS_ORIGINS == "*":
+            return ["*"]
         return [origin.strip() for origin in self.APP_CORS_ORIGINS.split(",")]
+
+    @property
+    def async_database_url(self) -> str:
+        """
+        Ensures the DATABASE_URL uses the asyncpg driver. 
+        Managed services like Supabase often provide postgres:// URLs which SQLAlchemy 2.0 
+        requires to be explicit for async drivers.
+        """
+        url = self.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
 
     @property
     def is_production(self) -> bool:
