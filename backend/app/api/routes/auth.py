@@ -1,5 +1,3 @@
-"""Authentication routes: register, login, refresh, logout, me."""
-
 from __future__ import annotations
 
 import random
@@ -41,8 +39,6 @@ async def register(
     data: UserRegister,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Register a new user account."""
-    # Check if username or email already exists
     existing = await db.execute(
         select(User).where(or_(User.username == data.username, User.email == data.email))
     )
@@ -67,19 +63,11 @@ async def register(
     refresh_token = create_refresh_token(user.id)
     rank = calculate_rank(user.xp)
 
-    # Suggest learning path for beginners
     suggested_path = None
-    welcome_message = f"Welcome to CereForge, {user.username}! 🚀"
-    if data.skill_level == "absolute_beginner":
+    welcome_message = f"Welcome, {user.username}!"
+    if data.skill_level in ("absolute_beginner", "some_python"):
         suggested_path = "zero-to-ai-path"
-        welcome_message = f"Welcome to CereForge, {user.username}! 🚀 We've recommended the Zero to AI learning path based on your background. Start there — it's built for exactly where you are."
-    elif data.skill_level == "some_python":
-        suggested_path = "zero-to-ai-path"
-        welcome_message = f"Welcome to CereForge, {user.username}! 🐍 Your Python skills are a great foundation. Check out the Zero to AI path to start your AI engineering journey."
-    elif data.skill_level == "ml_familiar":
-        welcome_message = f"Welcome to CereForge, {user.username}! 🧪 Great that you have ML experience. Dive into our intermediate and expert tasks to level up your AI engineering skills."
-    elif data.skill_level == "advanced":
-        welcome_message = f"Welcome to CereForge, {user.username}! ⚡ Expert detected. Go straight to the expert-level tasks and show the community what you've got."
+        welcome_message = f"Welcome, {user.username}! We've queued up the Zero to AI path — it starts from scratch."
 
     return RegisterResponse(
         access_token=access_token,
@@ -102,7 +90,6 @@ async def login(
     data: UserLogin,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Log in with email/username and password."""
     result = await db.execute(
         select(User).where(
             or_(User.email == data.email_or_username, User.username == data.email_or_username)

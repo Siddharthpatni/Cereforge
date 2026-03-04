@@ -1,5 +1,3 @@
-"""FastAPI application factory with middleware, CORS, and router mounting."""
-
 from __future__ import annotations
 
 import time

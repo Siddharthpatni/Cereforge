@@ -1,5 +1,3 @@
-"""Initialize all models so they are registered with SQLAlchemy declarative base."""
-
 from __future__ import annotations
 
 from app.models.badge import Badge, UserBadge

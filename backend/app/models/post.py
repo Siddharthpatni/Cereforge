@@ -1,5 +1,3 @@
-"""Post model (community Q&A)."""
-
 from __future__ import annotations
 
 import uuid

@@ -1,5 +1,3 @@
-"""Pydantic schemas for learning paths, badges, leaderboard, etc."""
-
 from __future__ import annotations
 
 from datetime import datetime

@@ -1,5 +1,3 @@
-"""LLM-powered code evaluation service."""
-
 import json
 import logging
 

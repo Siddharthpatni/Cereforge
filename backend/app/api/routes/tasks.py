@@ -1,5 +1,3 @@
-"""Task routes: list, detail, submit, get submission."""
-
 from __future__ import annotations
 
 from typing import Annotated, Optional
@@ -39,7 +37,6 @@ async def list_tasks(
     task_status: str | None = Query(None, alias="status"),
     is_weekly: bool | None = Query(None),
 ):
-    """List all tasks with optional filters."""
     query = select(Task).where(Task.is_active).order_by(Task.track, Task.display_order)
 
     if track:

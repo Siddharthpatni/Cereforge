@@ -1,5 +1,3 @@
-"""Run all seeders — invoke with: python -m app.seeds.run_all"""
-
 from __future__ import annotations
 
 import asyncio

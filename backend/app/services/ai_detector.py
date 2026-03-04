@@ -1,5 +1,3 @@
-"""Mock AI/Bot Detection Service."""
-
 import re
 
 

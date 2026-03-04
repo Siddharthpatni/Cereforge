@@ -1,5 +1,3 @@
-"""Notification routes — list, mark as read."""
-
 from __future__ import annotations
 
 from typing import Annotated

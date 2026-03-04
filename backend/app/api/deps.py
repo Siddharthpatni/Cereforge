@@ -1,5 +1,3 @@
-"""Shared API dependencies: database session and current user extraction."""
-
 from __future__ import annotations
 
 from typing import Annotated

@@ -1,5 +1,3 @@
-"""Seed all 12 badges — idempotent."""
-
 from __future__ import annotations
 
 from sqlalchemy import select

@@ -1,5 +1,3 @@
-"""Community routes: posts CRUD, comments, voting, AI assist."""
-
 from __future__ import annotations
 
 from typing import Annotated

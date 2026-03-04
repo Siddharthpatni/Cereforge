@@ -1,5 +1,3 @@
-"""JWT token creation/verification and password hashing utilities."""
-
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone

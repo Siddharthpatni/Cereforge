@@ -1,5 +1,3 @@
-"""Seed community posts and comments."""
-
 import uuid
 
 from sqlalchemy import select

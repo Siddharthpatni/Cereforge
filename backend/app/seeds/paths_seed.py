@@ -1,5 +1,3 @@
-"""Seed all 3 learning paths with modules and lessons — idempotent."""
-
 from __future__ import annotations
 
 from typing import Any, cast

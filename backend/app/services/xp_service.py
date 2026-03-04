@@ -1,5 +1,3 @@
-"""XP calculation and rank determination service."""
-
 from __future__ import annotations
 
 from typing import Any
@@ -34,7 +32,6 @@ XP_COMMENT_UPVOTED = 2
 
 
 def calculate_rank(xp: int) -> dict:
-    """Calculate rank from XP, returning rank info with next rank details."""
     current_rank = RANKS[0]
     for rank in RANKS:
         if xp >= rank["min_xp"]:
@@ -57,7 +54,6 @@ def calculate_rank(xp: int) -> dict:
 
 
 async def award_xp(db: AsyncSession, user_id: UUID, amount: int) -> int:
-    """Award XP to a user, returns new total."""
     result = await db.execute(
         update(User).where(User.id == user_id).values(xp=User.xp + amount).returning(User.xp)
     )

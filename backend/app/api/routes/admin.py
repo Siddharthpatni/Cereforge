@@ -1,5 +1,3 @@
-"""Admin routes for portal."""
-
 import uuid
 from typing import Annotated
 

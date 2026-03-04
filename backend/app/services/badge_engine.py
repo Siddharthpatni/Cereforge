@@ -1,5 +1,3 @@
-"""Badge condition checking and awarding engine."""
-
 from __future__ import annotations
 
 from typing import Any, cast
@@ -33,23 +31,20 @@ async def check_and_award_badges(
 
     Returns list of newly earned badge dicts (for API response).
     """
-    # Fetch user
     user_result = await db.execute(select(User).where(User.id == user_id))
     user = user_result.scalar_one_or_none()
     if not user:
         return []
 
-    # Fetch all badges
     badges_result = await db.execute(select(Badge).order_by(Badge.display_order))
     all_badges = badges_result.scalars().all()
 
-    # Fetch user's existing badges
     existing_result = await db.execute(
         select(UserBadge.badge_id).where(UserBadge.user_id == user_id)
     )
     existing_badge_ids = set(existing_result.scalars().all())
 
-    # Fetch user's completions by track
+    # completions per track
     completions_result = await db.execute(
         select(Task.track, func.count(TaskSubmission.id))
         .join(Task, TaskSubmission.task_id == Task.id)
@@ -58,7 +53,6 @@ async def check_and_award_badges(
     )
     track_counts: dict[str, int] = {row[0]: row[1] for row in completions_result.all()}
 
-    # Fetch user's weekly task completions
     weekly_completions_result = await db.execute(
         select(func.count(TaskSubmission.id))
         .join(Task, TaskSubmission.task_id == Task.id)
@@ -66,7 +60,7 @@ async def check_and_award_badges(
     )
     weekly_completions = weekly_completions_result.scalar() or 0
 
-    # Total completions
+    # TODO: also track streaks here once we add a streak model
     total_completions = sum(track_counts.values())
 
     # Count accepted answers
@@ -93,14 +87,11 @@ async def check_and_award_badges(
         )
 
         if earned:
-            # Award badge
             user_badge = UserBadge(user_id=user_id, badge_id=badge.id)
             db.add(user_badge)
 
-            # Award XP bonus
             await award_xp(db, user_id, badge.xp_bonus)
 
-            # Create notification
             notification = Notification(
                 user_id=user_id,
                 type="badge_earned",
@@ -110,7 +101,6 @@ async def check_and_award_badges(
             )
             db.add(notification)
 
-            # Determine track color for cinematic
             track_color = _get_badge_track_color(badge)
 
             newly_earned.append(
@@ -138,7 +128,6 @@ def _check_badge_condition(
     accepted_answers: int,
     user_skill_level: str,
 ) -> bool:
-    """Evaluate a single badge's condition."""
     ctype = badge.condition_type
     cval = cast(dict[str, Any], badge.condition_value or {})
 
@@ -169,7 +158,6 @@ def _check_badge_condition(
 
 
 def _get_badge_track_color(badge: Badge) -> str | None:
-    """Determine the track color for a badge's unlock cinematic."""
     ctype = badge.condition_type
     cval = cast(dict[str, Any], badge.condition_value or {})
 

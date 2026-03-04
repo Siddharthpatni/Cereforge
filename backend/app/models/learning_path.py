@@ -1,5 +1,3 @@
-"""Learning path, module, lesson, and enrollment models."""
-
 from __future__ import annotations
 
 import uuid
