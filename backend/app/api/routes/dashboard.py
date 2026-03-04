@@ -61,7 +61,7 @@ async def get_dashboard(
     stats = {
         "xp": current_user.xp,
         "tasks_completed": len(submissions),
-        "total_tasks": 12,
+        "total_tasks": 24,
         "badges_earned": len(earned_badges),
         "total_badges": 12,
     }

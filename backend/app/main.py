@@ -72,19 +72,13 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
 async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown events."""
     # ── Startup security checks ────────────────────────────────────────────
-    import os
 
-    jwt_secret = os.getenv("JWT_SECRET_KEY", "")
+    jwt_secret = settings.JWT_SECRET_KEY
     if len(jwt_secret) < 32:
         raise RuntimeError(
             "JWT_SECRET_KEY must be at least 32 characters. "
             'Generate with: python -c "import secrets; print(secrets.token_hex(64))"'
         )
-
-    required_vars = ["DATABASE_URL", "JWT_SECRET_KEY"]
-    missing = [v for v in required_vars if not os.getenv(v)]
-    if missing:
-        raise RuntimeError(f"Missing required environment variables: {missing}")
 
     logger.info(f"Starting {settings.APP_NAME} v1.0.0")
     logger.info(f"Environment: {settings.APP_ENV}")
@@ -135,6 +129,7 @@ def create_app() -> FastAPI:
         dashboard,
         leaderboard,
         learning_paths,
+        notifications,
         tasks,
         users,
     )
@@ -150,6 +145,7 @@ def create_app() -> FastAPI:
     app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
     app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
     app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
+    app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
 
     # ── Global Exception Handlers ────────────────────────────────────────────
 

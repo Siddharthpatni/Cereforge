@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class TaskSubmissionCreate(BaseModel):
-    solution_text: str = Field(..., min_length=50)
+    solution_text: str = Field(..., min_length=10)
     colab_link: str | None = None
     notes: str | None = None
 

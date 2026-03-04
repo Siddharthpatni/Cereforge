@@ -6,6 +6,7 @@ from app.models.badge import Badge, UserBadge
 from app.models.comment import Comment, Vote
 from app.models.learning_path import LearningPath, PathEnrollment, PathLesson, PathModule
 from app.models.notification import Notification
+from app.models.otp import PasswordResetOTP
 from app.models.post import Post
 from app.models.submission import TaskSubmission
 from app.models.task import Task, TaskResource
@@ -28,4 +29,5 @@ __all__ = [
     "PathLesson",
     "PathEnrollment",
     "Notification",
+    "PasswordResetOTP",
 ]

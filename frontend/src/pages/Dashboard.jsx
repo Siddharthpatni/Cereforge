@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import {
   Card,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { useQuery } from "@tanstack/react-query";
 import {
   Trophy,
   Activity,
@@ -21,45 +22,16 @@ import {
 import apiClient from "@/api/client";
 import { formatDistanceToNow } from "date-fns";
 
-const RANK_THRESHOLDS = [
-  { name: "Initiate", min: 0, max: 999 },
-  { name: "Adept", min: 1000, max: 2499 },
-  { name: "Master", min: 2500, max: 4999 },
-  { name: "Grandmaster", min: 5000, max: 9999 },
-  { name: "Archmage", min: 10000, max: Infinity },
-];
-
-function getNextRank(xp) {
-  const tier = RANK_THRESHOLDS.find((t) => xp <= t.max);
-  if (!tier || tier.max === Infinity) return null;
-  return { name: RANK_THRESHOLDS[RANK_THRESHOLDS.indexOf(tier) + 1]?.name, needed: tier.max - xp + 1, max: tier.max, current: tier.min };
-}
-
 export function Dashboard() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const loadData = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
-    setError(false);
-    try {
+  const { data: dashboardData, isLoading, isError, refetch, isRefetching } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: async () => {
       const res = await apiClient.get("/dashboard");
-      setData(res.data);
-    } catch (err) {
-      console.error(err);
-      setError(true);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+      return res.data;
+    },
+  });
 
-  useEffect(() => { loadData(); }, [loadData]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12 min-h-[60vh]">
         <div className="animate-spin text-primary">
@@ -69,12 +41,12 @@ export function Dashboard() {
     );
   }
 
-  if (error || !data)
+  if (isError || !dashboardData)
     return (
       <div className="p-8 text-center text-zinc-500 min-h-[60vh] flex flex-col items-center justify-center">
         <Zap className="h-12 w-12 mb-4 opacity-20" />
         <p className="mb-4">Failed to load dashboard data.</p>
-        <Button onClick={() => loadData()} variant="outline">Retry</Button>
+        <Button onClick={() => refetch()} variant="outline">Retry</Button>
       </div>
     );
 
@@ -86,7 +58,7 @@ export function Dashboard() {
     badges,
     enrolled_paths,
     activity_feed,
-  } = data;
+  } = dashboardData;
 
   return (
     <div className="space-y-6">
@@ -98,11 +70,11 @@ export function Dashboard() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => loadData(true)}
-          disabled={refreshing}
+          onClick={() => refetch()}
+          disabled={isRefetching}
           className="shrink-0"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefetching ? "animate-spin" : ""}`} />
           Refresh
         </Button>
       </div>
@@ -124,26 +96,20 @@ export function Dashboard() {
                 <Zap className="h-5 w-5" />
               </div>
             </div>
-            {(() => {
-              const next = getNextRank(stats.xp);
-              if (!next) return <p className="text-xs text-primary mt-2 font-mono">MAX RANK</p>;
-              const range = next.max - next.current + 1;
-              const progress = ((stats.xp - next.current) / range) * 100;
-              return (
-                <div className="mt-3">
-                  <div className="flex justify-between text-xs text-zinc-500 mb-1">
-                    <span>{next.needed} XP to {next.name}</span>
-                    <span>{Math.round(progress)}%</span>
-                  </div>
-                  <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="bg-primary h-1.5 rounded-full transition-all duration-700"
-                      style={{ width: `${Math.min(100, progress)}%` }}
-                    />
-                  </div>
+            {rank.next_rank && (
+              <div className="mt-3">
+                <div className="flex justify-between text-xs text-zinc-500 mb-1">
+                  <span>{rank.xp_needed} XP to {rank.next_rank}</span>
+                  <span>{Math.round((stats.xp / (stats.xp + rank.xp_needed)) * 100)}%</span>
                 </div>
-              );
-            })()}
+                <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-primary h-1.5 rounded-full transition-all duration-700"
+                    style={{ width: `${Math.min(100, (stats.xp / (stats.xp + rank.xp_needed)) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

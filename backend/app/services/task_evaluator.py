@@ -74,7 +74,7 @@ async def evaluate_submission(solution_content: str, task_title: str, task_diffi
 
     try:
         response = await gemini_client.aio.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 temperature=0.2, response_mime_type="application/json"

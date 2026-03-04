@@ -12,10 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user, get_db
 from app.models.badge import Badge, UserBadge
 from app.models.comment import Comment
+from app.models.learning_path import PathEnrollment
 from app.models.post import Post
 from app.models.submission import TaskSubmission
 from app.models.task import Task
 from app.models.user import User
+from app.schemas.user import MeResponse, RankInfo, UserResponse, UserUpdate
 from app.services.xp_service import calculate_rank
 
 router = APIRouter()
@@ -31,38 +33,78 @@ class ProfileUpdate(BaseModel):
     skill_level: Optional[str] = None
 
 
-@router.get("/me")
+@router.get("/me", response_model=MeResponse)
 async def get_my_profile(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
-    """Get the currently authenticated user's own profile."""
-    return {
-        "id": str(current_user.id),
-        "username": current_user.username,
-        "email": current_user.email,
-        "avatar_url": current_user.avatar_url,
-        "skill_level": current_user.skill_level,
-        "background": current_user.background,
+    """Get the currently authenticated user's own profile with full stats."""
+    rank_res = calculate_rank(current_user.xp)
+
+    # Get badges
+    badges_result = await db.execute(
+        select(UserBadge).where(UserBadge.user_id == current_user.id).limit(50)
+    )
+    user_badges = badges_result.scalars().all()
+    badges_data = [
+        {
+            "slug": ub.badge.slug,
+            "name": ub.badge.name,
+            "icon": ub.badge.icon,
+            "earned_at": ub.earned_at.isoformat() if ub.earned_at else None,
+        }
+        for ub in user_badges
+    ]
+
+    # Get enrolled paths
+    enrollments_result = await db.execute(
+        select(PathEnrollment).where(PathEnrollment.user_id == current_user.id)
+    )
+    enrollments = enrollments_result.scalars().all()
+    paths_data = [
+        {
+            "slug": e.path.slug,
+            "title": e.path.title,
+            "enrolled_at": e.enrolled_at.isoformat() if e.enrolled_at else None,
+        }
+        for e in enrollments
+    ]
+
+    # Get stats
+    submissions_result = await db.execute(
+        select(TaskSubmission).where(TaskSubmission.user_id == current_user.id)
+    )
+    submissions = submissions_result.scalars().all()
+
+    stats = {
+        "tasks_completed": len(submissions),
+        "total_tasks": 24,  # Updated for the 24 tasks
+        "badges_earned": len(user_badges),
+        "total_badges": 12,
         "xp": current_user.xp,
-        "is_admin": current_user.is_admin,
-        "created_at": current_user.created_at.isoformat(),
     }
+
+    return MeResponse(
+        user=UserResponse.model_validate(current_user),
+        rank=RankInfo(
+            name=rank_res["name"],
+            color=rank_res["color"],
+            next_rank=rank_res["next_rank"],
+            xp_needed=rank_res["xp_needed"],
+        ),
+        badges=badges_data,
+        enrolled_paths=paths_data,
+        stats=stats,
+    )
 
 
 @router.patch("/me")
 async def update_my_profile(
-    body: ProfileUpdate,
+    body: UserUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Update the currently authenticated user's profile."""
-    if body.skill_level and body.skill_level not in VALID_SKILL_LEVELS:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"skill_level must be one of: {', '.join(sorted(VALID_SKILL_LEVELS))}",
-        )
-
     # Check username uniqueness if changing
     if body.username and body.username != current_user.username:
         existing = await db.execute(select(User).where(User.username == body.username))
@@ -81,16 +123,9 @@ async def update_my_profile(
     await db.commit()
     await db.refresh(current_user)
 
-    return {
-        "id": str(current_user.id),
-        "username": current_user.username,
-        "email": current_user.email,
-        "avatar_url": current_user.avatar_url,
-        "skill_level": current_user.skill_level,
-        "background": current_user.background,
-        "xp": current_user.xp,
-        "created_at": current_user.created_at.isoformat(),
-    }
+    rank_res = calculate_rank(current_user.xp)
+
+    return {"user": UserResponse.model_validate(current_user).model_dump(), "rank": rank_res}
 
 
 @router.get("/{username}")
@@ -197,3 +232,28 @@ async def get_user_profile(
         "completions": completions,
         "posts": posts_data,
     }
+
+
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8)
+
+
+@router.post("/me/change-password")
+async def change_password(
+    body: ChangePassword,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Change the current user's password. Requires current password for verification."""
+    from app.core.security import hash_password, verify_password
+
+    if not verify_password(body.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect.",
+        )
+
+    current_user.password_hash = hash_password(body.new_password)
+    await db.commit()
+    return {"message": "Password changed successfully. Please log in again."}

@@ -1,15 +1,53 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, Bell, Menu, X, Search } from "lucide-react";
+import { LogOut, Bell, Menu, X, Search, CheckCheck } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { XPCounter } from "../signature/XPCounter";
 import { Button } from "../ui/Button";
+import apiClient from "@/api/client";
+import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/utils/cn";
 
 export function Navbar() {
   const { user, rank, logout } = useAuthStore();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notifs, setNotifs] = useState([]);
+  const [unread, setUnread] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef(null);
   const searchRef = useRef(null);
+
+  // Fetch real notifications
+  const fetchNotifications = useCallback(() => {
+    if (!user) return;
+    apiClient
+      .get("/notifications")
+      .then((res) => {
+        setNotifs(res.data.notifications || []);
+        setUnread(res.data.unread_count || 0);
+      })
+      .catch(() => { });
+  }, [user]);
+
+  useEffect(() => {
+    fetchNotifications();
+    // Poll every 60s for new notifications
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   // Global / or Cmd+K shortcut focuses the search field (navigates to /tasks)
   useEffect(() => {
@@ -21,7 +59,9 @@ export function Navbar() {
         e.preventDefault();
         navigate("/tasks");
         setTimeout(() => {
-          const input = document.querySelector("input[type='text'], input[placeholder*='Search'], input[placeholder*='search']");
+          const input = document.querySelector(
+            "input[type='text'], input[placeholder*='Search'], input[placeholder*='search']"
+          );
           if (input) input.focus();
         }, 100);
       }
@@ -33,6 +73,23 @@ export function Navbar() {
   const handleLogout = () => {
     logout();
     navigate("/auth");
+  };
+
+  const markAllRead = async () => {
+    await apiClient.post("/notifications/read-all").catch(() => { });
+    setUnread(0);
+    setNotifs((prev) => prev.map((n) => ({ ...n, is_read: true })));
+  };
+
+  const typeColor = (type) => {
+    const map = {
+      badge: "text-yellow-400",
+      xp: "text-primary",
+      answer_accepted: "text-success",
+      upvote: "text-blue-400",
+      new_comment: "text-zinc-300",
+    };
+    return map[type] || "text-zinc-300";
   };
 
   return (
@@ -51,8 +108,8 @@ export function Navbar() {
         </button>
 
         <Link to="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded bg-primary flex items-center justify-center text-lg shadow-[0_0_15px_rgba(67,56,202,0.5)]">
-            🧠
+          <div className="h-8 w-8 rounded bg-primary flex items-center justify-center text-sm font-bold shadow-[0_0_15px_rgba(67,56,202,0.5)]">
+            CF
           </div>
           <span className="hidden sm:block text-lg font-bold tracking-tight text-white">
             CereForge
@@ -100,39 +157,92 @@ export function Navbar() {
           </div>
         )}
 
-        {/* Notifications & Profile Menu Stub */}
-        <div className="flex items-center gap-2">
-          <div className="relative group">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-zinc-400 hover:text-white"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            </Button>
-            {/* Popover content */}
-            <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-zinc-900 border border-border rounded-xl shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all z-50">
-              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
-                <Bell className="h-4 w-4 text-primary" />
-                <span className="text-sm font-bold text-white">Notifications</span>
-              </div>
-              <p className="text-xs text-zinc-400">
-                You're all caught up! Complete tasks to earn badges and climb the leaderboard.
-              </p>
-            </div>
-          </div>
-
+        {/* Notification Bell */}
+        <div className="relative" ref={notifRef}>
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleLogout}
-            className="text-zinc-400 hover:text-white"
-            title="Logout"
+            className="text-zinc-400 hover:text-white relative"
+            onClick={() => setNotifOpen((prev) => !prev)}
           >
-            <LogOut className="h-5 w-5" />
+            <Bell className="h-5 w-5" />
+            {unread > 0 && (
+              <span className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center leading-none">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
           </Button>
+
+          {notifOpen && (
+            <div className="absolute right-0 top-full mt-2 w-80 bg-zinc-900 border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-bold text-white">Notifications</span>
+                  {unread > 0 && (
+                    <span className="bg-primary/20 text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      {unread} new
+                    </span>
+                  )}
+                </div>
+                {unread > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                  >
+                    <CheckCheck className="h-3.5 w-3.5" />
+                    All read
+                  </button>
+                )}
+              </div>
+
+              <div className="max-h-80 overflow-y-auto divide-y divide-border/30">
+                {notifs.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-zinc-500 text-sm">
+                    You're all caught up! 🎉
+                  </div>
+                ) : (
+                  notifs.map((n) => (
+                    <div
+                      key={n.id}
+                      className={cn(
+                        "px-4 py-3 transition-colors hover:bg-zinc-800/50",
+                        !n.is_read && "bg-primary/5 border-l-2 border-primary"
+                      )}
+                    >
+                      <p className={cn("text-sm font-medium", typeColor(n.type))}>{n.title}</p>
+                      <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">{n.body}</p>
+                      <p className="text-[10px] text-zinc-600 mt-1">
+                        {formatDistanceToNow(new Date(n.created_at))} ago
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {notifs.length > 0 && (
+                <div className="px-4 py-2 border-t border-border/50 text-center">
+                  <button
+                    onClick={() => { setNotifOpen(false); navigate("/profile"); }}
+                    className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                  >
+                    View profile activity →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleLogout}
+          className="text-zinc-400 hover:text-white"
+          title="Logout"
+        >
+          <LogOut className="h-5 w-5" />
+        </Button>
       </div>
     </nav>
   );

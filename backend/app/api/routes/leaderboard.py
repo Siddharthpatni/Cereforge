@@ -27,15 +27,17 @@ async def get_leaderboard(
     """Get the global leaderboard sorted by XP with pagination."""
     offset = (page - 1) * size
 
-    # Total user count for pagination
-    total_result = await db.execute(select(func.count(User.id)).where(User.is_active))
+    # Total user count for pagination (excluding admins)
+    total_result = await db.execute(
+        select(func.count(User.id)).where(User.is_active, User.is_admin.is_(False))
+    )
     total = total_result.scalar() or 0
     pages = max(1, (total + size - 1) // size)
 
-    # Get users ordered by XP
+    # Get users ordered by XP (excluding admins)
     users_result = await db.execute(
         select(User)
-        .where(User.is_active)
+        .where(User.is_active, User.is_admin.is_(False))
         .order_by(desc(User.xp), User.created_at)
         .offset(offset)
         .limit(size)

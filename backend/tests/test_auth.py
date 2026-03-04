@@ -140,7 +140,7 @@ async def test_get_me_authenticated(client):
     """GET /auth/me with valid token returns 200 and user object."""
     data = await register_user(client, username="meuser")
     token = data["access_token"]
-    resp = await client.get("/api/v1/auth/me", headers=auth_headers(token))
+    resp = await client.get("/api/v1/users/me", headers=auth_headers(token))
     assert resp.status_code == 200
     me = resp.json()
     assert me["user"]["username"] == "meuser"
@@ -152,7 +152,7 @@ async def test_get_me_authenticated(client):
 @pytest.mark.asyncio
 async def test_get_me_unauthenticated(client):
     """GET /auth/me without token returns 401/403."""
-    resp = await client.get("/api/v1/auth/me")
+    resp = await client.get("/api/v1/users/me")
     assert resp.status_code in [401, 403]
 
 
@@ -191,5 +191,5 @@ async def test_password_never_returned(client):
     assert "password_hash" not in login_resp.text
 
     # /me
-    me_resp = await client.get("/api/v1/auth/me", headers=auth_headers(token))
+    me_resp = await client.get("/api/v1/users/me", headers=auth_headers(token))
     assert "password_hash" not in me_resp.text

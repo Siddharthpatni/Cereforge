@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Card,
   CardHeader,
@@ -130,7 +131,7 @@ export function Auth() {
       <Card className="w-full max-w-md relative z-10 glass-panel border-border/50 shadow-2xl">
         <CardHeader className="text-center space-y-2 pb-8">
           <div className="mx-auto h-12 w-12 rounded-lg bg-primary flex items-center justify-center font-mono font-bold text-2xl text-white shadow-[0_0_20px_rgba(67,56,202,0.6)] mb-4">
-            NF
+            CF
           </div>
           <CardTitle className="text-2xl text-white">
             {isLogin ? "Enter the Forge" : "Begin Your Journey"}
@@ -182,9 +183,19 @@ export function Auth() {
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-300">
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-zinc-300">
+                  Password
+                </label>
+                {isLogin && (
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                )}
+              </div>
               <input
                 type="password"
                 required

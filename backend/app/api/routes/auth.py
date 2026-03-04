@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import random
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from loguru import logger
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,20 +18,18 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-from app.models.badge import UserBadge
-from app.models.learning_path import PathEnrollment
-from app.models.submission import TaskSubmission
+from app.models.otp import PasswordResetOTP
 from app.models.user import User
 from app.schemas.user import (
     AuthResponse,
-    MeResponse,
+    ForgotPasswordRequest,
     RankInfo,
     RegisterResponse,
+    ResetPasswordRequest,
     TokenRefresh,
     UserLogin,
     UserRegister,
     UserResponse,
-    UserUpdate,
 )
 from app.services.xp_service import calculate_rank
 
@@ -175,95 +175,78 @@ async def logout(
     return None
 
 
-@router.get("/me", response_model=MeResponse)
-async def get_me(
-    current_user: Annotated[User, Depends(get_current_user)],
+@router.post("/forgot-password")
+async def forgot_password(
+    data: ForgotPasswordRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Get current user's full profile with rank, badges, enrolled paths, and stats."""
-    rank = calculate_rank(current_user.xp)
+    """Generate and 'send' OTP for password reset."""
+    # Check if user exists
+    result = await db.execute(select(User).where(User.email == data.email))
+    user = result.scalar_one_or_none()
 
-    # Get badges
-    badges_result = await db.execute(select(UserBadge).where(UserBadge.user_id == current_user.id))
-    user_badges = badges_result.scalars().all()
-    badges_data = [
-        {
-            "slug": ub.badge.slug,
-            "name": ub.badge.name,
-            "icon": ub.badge.icon,
-            "earned_at": ub.earned_at.isoformat() if ub.earned_at else None,
-        }
-        for ub in user_badges
-    ]
+    if not user:
+        # For security, we still return 200 even if user doesn't exist
+        # to avoid email enumeration.
+        return {"message": "If this email is registered, an OTP has been sent."}
 
-    # Get enrolled paths
-    enrollments_result = await db.execute(
-        select(PathEnrollment).where(PathEnrollment.user_id == current_user.id)
-    )
-    enrollments = enrollments_result.scalars().all()
-    paths_data = [
-        {
-            "slug": e.path.slug,
-            "title": e.path.title,
-            "enrolled_at": e.enrolled_at.isoformat() if e.enrolled_at else None,
-        }
-        for e in enrollments
-    ]
+    # Generate 6-digit OTP
+    otp_code = "".join([str(random.randint(0, 9)) for _ in range(6)])
 
-    # Get stats
-    submissions_result = await db.execute(
-        select(TaskSubmission).where(TaskSubmission.user_id == current_user.id)
-    )
-    submissions = submissions_result.scalars().all()
-
-    stats = {
-        "tasks_completed": len(submissions),
-        "total_tasks": 12,
-        "badges_earned": len(user_badges),
-        "total_badges": 12,
-        "xp": current_user.xp,
-    }
-
-    return MeResponse(
-        user=UserResponse.model_validate(current_user),
-        rank=RankInfo(
-            name=rank["name"],
-            color=rank["color"],
-            next_rank=rank["next_rank"],
-            xp_needed=rank["xp_needed"],
-        ),
-        badges=badges_data,
-        enrolled_paths=paths_data,
-        stats=stats,
-    )
-
-
-@router.patch("/me", response_model=dict)
-async def update_me(
-    data: UserUpdate,
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
-):
-    """Update current user's profile."""
-    if data.username is not None:
-        # Check uniqueness
-        existing = await db.execute(
-            select(User).where(User.username == data.username, User.id != current_user.id)
-        )
-        if existing.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Username already taken"
-            )
-        current_user.username = data.username
-
-    if data.skill_level is not None:
-        current_user.skill_level = data.skill_level
-    if data.background is not None:
-        current_user.background = data.background
-    if data.avatar_url is not None:
-        current_user.avatar_url = data.avatar_url
-
-    await db.flush()
+    # Save OTP to DB
+    otp_record = PasswordResetOTP(email=data.email, otp_code=otp_code)
+    db.add(otp_record)
     await db.commit()
 
-    return {"user": UserResponse.model_validate(current_user).model_dump()}
+    # MOCK EMAIL SENDING
+    logger.warning("--- [MOCK EMAIL] ---")
+    logger.warning(f"TO: {data.email}")
+    logger.warning("SUBJECT: CereForge Password Reset OTP")
+    logger.warning(f"OTP CODE: {otp_code}")
+    logger.warning("---------------------")
+
+    return {"message": "OTP sent successfully to your registered email."}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    data: ResetPasswordRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Verify OTP and update user's password."""
+    from datetime import datetime, timezone
+
+    # Find the most recent valid OTP
+    result = await db.execute(
+        select(PasswordResetOTP)
+        .where(
+            PasswordResetOTP.email == data.email,
+            PasswordResetOTP.otp_code == data.otp_code,
+            PasswordResetOTP.is_used is False,
+            PasswordResetOTP.expires_at > datetime.now(timezone.utc),
+        )
+        .order_by(PasswordResetOTP.created_at.desc())
+    )
+    otp_record = result.scalars().first()
+
+    if not otp_record:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired OTP code."
+        )
+
+    # Find user
+    user_result = await db.execute(select(User).where(User.email == data.email))
+    user = user_result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+    # Update password
+    user.password_hash = hash_password(data.new_password)
+
+    # Mark OTP as used
+    otp_record.is_used = True
+
+    await db.commit()
+
+    return {"message": "Password has been reset successfully. You can now log in."}

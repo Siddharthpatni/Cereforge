@@ -16,6 +16,9 @@ const Auth = React.lazy(() =>
 const Dashboard = React.lazy(() =>
   import("./pages/Dashboard").then((m) => ({ default: m.Dashboard })),
 );
+const ForgotPassword = React.lazy(() =>
+  import("./pages/ForgotPassword").then((m) => ({ default: m.ForgotPassword })),
+);
 const Tasks = React.lazy(() =>
   import("./pages/Tasks").then((m) => ({ default: m.Tasks })),
 );
@@ -78,6 +81,11 @@ function App() {
                   <Auth />
                 )
               }
+            />
+
+            <Route
+              path="/forgot-password"
+              element={<ForgotPassword />}
             />
 
             {/* Authenticated Routes wrapped in Layout */}

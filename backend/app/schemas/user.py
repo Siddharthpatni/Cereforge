@@ -51,6 +51,16 @@ class UserUpdate(BaseModel):
         return v
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp_code: str = Field(..., min_length=6, max_length=6)
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
 # ─── Response Schemas ───
 
 
@@ -100,3 +110,7 @@ class MeResponse(BaseModel):
     badges: list = []
     enrolled_paths: list = []
     stats: dict = {}
+
+
+class AdminXPUpdate(BaseModel):
+    xp: int = Field(..., ge=0)

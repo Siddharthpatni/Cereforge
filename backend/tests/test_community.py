@@ -114,7 +114,7 @@ async def test_vote_post_upvote(client):
     voter_token = voter["access_token"]
     # Create post
     create_resp = await client.post("/api/v1/posts", headers=auth_headers(author_token), json={
-        "title": "Vote test", "body": "Post to vote on", "track": "rag",
+        "title": "Vote test post", "body": "Post body for voting test purposes.", "track": "rag",
     })
     post_id = create_resp.json()["post"]["id"]
     # Vote
@@ -134,7 +134,7 @@ async def test_vote_post_toggle(client):
     author_token = author["access_token"]
     voter_token = voter["access_token"]
     create_resp = await client.post("/api/v1/posts", headers=auth_headers(author_token), json={
-        "title": "Toggle test", "body": "Post for toggle", "track": "llm",
+        "title": "Toggle test", "body": "Post body for toggle voting test purposes.", "track": "llm",
     })
     post_id = create_resp.json()["post"]["id"]
     # Vote up
@@ -156,7 +156,7 @@ async def test_cannot_vote_own_post(client):
     data = await register_user(client, username="selfvoter")
     token = data["access_token"]
     create_resp = await client.post("/api/v1/posts", headers=auth_headers(token), json={
-        "title": "Self vote test", "body": "Post to self-vote", "track": "agents",
+        "title": "Self vote test", "body": "Post body to test self-vote prevention.", "track": "agents",
     })
     post_id = create_resp.json()["post"]["id"]
     resp = await client.post("/api/v1/vote", headers=auth_headers(token), json={
@@ -174,7 +174,7 @@ async def test_accept_answer(client):
     answerer_token = answerer["access_token"]
     # Create post
     create_resp = await client.post("/api/v1/posts", headers=auth_headers(author_token), json={
-        "title": "Accept test", "body": "Need answer", "track": "rag",
+        "title": "Accept test", "body": "Need an answer to this question.", "track": "rag",
     })
     post_id = create_resp.json()["post"]["id"]
     # Add answer

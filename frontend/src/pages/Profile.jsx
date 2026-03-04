@@ -95,8 +95,8 @@ export function Profile() {
           </div>
 
           <div className="flex-1 pb-2 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white tracking-tight">
+            <div className="pt-4 sm:pt-6">
+              <h1 className="text-3xl font-bold text-white tracking-tight leading-tight">
                 {profileUser.user.username}
               </h1>
               <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -338,12 +338,18 @@ export function Profile() {
                 background: editBackground,
                 skill_level: editSkillLevel,
               });
-              // Sync authStore so nav/header reflects new username immediately
-              setUser(res.data);
-              // Re-fetch profile data
-              const updated = await apiClient.get(`/users/${res.data.username}`);
+              const newUsername = res.data.user.username;
+              // Sync authStore so nav/header reflects new username/xp immediately
+              setUser(res.data.user, res.data.rank);
+              // Re-fetch profile data using the new username
+              const updated = await apiClient.get(`/users/${newUsername}`);
               setProfileUser(updated.data);
               setEditOpen(false);
+
+              // If we are on a specific username route and it changed, update the URL
+              if (username && username !== newUsername) {
+                navigate(`/profile/${newUsername}`, { replace: true });
+              }
             } catch (err) {
               const detail = err.response?.data?.detail;
               setEditError(

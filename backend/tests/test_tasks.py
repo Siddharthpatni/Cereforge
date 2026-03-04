@@ -132,7 +132,7 @@ async def test_submit_awards_xp(client):
             "solution_text": "A detailed solution covering all aspects of computer vision task implementation with edge cases handled." * 3,
         },
     )
-    me_resp = await client.get("/api/v1/auth/me", headers=auth_headers(token))
+    me_resp = await client.get("/api/v1/users/me", headers=auth_headers(token))
     assert me_resp.status_code == 200
     assert me_resp.json()["stats"]["tasks_completed"] == 1
     assert me_resp.json()["user"]["xp"] >= 0  # XP may vary based on AI eval result

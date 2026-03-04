@@ -16,7 +16,7 @@ export function TaskDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addToast, queueCinematic } = useUIStore();
-  const { updateXP } = useAuthStore();
+
 
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -85,11 +85,21 @@ export function TaskDetail() {
       setShowBenchmark(true);
 
     } catch (error) {
-      const msg = error.response?.data?.detail || "Something went wrong.";
+      let msg = "Something went wrong.";
+      const detail = error.response?.data?.detail;
+
+      if (typeof detail === "string") {
+        msg = detail;
+      } else if (Array.isArray(detail)) {
+        msg = detail.map(d => `${d.field}: ${d.message}`).join(", ");
+      } else if (detail && typeof detail === "object") {
+        msg = JSON.stringify(detail);
+      }
+
       setLocalError(msg);
       addToast({
         title: "Submission Failed",
-        message: msg,
+        message: msg.length > 100 ? msg.substring(0, 97) + "..." : msg,
         type: "error",
       });
       setIsInvalidating(false);
@@ -111,7 +121,9 @@ export function TaskDetail() {
 
       // 2. Local state update
       setTask((prev) => ({ ...prev, is_completed: true }));
-      updateXP(benchmarkResult.xp_earned);
+      // Sync XP and Rank to authStore so Navbar reflects changes immediately
+      const { setUser } = useAuthStore.getState();
+      setUser({ xp: benchmarkResult.total_xp }, benchmarkResult.rank);
 
       addToast({
         title: "Task Completed!",

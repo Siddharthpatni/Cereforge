@@ -241,7 +241,7 @@ async def submit_task(
     await db.commit()
 
     return TaskSubmissionResponse(
-        xp_earned=task.xp_reward,
+        xp_earned=actual_xp,
         total_xp=current_user.xp,
         rank=rank,
         newly_earned_badges=[BadgeEarned(**b) for b in newly_earned],
