@@ -1,222 +1,583 @@
-# CereForge — What You Need to Know to Build This Yourself
+# CereForge — Complete Knowledge Guide
 
 **Document type**: Engineering knowledge guide  
-**Audience**: Anyone who wants to understand and rebuild this system from scratch — no AI, no shortcuts.
+**Audience**: Anyone who wants to understand and rebuild this system from scratch — no AI, no shortcuts.  
+**Version**: March 2026
 
 ---
 
 ## Preface
 
-This document is not a tutorial. It is a map of the intellectual territory you need to cover. A thesis chapter on the same system would reference each of these areas in depth. Here, I aim to be precise about *what matters* and *why it matters in this context*, so you can go read the right things rather than reading everything.
+This document maps the intellectual territory you need to cover to understand CereForge. It is not a tutorial — it is a precise description of what each file does, what concepts it requires, and what you'd need to learn to write it yourself.
 
-The project is a web platform for AI engineering education. Users solve design problems, submit written solutions, receive automated feedback, earn XP and badges, and participate in a community forum. The system is built on a Python async backend, a PostgreSQL database, a Redis-backed task queue, and a React frontend. Understanding *why* these choices were made is as important as understanding *how* they work.
-
----
-
-## Part I — The Conceptual Foundation
-
-### 1.1 What the System Actually Does
-
-CereForge is a structured learning environment that separates itself from tutorial platforms by focusing on *evaluation of reasoning*, not execution of predefined steps. Users submit their architectural decisions — for example, how they would design a RAG pipeline to handle conflicting retrieval results — and the system scores their reasoning across multiple dimensions.
-
-The core intellectual claim is that learning AI engineering requires decision-making under constraint, which tutorial platforms do not provide. The evaluation mechanism is therefore the most important and least solved part of the system.
-
-### 1.2 The Evaluation Problem (Know This First)
-
-The most technically interesting component of CereForge is the automated evaluator in `backend/app/services/task_evaluator.py`. It uses an LLM (currently Google Gemini) to score open-ended submissions against a multi-dimensional rubric.
-
-The fundamental problem: **LLM-as-judge evaluation is inconsistent.** Two identical submissions may receive different scores if the temperature is non-zero, if the rubric is ambiguously worded, or if the model's context window is partially occupied by different token sequences. This is documented extensively in:
-
-- Zheng et al., 2023 — *Judging LLM-as-a-Judge with MT-Bench*
-- Shahul et al., 2023 — *RAGAS: Automated Evaluation of RAG frameworks*
-
-Before building this system, you need to understand *inter-rater reliability* (Cohen's kappa, Krippendorff's alpha) and *rubric calibration* well enough to design evaluation criteria that minimize judge variance. This is the part I have not fully solved. Section 8 of the research note in `docs/CereForge_Research_Note.md` describes this honestly.
+The project is a web platform for AI engineering education. Users solve design problems, submit written solutions, receive automated feedback, earn XP and badges, and participate in a community Q&A forum. The backend is Python/FastAPI, the database is PostgreSQL, the queue is Celery/Redis, and the frontend is React/Vite.
 
 ---
 
-## Part II — The Technical Stack
+## Part I — Project File Structure (Annotated)
 
-### 2.1 Backend: FastAPI + SQLAlchemy (Async)
+### Repository Root
 
-Why FastAPI over Flask or Django REST Framework? Two reasons:
-
-1. **Async-first design.** The platform streams AI responses via Server-Sent Events. This requires non-blocking I/O throughout the request/response cycle. FastAPI is built on Starlette, which is genuinely async. Django is not, and Flask's async support is retrofitted.
-
-2. **Automatic schema validation.** FastAPI uses Pydantic models for both request validation and response serialization. You define a schema once; the framework enforces it at the boundary and generates OpenAPI documentation automatically. This reduces the surface area for bugs at API boundaries.
-
-**What you need to learn:**
-
-- Python's `asyncio` event loop — particularly the difference between `async def`, `await`, `asyncio.gather`, and why you cannot block the event loop with synchronous calls.
-- [FastAPI documentation](https://fastapi.tiangolo.com/) — focus on dependency injection (the `Depends()` pattern), lifespan events, and exception handlers.
-- Pydantic v2 — validators, model inheritance, `model_config`, computed fields.
-
-**The database layer:**
-
-SQLAlchemy 2.0 with its async session is conceptually different from ORM usage most tutorials demonstrate. You will not find `.query()`. Instead:
-
-```python
-result = await db.execute(select(User).where(User.id == user_id))
-user = result.scalar_one_or_none()
+```
+Cereforge/
+├── README.md                    # What the project is and how to run it locally
+├── CHANGELOG.md                 # Human-maintained log of meaningful changes
+├── LICENSE                      # MIT
+├── docker-compose.yml           # Orchestrates all services for local dev
+├── docker-compose.dev.yml       # Dev overrides (hot-reload mounts)
+├── start_demo.sh                # Shell script: starts all services in sequence
+├── docs/
+│   ├── ARCHITECTURE.md          # System design decisions explained
+│   ├── PROD_SETUP.md            # Step-by-step deployment guide (Supabase/Render/Vercel)
+│   ├── KNOWLEDGE_GUIDE.md       # This file
+│   └── CereForge_Research_Note.md  # Research proposal for LLM evaluation problem
+├── .github/
+│   └── workflows/ci.yml         # GitHub Actions: runs lint, tests, build on every push
+├── backend/                     # Python FastAPI application
+└── frontend/                    # React/Vite application
 ```
 
-Every DB operation is an explicit query builder expression, awaited through an `AsyncSession`. This is intentional — it forces you to think about what SQL you are actually writing.
+### Backend: `backend/`
 
-**What you need to learn:**
+```
+backend/
+├── Dockerfile                   # Two-stage build: builder copies deps, production stage copies app
+├── requirements.txt             # All Python dependencies pinned to exact versions
+├── pyproject.toml               # Ruff (linter/formatter) config and pytest config
+├── alembic.ini                  # Alembic database migration configuration
+├── alembic/
+│   └── versions/                # One .py file per migration, each describing a schema change
+├── .env                         # Local environment variables (NOT committed to git)
+├── .env.example                 # Template showing required env vars (committed)
+└── app/
+    ├── main.py                  # Application factory: creates FastAPI app, mounts middleware and routers
+    ├── core/
+    │   ├── config.py            # Pydantic Settings: reads env vars, validates types, exposes as properties
+    │   ├── database.py          # SQLAlchemy async engine and session factory
+    │   ├── security.py          # JWT creation and verification functions
+    │   └── redis.py             # Redis connection singleton
+    ├── models/
+    │   ├── __init__.py          # Imports all models so Alembic can detect them for migrations
+    │   ├── user.py              # User table: id, username, email, password hash, xp, is_admin, etc.
+    │   ├── task.py              # Task and TaskResource tables
+    │   ├── submission.py        # TaskSubmission: which user submitted which task, xp_earned, score
+    │   ├── post.py              # Community post (question)
+    │   ├── comment.py           # Comment and Vote tables
+    │   ├── badge.py             # Badge definition and UserBadge (many-to-many junction)
+    │   ├── notification.py      # In-app notification per user
+    │   ├── learning_path.py     # LearningPath, Module, Lesson, Enrollment tables
+    │   └── otp.py               # One-time password for password reset flow
+    ├── schemas/
+    │   ├── user.py              # Pydantic: UserCreate, UserResponse, UserProfile shapes
+    │   ├── task.py              # Pydantic: TaskResponse, SubmitRequest, SubmitResponse
+    │   ├── post.py              # Pydantic: PostCreate, PostResponse, CommentResponse
+    │   └── common.py            # Pydantic: LeaderboardEntry, BadgeResponse, NotificationResponse
+    ├── api/
+    │   ├── deps.py              # Dependency functions: get_db, get_current_user, get_current_admin
+    │   └── routes/
+    │       ├── auth.py          # POST /auth/register, /auth/login, /auth/refresh, /auth/logout, GET /auth/me
+    │       ├── tasks.py         # GET /tasks, GET /tasks/{slug}, POST /tasks/{slug}/submit
+    │       ├── community.py     # CRUD for posts, comments; voting; AI community analysis
+    │       ├── leaderboard.py   # GET /leaderboard with pagination and timeframe filter
+    │       ├── badges.py        # GET /badges (user's earned badges + all available)
+    │       ├── dashboard.py     # GET /dashboard (personalised: next task, stats, recent activity)
+    │       ├── users.py         # GET/PATCH /users/me, GET /users/{id}/profile
+    │       ├── admin.py         # Admin-only endpoints: user management, XP overrides, bans
+    │       ├── notifications.py # GET /notifications, PATCH /notifications/read-all, PATCH /{id}/read
+    │       └── learning_paths.py # GET /paths, GET /paths/{slug}
+    ├── services/
+    │   ├── task_evaluator.py    # Calls Gemini API to score a submission against a rubric
+    │   ├── ai_mentor.py         # Streams Gemini guidance for a specific task/question
+    │   ├── badge_engine.py      # Checks all badge conditions for a user, awards newly earned ones
+    │   ├── xp_service.py        # Atomic XP update, rank calculation from XP
+    │   ├── notification.py      # Creates in-app notification records
+    │   └── ai_detector.py       # Placeholder: flags suspicious submissions (not fully implemented)
+    ├── workers/
+    │   └── tasks.py             # Celery task definitions: check_badges_background, send_email_background
+    ├── seeds/
+    │   ├── run_all.py           # Entry point: runs all seeders in dependency order
+    │   ├── tasks_seed.py        # Inserts 24 challenge tasks across 4 tracks
+    │   ├── badges_seed.py       # Inserts 23 badge definitions
+    │   ├── paths_seed.py        # Inserts 5 learning paths with modules and lessons
+    │   └── community_seed.py    # Inserts sample posts for a non-empty community on first run
+    └── scripts/
+        ├── explore_db.py        # Debug script: prints table names and row counts
+        └── wipe_db.py           # Danger: deletes all user data (keeps schema intact)
+```
 
-- SQLAlchemy 2.0 Core API (not the 1.x query API) — `select()`, `insert()`, `update()`, `join()`, `.where()`, `.returning()`.
-- PostgreSQL fundamentals: indexes, `SERIAL` vs `UUID` primary keys, transactional semantics (`COMMIT`, `ROLLBACK`), `asyncpg` as the Python driver.
-- Alembic for schema migrations — understand the difference between a migration and a seed, and why you need both separately.
+### Frontend: `frontend/src/`
+
+```
+frontend/src/
+├── main.jsx                     # Entry point: renders <App /> into #root DOM node
+├── App.jsx                      # Route definitions: public routes, protected routes with auth guard
+├── index.css                    # Global styles: CSS variables, dark theme, scrollbar overrides
+├── App.css                      # App-level layout styles
+├── animations.css               # Keyframe animations (badge unlock, XP counter, cinematic runner)
+├── api/
+│   └── client.js                # Axios instance with base URL, request interceptor (attaches JWT),
+│                                #   response interceptor (handles 401 → token refresh, logs 500s)
+├── stores/
+│   ├── authStore.js             # Zustand store: accessToken, refreshToken, user, setTokens, logout
+│   └── uiStore.js               # Zustand store: toast notifications, modal state
+├── pages/
+│   ├── Auth.jsx                 # Login and register tabs, form state, calls /auth/login or /auth/register
+│   ├── Dashboard.jsx            # User home: shows XP, rank, next recommended task, recent badges
+│   ├── Tasks.jsx                # Task list with track/difficulty filter, completion ring in header
+│   ├── TaskDetail.jsx           # Single task: description, resources, submission editor, AI mentor panel
+│   ├── Leaderboard.jsx          # Global rankings with All/Month/Week tabs
+│   ├── Community.jsx            # Post list with filters: track, tag, difficulty
+│   ├── PostDetail.jsx           # Single post with answer editor, voting, AI analysis button
+│   ├── Profile.jsx              # User profile: avatar, rank badge, bio, stats, earned badges
+│   ├── Paths.jsx                # Learning paths list
+│   ├── PathDetail.jsx           # Single path: modules, lessons, enrollment progress
+│   ├── Admin.jsx                # Admin portal: user management, overview stats, moderation actions
+│   ├── ForgotPassword.jsx       # 3-step: email entry → OTP input → new password
+│   ├── WeeklyTasks.jsx          # Weekly challenge view
+│   └── NotFound.jsx             # 404 page
+├── components/
+│   ├── layout/
+│   │   ├── Layout.jsx           # Wraps every protected page: Sidebar + Navbar + main content area
+│   │   ├── Navbar.jsx           # Top bar: search, notification bell, user info, logout
+│   │   └── Sidebar.jsx          # Left nav: links to all pages, collapsible on mobile
+│   ├── ui/
+│   │   ├── Button.jsx           # Reusable button with variant props (primary, ghost, danger)
+│   │   ├── Card.jsx             # Generic card container component
+│   │   ├── Badge.jsx            # Small status pill (difficulty, track, rank tier)
+│   │   ├── Modal.jsx            # Overlay modal with backdrop click to close
+│   │   ├── BenchmarkModal.jsx   # Post-submission modal: shows evaluation score and feedback
+│   │   ├── ToastContainer.jsx   # Renders toast notifications from uiStore
+│   │   ├── ErrorBoundary.jsx    # Catches React render errors, shows fallback UI
+│   │   ├── FullPageLoader.jsx   # Spinner for initial auth check / data loading
+│   │   └── PageSkeleton.jsx     # Skeleton loading placeholder
+│   ├── tasks/
+│   │   └── AIMentorPanel.jsx    # Streaming AI guidance panel in TaskDetail, uses EventSource
+│   └── signature/
+│       ├── CinematicRunner.jsx  # Animated badge unlock sequence (played after earning a badge)
+│       ├── XPCounter.jsx        # Animated XP increment counter
+│       ├── PipelineBuilder.jsx  # Interactive diagram component for RAG/agent pipeline tasks
+│       └── MarkdownRenderer.jsx # Renders markdown submission editor output with syntax highlighting
+└── utils/
+    └── cn.js                    # classnames utility — merges CSS class strings conditionally
+```
 
 ---
 
-### 2.2 Authentication: JWT + Refresh Token Rotation
+## Part II — Key Code Patterns (With Actual Code from the Project)
 
-CereForge uses a dual-token authentication model: a short-lived **access token** (24 hrs) and a longer-lived **refresh token** (30 days). This is not unique to this project, but understanding why this is the standard requires understanding what JWTs actually are.
+### 2.1 FastAPI Dependency Injection
 
-A JWT is a base64-encoded JSON object signed with a secret key. The server does not store it — it trusts any token it can verify against its own secret key. The implication is that a stolen access token cannot be revoked without implementing a token blocklist (which removes the statelessness benefit). The short expiry is the compromise.
+The `Depends()` pattern is central to FastAPI. It avoids repeating code in every route by declaring shared logic as a dependency. The database session and the current user are injected this way.
 
-Refresh token rotation: every time you use the refresh token to generate a new access token, you also issue a new refresh token. If someone steals the refresh token and uses it, the original also becomes invalid, which lets you detect the compromise.
+From `backend/app/api/deps.py`:
 
-**What you need to learn:**
+```python
+async def get_db():
+    async with async_session_factory() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+```
 
-- RFC 7519 (JWT spec) — at least the structure of the header, payload, and signature.
-- `python-jose` for signing/verifying tokens in Python.
-- The difference between `HS256` (symmetric, single secret key) and `RS256` (asymmetric, public/private key pair). For this project, HS256 is sufficient. For a multi-service architecture, you'd want RS256.
-- Password hashing: bcrypt and why you never store plaintext passwords or MD5 hashes.
+Then in any route handler:
 
----
+```python
+@router.get("/tasks")
+async def list_tasks(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    ...
+```
 
-### 2.3 Background Task Queue: Celery + Redis
+**Why it works**: FastAPI sees `Depends(get_db)` and calls `get_db()` before calling your route function. It handles the `yield` — code before `yield` runs on request, code after `yield` runs on response or error. This is Python's context manager pattern applied to HTTP.
 
-When a user submits a task solution, several expensive operations need to happen: running the LLM evaluation, checking badge conditions, awarding XP, and sending a notification. These cannot happen synchronously within the HTTP request/response cycle without exceeding timeout limits and degrading the user experience.
-
-Celery solves this by moving the work to background workers. Redis is the message broker — it holds the task queue. The web server enqueues a job (`task_evaluator.delay(user_id, submission_id)`) and responds immediately. A separate Celery worker process picks up the job and executes it independently.
-
-**What you need to learn:**
-
-- The producer-consumer pattern and message queues conceptually.
-- Redis data structures (lists, pub/sub, sorted sets) — Celery uses Redis as a message broker but Redis has many other uses (rate limiting, caching, real-time features).
-- Celery documentation: focus on `@celery_app.task`, task routing, and retry logic for transient failures.
-- The subtle bug: Celery workers run in separate processes. They need their own database sessions, their own event loops (if async), and cannot share in-memory state with the main FastAPI process.
-
----
-
-### 2.4 Frontend: React + Vite + Zustand + React Query
-
-The frontend is a Single Page Application. The interesting architectural choices:
-
-**State management: Zustand instead of Redux.** Redux is powerful but verbose for an application this size. Zustand provides a simple store with minimal boilerplate. The `useAuthStore` in `frontend/src/stores/authStore.js` manages the authentication state (tokens, user profile). If you understand the `useState` hook, Zustand is the next natural step.
-
-**Server state: TanStack Query (React Query).** There is a distinction between *client state* (which tab is selected, whether a modal is open) and *server state* (data fetched from the API). React Query manages server state: caching, refetching on window focus, invalidation after mutations. Without it, you'd write this plumbing manually in `useEffect` hooks, and you'd get it wrong in edge cases.
-
-**What you need to learn:**
-
-- React fundamentals: component lifecycle, hooks (`useState`, `useEffect`, `useContext`, `useRef`), the mental model of declarative rendering.
-- React Router v6 — especially nested routes and the `Outlet` pattern.
-- `fetch` and then Axios — understand HTTP fundamentals (methods, status codes, headers) before abstracting over them.
-- Zustand — read the documentation in one sitting, it is short.
-- React Query (TanStack Query) — understand `useQuery` and `useMutation`, then the caching and invalidation model.
+**What you need to learn**: Python generators (`yield`), context managers (`with` / `__enter__` / `__exit__`), and then how FastAPI uses them via `Depends`.
 
 ---
 
-### 2.5 The XP and Badge System
+### 2.2 Async Database Queries
 
-The gamification layer is in `backend/app/services/xp_service.py` and `backend/app/services/badge_engine.py`.
+Every database query follows this pattern:
 
-XP is simple: a flat integer per user, updated atomically with `UPDATE users SET xp = xp + $1 WHERE id = $2`. The rank is computed from the current XP at read time, not stored. This avoids the consistency problem of a stored rank that drifts out of sync with XP.
+```python
+# Select one row
+result = await db.execute(select(User).where(User.id == user_id))
+user = result.scalar_one_or_none()
 
-Badge conditions are evaluated by iterating over all badge definitions and checking each condition against the user's current state (submission counts, accepted answers, XP). This is a brute-force approach — O(badges × conditions). It works at this scale (23 badges). At much larger scale you would need a rules engine or event-driven evaluation.
+# Select multiple rows
+result = await db.execute(
+    select(Task)
+    .where(Task.is_active)
+    .order_by(Task.display_order)
+)
+tasks = result.scalars().all()
 
-**The key learning**: atomic database updates for counters (`UPDATE SET xp = xp + :amount`) versus optimistic locking. Understand *read-modify-write* race conditions. If two submissions arrive simultaneously and you do `user.xp = user.xp + 50` in Python and then save, one of them will be lost. The SQL `UPDATE ... SET xp = xp + 50` is atomic and avoids this.
+# Atomic counter update (safe for concurrent requests)
+await db.execute(
+    update(User)
+    .where(User.id == user_id)
+    .values(xp=User.xp + amount)
+    .returning(User.xp)
+)
+```
+
+**The key distinction**: `result.scalar_one_or_none()` returns a single ORM object or `None`. `result.scalars().all()` returns a list. `result.all()` returns a list of Row tuples (useful for aggregates and joins).
+
+**What you need to learn**: SQLAlchemy 2.0 Core — `select()`, `update()`, `insert()`, `join()`, `func.count()`, `group_by()`, `.where()`. The ORM-level `.query()` API from SQLAlchemy 1.x is not used here.
 
 ---
 
-### 2.6 Real-time Features: Server-Sent Events
+### 2.3 JWT Creation and Verification
 
-The AI Mentor streams responses rather than returning them all at once. This uses Server-Sent Events (SSE), not WebSockets. The difference matters:
+From `backend/app/core/security.py`:
 
-- **SSE** is unidirectional (server → client), text-based, and works over standard HTTP. The browser's native `EventSource` API handles reconnection.
-- **WebSockets** are bidirectional and require a persistent connection upgrade.
+```python
+def create_access_token(user_id: str, email: str) -> str:
+    expire = datetime.now(UTC) + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload = {
+        "sub": user_id,         # "subject" — standard JWT claim
+        "email": email,
+        "type": "access",
+        "exp": expire,
+        "iat": datetime.now(UTC),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
-For streaming LLM output where the client only needs to receive data, SSE is simpler and sufficient.
+def get_user_id_from_token(token: str, token_type: str) -> str | None:
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        if payload.get("type") != token_type:
+            return None
+        return payload.get("sub")
+    except JWTError:
+        return None
+```
 
-**What you need to learn:**
+**What this means**: A JWT is created by encoding a dict (the "claims") signed with `JWT_SECRET_KEY`. Any service that knows the secret can verify the token without a database lookup. The `exp` field is checked automatically by `jwt.decode` — expired tokens raise a `JWTError`.
 
-- The SSE protocol (it is simple: `data: <content>\n\n` over a kept-alive HTTP connection).
-- Python's `StreamingResponse` in FastAPI / Starlette.
-- The `async for chunk in stream` pattern when consuming a streaming LLM API response.
+**What you need to learn**: What claims are standard in JWTs (`sub`, `iat`, `exp`, `aud`), why `HS256` is symmetric, and what happens if your JWT secret key is leaked (hint: you have to rotate it and invalidate all existing tokens).
 
 ---
 
-## Part III — Things That Look Simple But Are Not
+### 2.4 Pydantic Schemas vs SQLAlchemy Models
 
-### 3.1 Database Connection Pooling
+These are two separate things that often confuse beginners:
 
-The application uses `pool_size=5, max_overflow=0` in production. This is not arbitrary. Managed PostgreSQL services (Supabase, Railway, Neon) impose hard limits on concurrent connections. A pool of 20 + 10 overflow looks fine locally but will exhaust the connection limit of a free-tier managed database immediately.
+**SQLAlchemy Model** (in `models/user.py`) — describes the database table:
 
-The general principle: connection pool size should be configured based on the database server's limit, not the application's ideal throughput. Formula: `max_connections / number_of_app_instances`.
+```python
+class User(Base):
+    __tablename__ = "users"
 
-### 3.2 Migration Management
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    username: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    xp: Mapped[int] = mapped_column(Integer, default=0)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+```
 
-The project uses Alembic for schema migrations. The common mistake is mixing migrations with seed data. Migrations describe schema changes (adding a column, creating a table). Seeds describe initial data (inserting badges, tasks). These must be separate and idempotent — running seeds twice should not create duplicate records.
+**Pydantic Schema** (in `schemas/user.py`) — describes what the API accepts and returns:
 
-### 3.3 CORS
+```python
+class UserResponse(BaseModel):
+    id: UUID
+    username: str
+    email: str
+    xp: int
+    # NOTE: password_hash is NOT here — deliberately excluded from API responses
 
-Cross-Origin Resource Sharing fails silently from the developer's perspective — the browser blocks the request before it reaches your JavaScript error handler. When deploying frontend and backend on different domains (Vercel + Render), you must explicitly list the frontend's origin in `APP_CORS_ORIGINS`. The middleware is configured in `app/main.py`.
+    model_config = ConfigDict(from_attributes=True)  # allows creating from ORM object
+```
 
-### 3.4 Security: What This Project Does and Does Not Do
+The `model_config = ConfigDict(from_attributes=True)` line is critical — it allows you to do `UserResponse.model_validate(user_orm_object)` and Pydantic will read the attributes from the ORM model.
 
-What this project handles correctly:
-- Password hashing (bcrypt).
-- JWT expiry and refresh rotation.
-- Basic rate limiting via `slowapi`.
-- Security headers (CSP, X-Frame-Options) via middleware.
+**Why separate?** The database model can have fields you never want to expose (like `password_hash`). The API schema is the contract with the client. Keeping them separate means your ORM can change without necessarily changing your API.
 
-What this project does not fully handle:
-- Input sanitization for the community forum (XSS risk if user-supplied HTML is rendered).
-- CSRF protection (generally not needed for API-only backends with JWT, but worth understanding).
-- Audit logging (who changed what, when).
+---
+
+### 2.5 Celery Background Tasks
+
+When a task submission arrives, the route handler triggers a background job and returns immediately:
+
+```python
+# In routes/tasks.py — inside the submit route
+check_badges_background.delay(str(current_user.id))
+
+# Return 200 to the user right now, don't wait for badge check
+return {"status": "submitted", "xp_earned": xp_earned}
+```
+
+The Celery task itself (`workers/tasks.py`) runs in a separate process:
+
+```python
+@celery_app.task
+def check_badges_background(user_id: str):
+    import asyncio
+    from app.services.badge_engine import check_and_award_badges
+    from app.core.database import async_session_factory
+
+    async def _run():
+        async with async_session_factory() as db:
+            await check_and_award_badges(db, UUID(user_id))
+            await db.commit()
+
+    asyncio.run(_run())
+```
+
+**Note the pattern**: Celery tasks are synchronous functions. To do async database work inside them, `asyncio.run()` creates a new event loop for the duration of the task. This is necessary because the Celery worker is a separate process from the FastAPI server and has no shared event loop.
+
+---
+
+### 2.6 SSE Streaming (AI Mentor)
+
+From `backend/app/services/ai_mentor.py` — returns an async generator:
+
+```python
+async def stream_mentor_guidance(task, user_message, skill_level):
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    
+    async for chunk in await client.aio.models.generate_content_stream(...):
+        if chunk.text:
+            yield f"data: {json.dumps({'content': chunk.text})}\n\n"
+```
+
+In the route (`community.py`):
+
+```python
+return StreamingResponse(
+    stream_mentor_guidance(task, message, user.skill_level),
+    media_type="text/event-stream",
+    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+)
+```
+
+On the frontend (`AIMentorPanel.jsx`):
+
+```javascript
+const eventSource = new EventSource(`${API_URL}/ai-mentor/guidance?...`);
+eventSource.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    setResponse(prev => prev + data.content);  // append each chunk
+};
+```
+
+**What you need to understand**: The server holds a long-lived HTTP connection open and sends `data: ...\n\n` chunks as they arrive. The browser's native `EventSource` handles reconnection. This is fundamentally different from a normal JSON response — the connection stays open until the generator is exhausted.
+
+---
+
+### 2.7 Zustand Store (Frontend State)
+
+From `frontend/src/stores/authStore.js`:
+
+```javascript
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+export const useAuthStore = create(
+    persist(
+        (set) => ({
+            accessToken: null,
+            refreshToken: null,
+            user: null,
+
+            setTokens: (access, refresh) =>
+                set({ accessToken: access, refreshToken: refresh }),
+
+            setUser: (user) => set({ user }),
+
+            logout: () =>
+                set({ accessToken: null, refreshToken: null, user: null }),
+        }),
+        {
+            name: "cereforge-auth",        // key in localStorage
+            partialize: (state) => ({      // only persist tokens, not user object
+                accessToken: state.accessToken,
+                refreshToken: state.refreshToken,
+            }),
+        }
+    )
+);
+```
+
+**What this does**: `create()` creates a store. `persist()` wraps it so the tokens survive browser refresh (stored in localStorage). Any component can call `useAuthStore(state => state.user)` to subscribe to the user object — when it changes, the component re-renders.
+
+**Why not Redux?** Redux requires actions, reducers, and a separate dispatch mechanism. Zustand does the same thing in ~30 lines. For an app this size, the additional structure of Redux adds complexity without benefit.
+
+---
+
+### 2.8 React Query (Server State)
+
+From `frontend/src/pages/Tasks.jsx`:
+
+```javascript
+const { data: tasksData, isLoading, isError, refetch } = useQuery({
+    queryKey: ["tasks", { track, difficulty }],
+    queryFn: () => apiClient.get("/tasks", { params: { track, difficulty } }).then(r => r.data),
+    staleTime: 60_000,   // treat as fresh for 60 seconds — don't refetch immediately
+});
+```
+
+After a mutation (e.g., submitting a solution):
+
+```javascript
+const mutation = useMutation({
+    mutationFn: (data) => apiClient.post(`/tasks/${slug}/submit`, data),
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });  // marks cache stale → refetches
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+});
+```
+
+**The mental model**: React Query maintains a cache keyed by `queryKey`. `useQuery` reads from the cache and fetches if stale. `invalidateQueries` marks cache entries as stale after a mutation — triggering a background refetch. You never manually update state after an API call; you just invalidate the relevant queries.
+
+---
+
+### 2.9 The Badge Engine — Condition Checking
+
+The badge engine in `backend/app/services/badge_engine.py` iterates over badge definitions and checks each condition. Each badge in the database has a `condition_type` string and a `condition_value` JSON object:
+
+```json
+{
+  "condition_type": "track_count",
+  "condition_value": {"track": "llm", "count": 5}
+}
+```
+
+The engine evaluates it:
+
+```python
+if ctype == "track_count":
+    track = str(cval.get("track", ""))
+    count = int(cval.get("count", 0))
+    return track_counts.get(track, 0) >= count
+```
+
+This pattern — storing condition logic as structured data in the database, not as hardcoded rules — is called a **rules engine**. It lets you add new badges by inserting a row, not by deploying code.
+
+**The trade-off**: Flexible, data-driven conditions are harder to debug than explicit Python conditions. The `condition_type` values must be documented and the engine updated each time a new condition type is needed.
+
+---
+
+## Part III — Database Schema Design Decisions
+
+### Why UUID primary keys, not auto-increment integers?
+
+```python
+id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+```
+
+Auto-increment integers reveal information: if your user ID is 47, a competitor can guess there are ~47 users. UUIDs are random. They are also safe across distributed systems — you can generate an ID in Python before inserting, without a database round-trip.
+
+**Trade-off**: UUIDs are larger (16 bytes vs 4 bytes), and sequential row inserts fragment the B-tree index. For this application scale, this doesn't matter.
+
+### Why separate `is_active` and `is_admin` flags on User?
+
+```python
+is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+```
+
+`is_active = False` is the "soft ban" mechanism. It deactivates the account without deleting the user's data. Deleting the row would cascade and remove all posts, submissions, and badges — collateral damage the admin didn't intend.
+
+### Why a junction table for badges?
+
+```python
+class UserBadge(Base):
+    __tablename__ = "user_badges"
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    badge_id: Mapped[UUID] = mapped_column(ForeignKey("badges.id"))
+    earned_at: Mapped[datetime] = mapped_column(default=utcnow)
+```
+
+Because a user can earn many badges, and many users can earn the same badge. This is a many-to-many relationship. The junction table is the standard relational way to model it. Querying "which badges has user X earned" becomes `SELECT badge_id FROM user_badges WHERE user_id = X`.
 
 ---
 
 ## Part IV — What to Read, In Order
 
-This is not an exhaustive list. It is ordered by dependency — later items require the earlier ones.
-
 | Topic | Resource |
 |---|---|
-| Python async/await | [Python docs: asyncio](https://docs.python.org/3/library/asyncio.html) — read the coroutines and tasks section |
-| HTTP fundamentals | MDN Web Docs: HTTP — methods, status codes, headers, cookies |
-| SQL | *Learning SQL* by Alan Beaulieu — chapters 1–10 cover everything needed |
-| PostgreSQL | PostgreSQL official documentation — focus on transactions, indexes, EXPLAIN |
-| FastAPI | [fastapi.tiangolo.com](https://fastapi.tiangolo.com/) — the entire tutorial, not just the quickstart |
-| SQLAlchemy 2.0 | [SQLAlchemy 2.0 Migration Guide](https://docs.sqlalchemy.org/en/20/changelog/migration_20.html) |
-| JWTs | [jwt.io/introduction](https://jwt.io/introduction) — then read RFC 7519 |
-| React | [react.dev](https://react.dev) — the new official docs, not W3Schools |
+| Python fundamentals | Work through all of [docs.python.org/3/tutorial](https://docs.python.org/3/tutorial/) |
+| Python async/await | [docs.python.org/3/library/asyncio](https://docs.python.org/3/library/asyncio.html) — coroutines, tasks, event loop |
+| HTTP fundamentals | MDN: HTTP — methods, status codes, headers, cookies, CORS |
+| SQL | *Learning SQL* by Alan Beaulieu — ch. 1–10 |
+| PostgreSQL | PostgreSQL docs — focus on transactions, indexes, `EXPLAIN ANALYZE` |
+| FastAPI | [fastapi.tiangolo.com](https://fastapi.tiangolo.com) — the full tutorial incl. dependency injection |
+| Pydantic v2 | [docs.pydantic.dev](https://docs.pydantic.dev/) — validators, model config, computed fields |
+| SQLAlchemy 2.0 | [docs.sqlalchemy.org](https://docs.sqlalchemy.org) — 2.0 Core expression language, async sessions |
+| Alembic | [alembic.sqlalchemy.org](https://alembic.sqlalchemy.org) — autogenerate, upgrade, downgrade |
+| JWTs | [jwt.io/introduction](https://jwt.io/introduction) → RFC 7519 |
+| bcrypt | Any explainer on password hashing — understand salts and why MD5 is wrong |
+| React | [react.dev](https://react.dev) — hooks, component lifecycle, state |
+| React Router v6 | [reactrouter.com/docs](https://reactrouter.com/docs) — especially `Outlet`, loaders |
+| Zustand | [docs.pmnd.rs/zustand](https://docs.pmnd.rs/zustand/getting-started/introduction) |
 | TanStack Query | [tanstack.com/query/latest/docs](https://tanstack.com/query/latest/docs/framework/react/overview) |
-| Celery | [docs.celeryq.dev](https://docs.celeryq.dev/) — Getting Started + Guide: Tasks |
-| Redis | *Redis in Action* by Josiah Carlson — chapters 1–3 |
-| Docker & Docker Compose | Docker official "Get Started" guide |
-| LLM evaluation | Zheng et al. (2023) MT-Bench paper; Shahul et al. (2023) RAGAS paper |
+| Axios | [axios-http.com/docs](https://axios-http.com/docs/intro) — interceptors are the important part |
+| Celery | [docs.celeryq.dev](https://docs.celeryq.dev) — Guide: Tasks and Next Steps |
+| Redis | First 3 chapters of *Redis in Action* by Josiah Carlson |
+| Docker | Docker "Get Started" + Compose docs |
+| LLM evaluation | Zheng et al. (2023) MT-Bench; Shahul et al. (2023) RAGAS |
 
 ---
 
-## Part V — How I Would Rebuild This, Without AI
+## Part V — How I Would Rebuild This (The Right Order)
 
-If I were to rebuild CereForge from scratch today, I would do it in this order:
+**Step 1: Database schema**
 
-1. **Database schema first.** Write `models.py` and Alembic migrations before any route. Getting the data model right is the hardest part and the most expensive to change later.
+Write `models.py` and the first Alembic migration before any route. Every other decision depends on the data model. The order of things:
 
-2. **Auth routes second.** Register and login, returning a JWT. Test with `curl` before writing any frontend. This forces you to understand the request/response cycle at the protocol level.
+1. Sketch the entities on paper: User, Task, Submission, Post, Comment, Badge, UserBadge, Notification.
+2. For each entity, list the fields and their types.
+3. Draw the foreign key relationships (User → Submission, Task → Submission, etc.).
+4. Write SQLAlchemy models. Run `alembic revision --autogenerate` to create the migration.
+5. Run `alembic upgrade head`. Connect to PostgreSQL with psql and verify the tables exist.
 
-3. **One feature end-to-end.** Task list → task detail → task submission → XP awarded. No badges, no AI, no community. Just one vertical slice, fully working, with tests.
+**Step 2: Auth**
 
-4. **Layer complexity incrementally.** Add Celery when you have a slow synchronous operation that needs to go async. Add Redis when you need caching or a queue. Add the AI evaluator when the basic submission flow is solid.
+Write `POST /auth/register` and `POST /auth/login` before anything else. Test with `curl`:
 
-5. **Frontend last.** Build the API contract first. A well-defined API lets the frontend be written independently. If you build frontend and backend simultaneously without a contract, you will spend most of your time debugging mismatched assumptions.
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "test", "email": "test@test.com", "password": "Password123!"}'
+```
 
-The instinct is to build everything at once. The discipline is to build one thing well, verify it, and then add the next layer.
+If it returns a 201 and a JWT, auth is working. All other endpoints depend on auth.
+
+**Step 3: One feature, end-to-end**
+
+Task list → task detail → task submission → XP awarded. No badges, no AI, no email, no Celery. Call `award_xp` synchronously in the route handler for now. Get the whole thing working with tests before adding the next layer.
+
+**Step 4: Add Celery for expensive work**
+
+Once task submission works synchronously, move the badge checking and XP award into Celery workers. The route handler becomes faster; the work happens in the background.
+
+**Step 5: Add the AI evaluator**
+
+Only once the submission flow is stable. The evaluator is the most brittle part of the system — LLM APIs fail, responses are inconsistent, latency is high. Make everything else solid first.
+
+**Step 6: Frontend**
+
+Start with `Auth.jsx`. Get login and register working. Then `Dashboard.jsx`. Then `Tasks.jsx` + `TaskDetail.jsx`. Build the API calls first, then the UI around them. If you try to build UI and API simultaneously, you will spend most of your time debugging mismatched assumptions.
 
 ---
 
-*This document describes the system as of March 2026. The evaluation component (Section I.2) remains the primary open research problem.*
+## Part VI — Known Gaps and Open Problems
+
+| Problem | Status | What's needed to solve it |
+|---|---|---|
+| LLM evaluator inconsistency | Unsolved | Rubric calibration against human raters; measure Cohen's kappa |
+| AI detector (`ai_detector.py`) | Placeholder | Needs a real implementation; current version always returns False |
+| Streak tracking | `# TODO` in badge_engine.py | Requires a streaks table and a daily job to check/update |
+| XSS in community posts | Partially mitigated | User-submitted HTML needs sanitization before rendering |
+| Email sending | Optional | SMTP is configured but most deployments won't set it up |
+
+---
+
+*This document reflects CereForge as of March 2026.*
