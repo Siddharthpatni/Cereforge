@@ -1,6 +1,6 @@
 # CereForge — Short Research Note
 
-**Siddharth Patni · siddharth.patni@student.tu-chemnitz.de**  
+**Siddharth Patni**  
 March 2026
 
 ---

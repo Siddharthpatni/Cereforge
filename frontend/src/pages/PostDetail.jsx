@@ -18,6 +18,18 @@ import apiClient from "@/api/client";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/utils/cn";
 
+// Extract a human-readable string from whatever shape the API returns for errors.
+// The backend can return: a plain string, or an array [{field, message, type}, ...] for 422s.
+function extractErrorMessage(err, fallback = "Something went wrong") {
+  const detail = err?.response?.data?.detail;
+  if (!detail) return fallback;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail.map((d) => d.message || d.msg || JSON.stringify(d)).join(", ");
+  }
+  return fallback;
+}
+
 // Subcomponent for comments tree
 function CommentNode({ comment, postAuthorId, onVote, onAccept, onReply }) {
   const { user } = useAuthStore();
@@ -36,7 +48,7 @@ function CommentNode({ comment, postAuthorId, onVote, onAccept, onReply }) {
       setReplyText("");
       setShowReplyBox(false);
     } catch (err) {
-      setLocalError(err.response?.data?.detail || "Failed to post reply");
+      setLocalError(extractErrorMessage(err, "Failed to post reply"));
     } finally {
       setSubmitting(false);
     }
@@ -326,7 +338,7 @@ export function PostDetail() {
       await handlePostComment(null, newComment);
       setNewComment("");
     } catch (err) {
-      setLocalError(err.response?.data?.detail || "Failed to post comment");
+      setLocalError(extractErrorMessage(err, "Failed to post comment"));
     } finally {
       setSubmitting(false);
     }
