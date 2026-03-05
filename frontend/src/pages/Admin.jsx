@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import apiClient from "@/api/client";
 import { cn } from "@/utils/cn";
+import { extractErrorMessage } from "@/utils/errorUtils";
 import { formatDistanceToNow } from "date-fns";
 import { useUIStore } from "@/stores/uiStore";
 
@@ -159,7 +160,7 @@ function XPCell({ userId, username, initialXP, onUpdated, addToast }) {
             onUpdated(userId, xpNum);
             setEditing(false);
         } catch (err) {
-            addToast({ title: "Failed", message: err.response?.data?.detail || "Could not update XP", type: "error" });
+            addToast({ title: "Failed", message: extractErrorMessage(err, "Could not update XP"), type: "error" });
         } finally {
             setSaving(false);
         }

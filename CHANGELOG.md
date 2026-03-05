@@ -3,6 +3,17 @@
 All notable changes to CereForge are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [1.2.0] — 2026-03-05
+
+### Added
+- `src/utils/errorUtils.js` — shared `extractErrorMessage(err, fallback)` utility that safely converts any API error response to a string, handling plain strings, 422 validation arrays (`[{field, message, type}]`), and undefined/null.
+
+### Fixed
+- React crash when posting or replying to comments: backend 422 validation errors return an array of objects, which React cannot render as a child directly. All error display paths now go through `extractErrorMessage`.
+- Same fix applied across `PostDetail.jsx`, `Community.jsx`, `ForgotPassword.jsx`, and `Admin.jsx` — previously these all read `err.response?.data?.detail` directly without guarding against arrays.
+
+---
+
 ## [1.1.0] — 2026-02-28
 
 ### Added

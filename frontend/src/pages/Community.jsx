@@ -18,6 +18,7 @@ import { useAuthStore } from "@/stores/authStore";
 import apiClient from "@/api/client";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/utils/cn";
+import { extractErrorMessage } from "@/utils/errorUtils";
 
 const TRACKS = ["llm", "rag", "vision", "agents"];
 
@@ -80,7 +81,7 @@ export function Community() {
     } catch (err) {
       addToast({
         title: "Vote Failed",
-        message: err.response?.data?.detail || "Could not cast vote.",
+        message: extractErrorMessage(err, "Could not cast vote."),
         type: "warning",
       });
     }
@@ -109,11 +110,7 @@ export function Community() {
       setNewTrack("");
       navigate(`/community/${res.data.post.id}`);
     } catch (err) {
-      const msg = err.response?.data?.detail || "Failed to post question. Please try again.";
-      // Pydantic validation errors come as an array
-      const errorMsg = Array.isArray(msg)
-        ? msg.map((e) => e.msg || e.type).join(", ")
-        : msg;
+      const errorMsg = extractErrorMessage(err, "Failed to post question. Please try again.");
       setLocalError(errorMsg);
       addToast({ title: "Error", message: errorMsg, type: "error" });
     } finally {

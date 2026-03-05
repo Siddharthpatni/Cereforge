@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { useUIStore } from "@/stores/uiStore";
 import apiClient from "@/api/client";
+import { extractErrorMessage } from "@/utils/errorUtils";
 import { KeyRound, Mail, ShieldCheck, ArrowLeft } from "lucide-react";
 
 export function ForgotPassword() {
@@ -37,7 +38,7 @@ export function ForgotPassword() {
             });
             setStep(2);
         } catch (err) {
-            const msg = err.response?.data?.detail || "Failed to send OTP.";
+            const msg = extractErrorMessage(err, "Failed to send OTP.");
             setLocalError(msg);
             addToast({ title: "Error", message: msg, type: "error" });
         } finally {
@@ -62,7 +63,7 @@ export function ForgotPassword() {
             });
             setStep(3);
         } catch (err) {
-            const msg = err.response?.data?.detail || "Failed to reset password.";
+            const msg = extractErrorMessage(err, "Failed to reset password.");
             setLocalError(msg);
             addToast({ title: "Error", message: msg, type: "error" });
         } finally {
