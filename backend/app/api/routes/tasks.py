@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
+from app.models.bookmark import TaskBookmark
 from app.models.post import Post
 from app.models.submission import TaskSubmission
 from app.models.task import Task
@@ -36,6 +37,8 @@ async def list_tasks(
     difficulty: str | None = Query(None),
     task_status: str | None = Query(None, alias="status"),
     is_weekly: bool | None = Query(None),
+    search: str | None = Query(None, description="Search by title or description"),
+    bookmarked: bool | None = Query(None, description="Filter to only bookmarked tasks"),
 ):
     query = select(Task).where(Task.is_active).order_by(Task.track, Task.display_order)
 
@@ -45,6 +48,11 @@ async def list_tasks(
         query = query.where(Task.difficulty == difficulty)
     if is_weekly is not None:
         query = query.where(Task.is_weekly == is_weekly)
+    if search:
+        term = f"%{search.lower()}%"
+        query = query.where(
+            or_(Task.title.ilike(term), Task.description.ilike(term))
+        )
 
     result = await db.execute(query)
     tasks = result.scalars().all()
@@ -55,14 +63,23 @@ async def list_tasks(
     )
     completed_ids = set(subs_result.scalars().all())
 
+    # Get user's bookmarked task IDs
+    bm_result = await db.execute(
+        select(TaskBookmark.task_id).where(TaskBookmark.user_id == current_user.id)
+    )
+    bookmarked_ids = set(bm_result.scalars().all())
+
     show_beginner = current_user.skill_level in ("absolute_beginner", "some_python")
 
     items = []
     for task in tasks:
         completed = task.id in completed_ids
+        is_bookmarked = task.id in bookmarked_ids
         if task_status == "completed" and not completed:
             continue
         if task_status == "incomplete" and completed:
+            continue
+        if bookmarked and not is_bookmarked:
             continue
 
         items.append(
@@ -78,6 +95,7 @@ async def list_tasks(
                 colab_url=task.colab_url,
                 is_weekly=task.is_weekly,
                 completed=completed,
+                bookmarked=is_bookmarked,
                 show_beginner_guide=show_beginner,
             )
         )
@@ -270,3 +288,69 @@ async def get_submission(
         return None
 
     return SubmissionDetailResponse.model_validate(submission)
+
+
+@router.post("/{slug}/bookmark")
+async def toggle_bookmark(
+    slug: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Toggle a bookmark on a task. Returns whether the task is now bookmarked."""
+    result = await db.execute(select(Task).where(Task.slug == slug))
+    task = result.scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    existing = await db.execute(
+        select(TaskBookmark).where(
+            TaskBookmark.user_id == current_user.id,
+            TaskBookmark.task_id == task.id,
+        )
+    )
+    bookmark = existing.scalar_one_or_none()
+
+    if bookmark:
+        await db.delete(bookmark)
+        await db.commit()
+        return {"bookmarked": False, "message": "Bookmark removed"}
+    else:
+        db.add(TaskBookmark(user_id=current_user.id, task_id=task.id))
+        await db.commit()
+        return {"bookmarked": True, "message": "Task bookmarked"}
+
+
+@router.get("/me/history")
+async def get_submission_history(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, le=50),
+):
+    """Get the current user's full submission history with task details."""
+    from sqlalchemy import desc
+
+    result = await db.execute(
+        select(TaskSubmission, Task)
+        .join(Task, TaskSubmission.task_id == Task.id)
+        .where(TaskSubmission.user_id == current_user.id)
+        .order_by(desc(TaskSubmission.submitted_at))
+        .offset(skip)
+        .limit(limit)
+    )
+    rows = result.all()
+
+    return [
+        {
+            "id": str(sub.id),
+            "task_slug": task.slug,
+            "task_title": task.title,
+            "track": task.track,
+            "difficulty": task.difficulty,
+            "xp_awarded": sub.xp_awarded,
+            "submitted_at": sub.submitted_at.isoformat(),
+            "is_ai_flagged": sub.is_ai_flagged,
+            "solution_preview": sub.solution_text[:200] + "..." if len(sub.solution_text) > 200 else sub.solution_text,
+        }
+        for sub, task in rows
+    ]

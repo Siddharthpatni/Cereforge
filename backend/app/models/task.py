@@ -43,6 +43,7 @@ class Task(Base):
     # Relationships
     resources = relationship("TaskResource", back_populates="task", lazy="selectin")
     submissions = relationship("TaskSubmission", back_populates="task", lazy="noload")
+    bookmarks = relationship("TaskBookmark", back_populates="task", lazy="noload")
 
 
 class TaskResource(Base):

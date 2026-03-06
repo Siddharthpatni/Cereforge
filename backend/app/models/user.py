@@ -51,3 +51,4 @@ class User(Base):
     comments = relationship("Comment", back_populates="author", lazy="noload")
     notifications = relationship("Notification", back_populates="user", lazy="noload")
     path_enrollments = relationship("PathEnrollment", back_populates="user", lazy="selectin")
+    task_bookmarks = relationship("TaskBookmark", back_populates="user", lazy="noload")

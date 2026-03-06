@@ -64,6 +64,7 @@ class TaskListItem(BaseModel):
     colab_url: str
     is_weekly: bool = False
     completed: bool = False
+    bookmarked: bool = False
     show_beginner_guide: bool = False
 
     model_config = {"from_attributes": True}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.models.badge import Badge, UserBadge
+from app.models.bookmark import TaskBookmark
 from app.models.comment import Comment, Vote
 from app.models.learning_path import LearningPath, PathEnrollment, PathLesson, PathModule
 from app.models.notification import Notification
@@ -28,4 +29,5 @@ __all__ = [
     "PathEnrollment",
     "Notification",
     "PasswordResetOTP",
+    "TaskBookmark",
 ]

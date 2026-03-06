@@ -255,3 +255,30 @@ async def change_password(
     current_user.password_hash = hash_password(body.new_password)
     await db.commit()
     return {"message": "Password changed successfully. Please log in again."}
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_account(
+    body: DeleteAccountRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Deactivate the current user's account. Requires password confirmation."""
+    from app.core.security import verify_password
+
+    if not verify_password(body.password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect password. Account was not deleted.",
+        )
+
+    # Soft delete: deactivate rather than hard-delete to preserve community contributions
+    current_user.is_active = False
+    current_user.email = f"deleted_{current_user.id}@deleted.cereforge"
+    current_user.username = f"deleted_{str(current_user.id)[:8]}"
+    await db.commit()
+    return None

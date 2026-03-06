@@ -6,14 +6,26 @@ import {
   MessageSquare,
   Calendar,
   Pencil,
+  History,
+  Settings as SettingsIcon,
+  User as UserIcon,
+  Key,
+  Trash2,
+  Shield,
+  AlertCircle,
+  Clock,
+  ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { Card, CardContent } from "@/components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import apiClient from "@/api/client";
 import { useAuthStore } from "@/stores/authStore";
+import { useUIStore } from "@/stores/uiStore";
 import { formatDistanceToNow, format } from "date-fns";
+import { extractErrorMessage } from "@/utils/errorUtils";
+import { cn } from "@/utils/cn";
 
 const SKILL_LEVELS = [
   { id: "absolute_beginner", label: "Absolute Beginner" },
@@ -25,7 +37,10 @@ const SKILL_LEVELS = [
 export function Profile() {
   const { username } = useParams();
   const navigate = useNavigate();
-  const { user: currentUser, setUser } = useAuthStore();
+  const { user: currentUser, setUser, logout } = useAuthStore();
+  const { addToast } = useUIStore();
+
+  const [activeTab, setActiveTab] = useState("overview");
 
   // Edit Profile modal state
   const [editOpen, setEditOpen] = useState(false);
@@ -36,7 +51,19 @@ export function Profile() {
   const [editError, setEditError] = useState("");
 
   const [profileUser, setProfileUser] = useState(null);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  // Settings state
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
+  const [deleteStep, setDeleteStep] = useState(1); // 1 = confirmation, 2 = password entry
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // If no username provided, default to current user
   const targetUsername = username || currentUser?.username;
@@ -47,7 +74,7 @@ export function Profile() {
       return;
     }
 
-    setTimeout(() => setLoading(true), 0);
+    setLoading(true);
     apiClient
       .get(`/users/${targetUsername}`)
       .then((res) => setProfileUser(res.data))
@@ -57,6 +84,62 @@ export function Profile() {
       })
       .finally(() => setLoading(false));
   }, [targetUsername, navigate]);
+
+  useEffect(() => {
+    if (activeTab === "history" && history.length === 0) {
+      fetchHistory();
+    }
+  }, [activeTab]);
+
+  const fetchHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await apiClient.get("/tasks/me/history");
+      setHistory(res.data);
+    } catch (err) {
+      console.error(err);
+      addToast({ title: "Error", message: "Failed to load history", type: "error" });
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      addToast({ title: "Error", message: "Passwords do not match", type: "error" });
+      return;
+    }
+    setPasswordLoading(true);
+    try {
+      await apiClient.post("/users/me/change-password", {
+        old_password: oldPassword,
+        new_password: newPassword,
+      });
+      addToast({ title: "Success", message: "Password changed. Please login again.", type: "success" });
+      logout();
+      navigate("/auth");
+    } catch (err) {
+      addToast({ title: "Error", message: extractErrorMessage(err), type: "error" });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async (e) => {
+    e.preventDefault();
+    deleteLoading(true);
+    try {
+      await apiClient.delete("/users/me", { data: { password: deletePassword } });
+      addToast({ title: "Account Deleted", message: "Your account has been deactivated.", type: "info" });
+      logout();
+      navigate("/auth");
+    } catch (err) {
+      addToast({ title: "Error", message: extractErrorMessage(err), type: "error" });
+    } finally {
+      deleteLoading(false);
+    }
+  };
 
   if (loading)
     return (
@@ -143,7 +226,7 @@ export function Profile() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    useAuthStore.getState().logout();
+                    logout();
                     navigate("/auth");
                   }}
                 >
@@ -183,146 +266,395 @@ export function Profile() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Badges Collection */}
-          <Card className="glass-panel">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-primary" /> Badge Showcase
-              </h3>
-
-              {profileUser.badges && profileUser.badges.length > 0 ? (
-                <div className="grid grid-cols-3 gap-3">
-                  {profileUser.badges.map((badge) => (
-                    <div
-                      key={badge.slug}
-                      className="group relative flex flex-col items-center p-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-primary/50 transition-colors"
-                    >
-                      <span className="text-3xl mb-1 group-hover:scale-110 transition-transform">
-                        {badge.icon}
-                      </span>
-                      <span className="text-[10px] font-medium text-zinc-400 text-center line-clamp-2">
-                        {badge.name}
-                      </span>
-                      <div className="absolute opacity-0 group-hover:opacity-100 bg-zinc-800 text-white text-xs p-2 rounded w-48 z-20 pointer-events-none -bottom-2 translate-y-full left-1/2 -translate-x-1/2 transition-opacity">
-                        {badge.description}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-zinc-500 py-6 text-sm">
-                  No badges unlocked yet.
-                </div>
+      {/* Tabs Navigation */}
+      <div className="flex border-b border-border gap-6">
+        <button
+          onClick={() => setActiveTab("overview")}
+          className={cn(
+            "pb-3 text-sm font-semibold transition-colors relative",
+            activeTab === "overview" ? "text-primary" : "text-zinc-500 hover:text-zinc-300"
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <UserIcon className="h-4 w-4" /> Overview
+          </div>
+          {activeTab === "overview" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
+        </button>
+        {isCurrentUser && (
+          <>
+            <button
+              onClick={() => setActiveTab("history")}
+              className={cn(
+                "pb-3 text-sm font-semibold transition-colors relative",
+                activeTab === "history" ? "text-primary" : "text-zinc-500 hover:text-zinc-300"
               )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Recent Tasks */}
-          <Card className="glass-panel">
-            <CardContent className="p-0">
-              <div className="p-6 border-b border-border/50">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Code className="h-5 w-5 text-primary" /> Completed Challenges
-                </h3>
+            >
+              <div className="flex items-center gap-2">
+                <History className="h-4 w-4" /> Submission History
               </div>
+              {activeTab === "history" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
+            </button>
+            <button
+              onClick={() => setActiveTab("settings")}
+              className={cn(
+                "pb-3 text-sm font-semibold transition-colors relative",
+                activeTab === "settings" ? "text-primary" : "text-zinc-500 hover:text-zinc-300"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <SettingsIcon className="h-4 w-4" /> Settings
+              </div>
+              {activeTab === "settings" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
+            </button>
+          </>
+        )}
+      </div>
 
-              <div className="divide-y divide-border/50">
-                {profileUser.completions &&
-                  profileUser.completions.length > 0 ? (
-                  profileUser.completions.map((taskLog, idx) => (
-                    <div
-                      key={taskLog.task_slug || idx}
-                      className="p-4 sm:p-6 hover:bg-zinc-900/30 transition-colors flex items-center justify-between"
-                    >
-                      <div>
-                        <Link
-                          to={`/tasks/${taskLog.task_slug}`}
-                          className="text-white font-medium hover:text-primary transition-colors block mb-1"
+      {/* Tab Content */}
+      <div className="mt-8">
+        {activeTab === "overview" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Badges Collection */}
+              <Card className="glass-panel">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-primary" /> Badge Showcase
+                  </h3>
+
+                  {profileUser.badges && profileUser.badges.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-3">
+                      {profileUser.badges.map((badge) => (
+                        <div
+                          key={badge.slug}
+                          className="group relative flex flex-col items-center p-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-primary/50 transition-colors"
                         >
-                          {taskLog.task_title}
-                        </Link>
-                        <p className="text-xs text-zinc-500">
-                          Completed{" "}
-                          {formatDistanceToNow(new Date(taskLog.submitted_at))}{" "}
-                          ago
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge
-                          variant={taskLog.track}
-                          className="text-[10px]"
-                        >
-                          {(taskLog.track || "mission").toUpperCase()}
-                        </Badge>
-                        <span className="text-xs text-primary font-mono bg-primary/10 px-2 py-1 rounded inline-flex items-center">
-                          +{taskLog.xp_earned} XP
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center text-zinc-500 py-8">
-                    No tasks completed yet.
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Forum Activity */}
-          <Card className="glass-panel">
-            <CardContent className="p-0">
-              <div className="p-6 border-b border-border/50">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-primary" /> Community
-                  Contributions
-                </h3>
-              </div>
-
-              <div className="divide-y divide-border/50">
-                {profileUser.posts && profileUser.posts.length > 0 ? (
-                  profileUser.posts.map((post) => (
-                    <div
-                      key={post.id}
-                      className="p-4 sm:p-6 hover:bg-zinc-900/30 transition-colors"
-                    >
-                      <Link
-                        to={`/community/${post.id}`}
-                        className="block group"
-                      >
-                        <h4 className="text-zinc-200 font-medium group-hover:text-primary transition-colors">
-                          {post.title}
-                        </h4>
-                        <div className="flex items-center gap-4 text-xs text-zinc-500 mt-2">
-                          <span>
-                            {formatDistanceToNow(new Date(post.created_at))} ago
+                          <span className="text-3xl mb-1 group-hover:scale-110 transition-transform">
+                            {badge.icon}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="h-3 w-3" />{" "}
-                            {post.comment_count || 0}
+                          <span className="text-[10px] font-medium text-zinc-400 text-center line-clamp-2">
+                            {badge.name}
                           </span>
-                          <span className="flex items-center gap-1">
-                            Score: {post.vote_score || 0}
-                          </span>
+                          <div className="absolute opacity-0 group-hover:opacity-100 bg-zinc-800 text-white text-xs p-2 rounded w-48 z-20 pointer-events-none -bottom-2 translate-y-full left-1/2 -translate-x-1/2 transition-opacity">
+                            {badge.description}
+                          </div>
                         </div>
-                      </Link>
+                      ))}
                     </div>
-                  ))
+                  ) : (
+                    <div className="text-center text-zinc-500 py-6 text-sm">
+                      No badges unlocked yet.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Recent Tasks */}
+              <Card className="glass-panel">
+                <CardContent className="p-0">
+                  <div className="p-6 border-b border-border/50">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <Code className="h-5 w-5 text-primary" /> Completed Challenges
+                    </h3>
+                  </div>
+
+                  <div className="divide-y divide-border/50">
+                    {profileUser.completions &&
+                      profileUser.completions.length > 0 ? (
+                      profileUser.completions.map((taskLog, idx) => (
+                        <div
+                          key={taskLog.task_slug || idx}
+                          className="p-4 sm:p-6 hover:bg-zinc-900/30 transition-colors flex items-center justify-between"
+                        >
+                          <div>
+                            <Link
+                              to={`/tasks/${taskLog.task_slug}`}
+                              className="text-white font-medium hover:text-primary transition-colors block mb-1"
+                            >
+                              {taskLog.task_title}
+                            </Link>
+                            <p className="text-xs text-zinc-500">
+                              Completed{" "}
+                              {formatDistanceToNow(new Date(taskLog.submitted_at))}{" "}
+                              ago
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Badge
+                              variant={taskLog.track}
+                              className="text-[10px]"
+                            >
+                              {(taskLog.track || "mission").toUpperCase()}
+                            </Badge>
+                            <span className="text-xs text-primary font-mono bg-primary/10 px-2 py-1 rounded inline-flex items-center">
+                              +{taskLog.xp_earned} XP
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-zinc-500 py-8">
+                        No tasks completed yet.
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Forum Activity */}
+              <Card className="glass-panel">
+                <CardContent className="p-0">
+                  <div className="p-6 border-b border-border/50">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-primary" /> Community
+                      Contributions
+                    </h3>
+                  </div>
+
+                  <div className="divide-y divide-border/50">
+                    {profileUser.posts && profileUser.posts.length > 0 ? (
+                      profileUser.posts.map((post) => (
+                        <div
+                          key={post.id}
+                          className="p-4 sm:p-6 hover:bg-zinc-900/30 transition-colors"
+                        >
+                          <Link
+                            to={`/community/${post.id}`}
+                            className="block group"
+                          >
+                            <h4 className="text-zinc-200 font-medium group-hover:text-primary transition-colors">
+                              {post.title}
+                            </h4>
+                            <div className="flex items-center gap-4 text-xs text-zinc-500 mt-2">
+                              <span>
+                                {formatDistanceToNow(new Date(post.created_at))} ago
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageSquare className="h-3 w-3" />{" "}
+                                {post.comment_count || 0}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                Score: {post.vote_score || 0}
+                              </span>
+                            </div>
+                          </Link>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-zinc-500 py-8">
+                        No community posts yet.
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "history" && (
+          <div className="space-y-6">
+            <Card className="glass-panel overflow-hidden">
+              <CardHeader className="border-b border-border/50 bg-zinc-900/30">
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <History className="h-5 w-5 text-primary" /> Full Submission Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {historyLoading ? (
+                  <div className="p-12 text-center text-zinc-500">
+                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                    Loading submission history...
+                  </div>
+                ) : history.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-zinc-900/50 text-xs font-semibold text-zinc-400 uppercase tracking-wider border-b border-border/50">
+                          <th className="px-6 py-4">Challenge</th>
+                          <th className="px-6 py-4">Date</th>
+                          <th className="px-6 py-4">XP</th>
+                          <th className="px-6 py-4">Status</th>
+                          <th className="px-6 py-4 text-right">Preview</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/50">
+                        {history.map((item) => (
+                          <tr key={item.id} className="hover:bg-zinc-900/30 transition-colors text-sm">
+                            <td className="px-6 py-4">
+                              <Link to={`/tasks/${item.task_slug}`} className="text-white hover:text-primary transition-colors font-medium">
+                                {item.task_title}
+                              </Link>
+                              <div className="text-[10px] text-zinc-500 flex items-center gap-2 mt-1">
+                                <span className="uppercase">{item.track}</span>
+                                <span className="h-1 w-1 bg-zinc-700 rounded-full" />
+                                <span className="capitalize">{item.difficulty}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-zinc-400">
+                              <div className="flex flex-col">
+                                <span>{format(new Date(item.submitted_at), "MMM d, yyyy")}</span>
+                                <span className="text-[10px] text-zinc-500">{format(new Date(item.submitted_at), "HH:mm")}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-primary font-mono font-bold">+{item.xp_awarded}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                {item.is_ai_flagged ? (
+                                  <Badge variant="outline" className="text-amber-400 border-amber-500/50 bg-amber-500/5 text-[10px] flex items-center gap-1">
+                                    <Shield className="h-3 w-3" /> AI Detected
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-success border-success/50 bg-success/5 text-[10px] flex items-center gap-1">
+                                    <Shield className="h-3 w-3" /> Human Pass
+                                  </Badge>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <p className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors italic line-clamp-1 max-w-[150px] inline-block">
+                                {item.solution_preview}
+                              </p>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 ) : (
-                  <div className="text-center text-zinc-500 py-8">
-                    No community posts yet.
+                  <div className="p-12 text-center text-zinc-500">
+                    <History className="h-12 w-12 text-zinc-700 mx-auto mb-4 opacity-50" />
+                    <p>No submission records found yet.</p>
+                    <Link to="/tasks">
+                      <Button variant="ghost" className="mt-4">Start a Challenge</Button>
+                    </Link>
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === "settings" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Password Management */}
+            <Card className="glass-panel">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Key className="h-5 w-5 text-primary" /> Security & Password
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Current Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-input border border-border rounded-lg p-2.5 text-sm outline-none focus:border-primary transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">New Password</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-input border border-border rounded-lg p-2.5 text-sm outline-none focus:border-primary transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Confirm New Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-input border border-border rounded-lg p-2.5 text-sm outline-none focus:border-primary transition-colors"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" isLoading={passwordLoading}>
+                    Update Password
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Account Deletion */}
+            <Card className="glass-panel border-red-900/10">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2 text-red-400">
+                  <Trash2 className="h-5 w-5" /> Danger Zone
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="p-4 bg-red-900/10 border border-red-900/20 rounded-xl">
+                  <p className="text-sm text-red-200 leading-relaxed">
+                    Once you deactivate your account, you will no longer be able to log in or earn XP.
+                    Your public community contributions (posts/comments) will remain but will be anonymised.
+                  </p>
+                </div>
+
+                {deleteStep === 1 ? (
+                  <Button
+                    variant="outline"
+                    className="w-full border-red-900/30 text-red-500 hover:bg-red-900/20 hover:text-red-400"
+                    onClick={() => setDeleteStep(2)}
+                  >
+                    Deactivate My Account
+                  </Button>
+                ) : (
+                  <form onSubmit={handleDeleteAccount} className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-red-400/80 uppercase tracking-wider">Enter Password to Confirm</label>
+                      <input
+                        type="password"
+                        required
+                        value={deletePassword}
+                        onChange={(e) => setDeletePassword(e.target.value)}
+                        placeholder="Confirm password"
+                        className="w-full bg-input border border-red-900/20 rounded-lg p-2.5 text-sm outline-none focus:border-red-500 transition-colors"
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="flex-1"
+                        onClick={() => {
+                          setDeleteStep(1);
+                          setDeletePassword("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                        isLoading={deleteLoading}
+                      >
+                        Delete Forever
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       {/* Edit Profile Modal */}
@@ -345,18 +677,14 @@ export function Profile() {
               const updated = await apiClient.get(`/users/${newUsername}`);
               setProfileUser(updated.data);
               setEditOpen(false);
+              addToast({ title: "Updated", message: "Profile saved successfully.", type: "success" });
 
               // If we are on a specific username route and it changed, update the URL
               if (username && username !== newUsername) {
                 navigate(`/profile/${newUsername}`, { replace: true });
               }
             } catch (err) {
-              const detail = err.response?.data?.detail;
-              setEditError(
-                Array.isArray(detail)
-                  ? detail.map((d) => d.msg || d.type).join(", ")
-                  : detail || "Failed to save changes.",
-              );
+              setEditError(extractErrorMessage(err));
             } finally {
               setEditSaving(false);
             }
@@ -379,7 +707,7 @@ export function Profile() {
               maxLength={30}
               pattern="^[a-zA-Z0-9_]+$"
               title="Letters, numbers, underscores only"
-              className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
+              className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-primary"
             />
             <p className="text-xs text-zinc-500">Letters, numbers, underscores only.</p>
           </div>
@@ -391,7 +719,7 @@ export function Profile() {
               value={editBackground}
               onChange={(e) => setEditBackground(e.target.value)}
               maxLength={500}
-              className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-foreground focus:outline-none focus:border-primary resize-none"
+              className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-primary resize-none"
               placeholder="Tell the community a bit about yourself..."
             />
           </div>
@@ -401,7 +729,7 @@ export function Profile() {
             <select
               value={editSkillLevel}
               onChange={(e) => setEditSkillLevel(e.target.value)}
-              className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
+              className="w-full bg-input border border-border rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-primary"
             >
               {SKILL_LEVELS.map((s) => (
                 <option key={s.id} value={s.id}>{s.label}</option>
