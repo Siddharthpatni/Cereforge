@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Trophy,
@@ -89,9 +89,9 @@ export function Profile() {
     if (activeTab === "history" && history.length === 0) {
       fetchHistory();
     }
-  }, [activeTab]);
+  }, [activeTab, history.length, fetchHistory]);
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     setHistoryLoading(true);
     try {
       const res = await apiClient.get("/tasks/me/history");
@@ -102,7 +102,7 @@ export function Profile() {
     } finally {
       setHistoryLoading(false);
     }
-  };
+  }, [addToast]);
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -128,7 +128,7 @@ export function Profile() {
 
   const handleDeleteAccount = async (e) => {
     e.preventDefault();
-    deleteLoading(true);
+    setDeleteLoading(true);
     try {
       await apiClient.delete("/users/me", { data: { password: deletePassword } });
       addToast({ title: "Account Deleted", message: "Your account has been deactivated.", type: "info" });
@@ -137,7 +137,7 @@ export function Profile() {
     } catch (err) {
       addToast({ title: "Error", message: extractErrorMessage(err), type: "error" });
     } finally {
-      deleteLoading(false);
+      setDeleteLoading(false);
     }
   };
 
